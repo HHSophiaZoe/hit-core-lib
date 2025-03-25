@@ -7,7 +7,7 @@ import vn.tnteco.storage.data.FileEntryDTO;
 import java.io.InputStream;
 import java.util.List;
 
-public interface IStorageService extends AutoCloseable {
+public interface StorageService extends AutoCloseable {
 
     List<FileEntryDTO> listFiles(String path);
 

@@ -7,7 +7,7 @@ import io.minio.messages.Item;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
-import vn.tnteco.storage.IStorageService;
+import vn.tnteco.storage.StorageService;
 import vn.tnteco.storage.config.StorageFileConfig;
 import vn.tnteco.storage.constant.FileExtensionEnum;
 import vn.tnteco.storage.data.FileEntryDTO;
@@ -24,7 +24,7 @@ import static vn.tnteco.storage.util.FileUtils.FORWARD_SLASH;
 
 @Slf4j
 @SuppressWarnings({"java:S112"})
-public class MinioStorageServiceImpl implements IStorageService, AutoCloseable {
+public class MinioStorageServiceImpl implements StorageService, AutoCloseable {
 
     private MinioClient minioClient;
 

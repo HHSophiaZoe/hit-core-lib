@@ -8,7 +8,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.integration.file.remote.session.Session;
 import org.springframework.integration.ftp.session.DefaultFtpSessionFactory;
 import org.springframework.integration.ftp.session.FtpRemoteFileTemplate;
-import vn.tnteco.storage.IStorageService;
+import vn.tnteco.storage.StorageService;
 import vn.tnteco.storage.config.StorageFileConfig;
 import vn.tnteco.storage.constant.FileExtensionEnum;
 import vn.tnteco.storage.data.FileEntryDTO;
@@ -25,7 +25,7 @@ import java.util.List;
 import static vn.tnteco.storage.util.FileUtils.FORWARD_SLASH;
 
 @Slf4j
-public class FtpStorageServiceImpl implements IStorageService, AutoCloseable {
+public class FtpStorageServiceImpl implements StorageService, AutoCloseable {
 
     private final Session<FTPFile> session;
 

@@ -13,17 +13,11 @@ public interface BaseRepository<T, ID> {
 
     PaginationResponse<T> search(PaginationRequest request);
 
-    PaginationResponse<T> search(PaginationRequest request, Predicate condition);
-
     PaginationResponse<T> search(PaginationSearchRequest request);
-
-    PaginationResponse<T> search(PaginationSearchRequest request, Predicate condition);
 
     List<ID> getAllId();
 
     List<ID> getAllId(Collection<ID> ids);
-
-    List<ID> getAllId(Predicate condition);
 
     List<T> getAll();
 
@@ -32,8 +26,6 @@ public interface BaseRepository<T, ID> {
     Map<ID, T> getMapId(Collection<ID> ids);
 
     T getOne(ID id);
-
-    T getOne(Predicate condition);
 
     boolean exists(ID id);
 

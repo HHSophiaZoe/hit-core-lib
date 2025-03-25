@@ -29,6 +29,9 @@ public class RolesAllowedResolver {
         if (simpleSecurityUser == null) {
             throw new BaseResponseException(ResponseStatusCodeEnum.UNAUTHORIZED_ERROR);
         }
+        if (simpleSecurityUser.isSystemAdmin()) {
+            return;
+        }
         List<String> authorities = simpleSecurityUser.getAuthorities();
         if (CollectionUtils.isNotEmpty(authorities)) {
             for (String authority : authorities) {

@@ -12,7 +12,7 @@
     <artifactId>storage-starter</artifactId>
     <name>storage-starter-library</name>
     <description>Module storage library</description>
-    <version>1.0.0</version>
+    <version>1.0</version>
 
     <properties>
         <spring-ftp.version>5.5.3</spring-ftp.version>

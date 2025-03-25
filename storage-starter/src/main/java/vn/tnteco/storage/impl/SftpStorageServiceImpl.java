@@ -2,7 +2,7 @@ package vn.tnteco.storage.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
-import vn.tnteco.storage.IStorageService;
+import vn.tnteco.storage.StorageService;
 import vn.tnteco.storage.constant.FileExtensionEnum;
 import vn.tnteco.storage.data.FileEntryDTO;
 
@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.util.List;
 
 @Slf4j
-public class SftpStorageServiceImpl implements IStorageService, AutoCloseable {
+public class SftpStorageServiceImpl implements StorageService, AutoCloseable {
 
     @Override
     public List<FileEntryDTO> listFiles(String path) {

@@ -14,7 +14,7 @@ import vn.tnteco.storage.impl.SftpStorageServiceImpl;
 @RequiredArgsConstructor
 public class StorageFactory {
 
-    public IStorageService getStorage(StorageFileConfig config) {
+    public StorageService getStorage(StorageFileConfig config) {
         if (ObjectUtils.isEmpty(config)) {
             throw new IllegalArgumentException("Storage File Config required");
         }

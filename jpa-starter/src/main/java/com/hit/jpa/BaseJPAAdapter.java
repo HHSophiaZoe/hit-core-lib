@@ -72,11 +72,11 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
         return new PaginationResponse<>(SqlUtils.buildPagingMeta(request, page), page.getContent());
     }
 
-    @Override
-    public PaginationResponse<T> search(PaginationRequest request, Predicate condition) {
+    protected PaginationResponse<T> search(PaginationRequest request, Predicate condition) {
         return null;
     }
 
+    @Override
     public PaginationResponse<T> search(PaginationSearchRequest request) {
         Pageable pageable = SqlUtils.createPageable(request);
         Specification<T> specification = SqlUtils.createSpecificationPaginationSearch(request, this.getEntityClass());
@@ -84,8 +84,7 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
         return new PaginationResponse<>(SqlUtils.buildPagingMeta(request, page), page.getContent());
     }
 
-    @Override
-    public PaginationResponse<T> search(PaginationSearchRequest request, Predicate condition) {
+    protected PaginationResponse<T> search(PaginationSearchRequest request, Predicate condition) {
         return null;
     }
 
@@ -99,8 +98,7 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
         return this.dslRepository.getAllId(ids);
     }
 
-    @Override
-    public List<ID> getAllId(Predicate condition) {
+    protected List<ID> getAllId(Predicate condition) {
         return this.dslRepository.getAllId(condition);
     }
 
@@ -128,8 +126,7 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
         return this.jpaRepository.findById(id).orElse(null);
     }
 
-    @Override
-    public T getOne(Predicate condition) {
+    protected T getOne(Predicate condition) {
         return this.dslRepository.getOne(condition).orElse(null);
     }
 

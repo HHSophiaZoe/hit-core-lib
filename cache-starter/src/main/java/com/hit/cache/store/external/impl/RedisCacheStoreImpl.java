@@ -3,18 +3,15 @@ package com.hit.cache.store.external.impl;
 import com.hit.cache.config.properties.ExternalCacheConfigProperties;
 import com.hit.cache.config.serializer.RedisSerializer;
 import com.hit.cache.store.external.ExternalCacheStore;
-import com.hit.cache.store.external.RxExternalCacheStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.RedissonMultiLock;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +24,7 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 @Service("redisCacheStore")
 @ConditionalOnProperty(value = {"app.external-cache.enable"}, havingValue = "true")
-public class RedisCacheStoreImpl implements ExternalCacheStore, RxExternalCacheStore {
+public class RedisCacheStoreImpl implements ExternalCacheStore {
 
     private final RedisTemplate<String, String> stringRedisTemplate;
 
