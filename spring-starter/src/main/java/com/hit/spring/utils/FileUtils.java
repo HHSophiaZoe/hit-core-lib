@@ -3,8 +3,7 @@ package com.hit.spring.utils;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -16,7 +15,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -26,6 +24,35 @@ public class FileUtils {
     private static final Path CURRENT_FOLDER = Paths.get(System.getProperty("user.dir"));
 
     private static final Path RESOURCES_PATH = CURRENT_FOLDER.resolve(Paths.get("src/main/resources"));
+
+    public static String getFilename(String path) {
+        return FilenameUtils.getName(path);
+    }
+
+    public static String getExtension(String filename) {
+        return FilenameUtils.getExtension(filename);
+    }
+
+    public static String removeExtension(String filename) {
+        return FilenameUtils.removeExtension(filename);
+    }
+
+    public void createDirectories(String... paths) throws IOException {
+        for (String pathFolder : paths) {
+            Path path = RESOURCES_PATH.resolve(Paths.get(pathFolder));
+            if (!Files.exists(path)) {
+                Files.createDirectories(path);
+            }
+        }
+    }
+
+    public Path createDirectories(String path) throws IOException {
+        Path pathResult = RESOURCES_PATH.resolve(Paths.get(path));
+        if (!Files.exists(pathResult)) {
+            Files.createDirectories(pathResult);
+        }
+        return pathResult;
+    }
 
     /**
      * Zip a folder or multiple folder
@@ -82,27 +109,32 @@ public class FileUtils {
     /**
      * Save file upload to Resources
      *
-     * @param newFileName   Tên file mới để lưu
-     * @param uploadPath    Vị trí cần lưu (trong phạm vi folder resources), example: "upload/xxx/xxx"
-     * @param multipartFile File cần lưu
+     * @param inputStream File cần lưu
+     * @param uploadPath  Vị trí cần lưu (trong phạm vi folder resources), example: "upload/xxx/xxx"
+     * @param filename Tên file để lưu, example: "example.txt"
      * @return String
      */
-    public static String saveFile(String newFileName, String uploadPath, MultipartFile multipartFile) throws IOException {
-        Path path = RESOURCES_PATH.resolve(Paths.get(uploadPath));
-        if (!Files.exists(path)) {
-            Files.createDirectories(path);
-        }
-        String fileName = StringUtils.cleanPath(Objects.requireNonNull(multipartFile.getOriginalFilename()));
-        String fileType = fileName.substring(fileName.lastIndexOf("."));
-        String newFile = newFileName + fileType;
-        Path filePath;
-        try (InputStream inputStream = multipartFile.getInputStream()) {
-            filePath = path.resolve(newFile);
-            Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
+    public static Path saveFile(InputStream inputStream, String uploadPath, String filename) throws IOException {
+        Path path = createDirectories(uploadPath);
+        return saveFile(inputStream, path, filename);
+    }
+
+    /**
+     * Save file upload to Resources
+     *
+     * @param inputStream File cần lưu
+     * @param uploadPath  Vị trí cần lưu
+     * @param filename Tên file để lưu, example: "example.txt"
+     * @return String
+     */
+    public static Path saveFile(InputStream inputStream, Path uploadPath, String filename) throws IOException {
+        try (InputStream is = inputStream) {
+            Path filePath = uploadPath.resolve(filename);
+            Files.copy(is, filePath, StandardCopyOption.REPLACE_EXISTING);
+            return filePath;
         } catch (IOException ioe) {
-            throw new IOException("Could not save file: " + fileName);
+            throw new IOException("Could not save file: " + filename);
         }
-        return newFile;
     }
 
     /**
