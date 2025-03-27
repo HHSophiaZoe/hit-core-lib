@@ -1,13 +1,14 @@
-package vn.tnteco.storage;
+package com.hit.storage;
 
+import com.hit.storage.config.StorageFileConfig;
+import com.hit.storage.constant.StorageEnum;
+import com.hit.storage.impl.FtpStorageServiceImpl;
+import com.hit.storage.impl.MinioStorageServiceImpl;
+import com.hit.storage.impl.SftpStorageServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
-import vn.tnteco.storage.config.StorageFileConfig;
-import vn.tnteco.storage.impl.FtpStorageServiceImpl;
-import vn.tnteco.storage.impl.MinioStorageServiceImpl;
-import vn.tnteco.storage.impl.SftpStorageServiceImpl;
 
 @Slf4j
 @Service
@@ -19,9 +20,9 @@ public class StorageFactory {
             throw new IllegalArgumentException("Storage File Config required");
         }
         return switch (config.getStorage()) {
-            case FTP -> new FtpStorageServiceImpl(config);
-            case SFTP -> new SftpStorageServiceImpl();
-            case MINIO -> new MinioStorageServiceImpl(config);
+            case StorageEnum.FTP -> new FtpStorageServiceImpl(config);
+            case StorageEnum.SFTP -> new SftpStorageServiceImpl();
+            case StorageEnum.MINIO -> new MinioStorageServiceImpl(config);
         };
     }
 }

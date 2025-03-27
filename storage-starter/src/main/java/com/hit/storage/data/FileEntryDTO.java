@@ -1,4 +1,4 @@
-package vn.tnteco.storage.data;
+package com.hit.storage.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,11 +1,11 @@
-package vn.tnteco.storage.config;
+package com.hit.storage.config;
 
+import com.hit.storage.constant.FTPModeEnum;
+import com.hit.storage.constant.StorageEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import vn.tnteco.storage.constant.FTPModeEnum;
-import vn.tnteco.storage.constant.StorageEnum;
 
 @Getter
 @Builder

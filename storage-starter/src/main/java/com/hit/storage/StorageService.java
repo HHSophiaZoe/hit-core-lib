@@ -1,8 +1,8 @@
-package vn.tnteco.storage;
+package com.hit.storage;
 
+import com.hit.storage.constant.FileExtensionEnum;
 import org.springframework.core.io.ByteArrayResource;
-import vn.tnteco.storage.constant.FileExtensionEnum;
-import vn.tnteco.storage.data.FileEntryDTO;
+import com.hit.storage.data.FileEntryDTO;
 
 import java.io.InputStream;
 import java.util.List;

@@ -1,17 +1,17 @@
-package vn.tnteco.storage.impl;
+package com.hit.storage.impl;
 
 import com.google.common.io.ByteStreams;
+import com.hit.storage.util.FileUtils;
 import io.minio.*;
 import io.minio.http.Method;
 import io.minio.messages.Item;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
-import vn.tnteco.storage.StorageService;
-import vn.tnteco.storage.config.StorageFileConfig;
-import vn.tnteco.storage.constant.FileExtensionEnum;
-import vn.tnteco.storage.data.FileEntryDTO;
-import vn.tnteco.storage.util.FileUtils;
+import com.hit.storage.StorageService;
+import com.hit.storage.config.StorageFileConfig;
+import com.hit.storage.constant.FileExtensionEnum;
+import com.hit.storage.data.FileEntryDTO;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
-
-import static vn.tnteco.storage.util.FileUtils.FORWARD_SLASH;
 
 @Slf4j
 @SuppressWarnings({"java:S112"})
@@ -59,8 +57,8 @@ public class MinioStorageServiceImpl implements StorageService, AutoCloseable {
     @Override
     public List<FileEntryDTO> listFiles(String path) {
         Objects.requireNonNull(path, "Directory path must not be null");
-        if (!path.endsWith(FORWARD_SLASH)) {
-            path += FORWARD_SLASH;
+        if (!path.endsWith(FileUtils.FORWARD_SLASH)) {
+            path += FileUtils.FORWARD_SLASH;
         }
         Iterable<Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucketName)
@@ -96,8 +94,8 @@ public class MinioStorageServiceImpl implements StorageService, AutoCloseable {
     @SneakyThrows
     public void makeDirectory(String dirPath) {
         Objects.requireNonNull(dirPath, "Directory path ust not be null");
-        if (!dirPath.endsWith(FORWARD_SLASH)) {
-            dirPath += FORWARD_SLASH;
+        if (!dirPath.endsWith(FileUtils.FORWARD_SLASH)) {
+            dirPath += FileUtils.FORWARD_SLASH;
         }
         try {
             minioClient.putObject(PutObjectArgs.builder()

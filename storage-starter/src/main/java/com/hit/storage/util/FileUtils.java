@@ -1,4 +1,4 @@
-package vn.tnteco.storage.util;
+package com.hit.storage.util;
 
 import lombok.experimental.UtilityClass;
 import org.apache.commons.io.FilenameUtils;

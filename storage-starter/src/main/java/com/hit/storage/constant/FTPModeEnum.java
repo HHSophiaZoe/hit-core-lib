@@ -1,4 +1,4 @@
-package vn.tnteco.storage.constant;
+package com.hit.storage.constant;
 
 import lombok.AllArgsConstructor;
 import org.apache.commons.net.ftp.FTPClient;

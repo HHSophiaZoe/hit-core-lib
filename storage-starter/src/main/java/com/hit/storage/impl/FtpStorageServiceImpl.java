@@ -1,5 +1,6 @@
-package vn.tnteco.storage.impl;
+package com.hit.storage.impl;
 
+import com.hit.storage.util.FileUtils;
 import io.micrometer.common.util.StringUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -8,11 +9,10 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.integration.file.remote.session.Session;
 import org.springframework.integration.ftp.session.DefaultFtpSessionFactory;
 import org.springframework.integration.ftp.session.FtpRemoteFileTemplate;
-import vn.tnteco.storage.StorageService;
-import vn.tnteco.storage.config.StorageFileConfig;
-import vn.tnteco.storage.constant.FileExtensionEnum;
-import vn.tnteco.storage.data.FileEntryDTO;
-import vn.tnteco.storage.util.FileUtils;
+import com.hit.storage.StorageService;
+import com.hit.storage.config.StorageFileConfig;
+import com.hit.storage.constant.FileExtensionEnum;
+import com.hit.storage.data.FileEntryDTO;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -21,8 +21,6 @@ import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static vn.tnteco.storage.util.FileUtils.FORWARD_SLASH;
 
 @Slf4j
 public class FtpStorageServiceImpl implements StorageService, AutoCloseable {
@@ -85,11 +83,11 @@ public class FtpStorageServiceImpl implements StorageService, AutoCloseable {
     @SneakyThrows
     public void makeDirectory(String dirPath) {
         StringBuilder sb = new StringBuilder();
-        String[] dirs = dirPath.split(FORWARD_SLASH);
+        String[] dirs = dirPath.split(FileUtils.FORWARD_SLASH);
         try {
             for (String dir : dirs) {
                 if (StringUtils.isBlank(dir)) continue;
-                sb.append(FORWARD_SLASH).append(dir);
+                sb.append(FileUtils.FORWARD_SLASH).append(dir);
                 String currentDir = sb.toString();
                 if (session.exists(currentDir)) {
                     log.info("[FTP] server path {} existed", currentDir);

@@ -1,10 +1,10 @@
-package vn.tnteco.storage.impl;
+package com.hit.storage.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
-import vn.tnteco.storage.StorageService;
-import vn.tnteco.storage.constant.FileExtensionEnum;
-import vn.tnteco.storage.data.FileEntryDTO;
+import com.hit.storage.StorageService;
+import com.hit.storage.constant.FileExtensionEnum;
+import com.hit.storage.data.FileEntryDTO;
 
 import java.io.InputStream;
 import java.util.List;
