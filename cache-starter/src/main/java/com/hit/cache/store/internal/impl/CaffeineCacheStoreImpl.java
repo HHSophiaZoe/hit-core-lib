@@ -17,7 +17,7 @@ import java.util.function.Function;
 @Primary
 @RequiredArgsConstructor
 @Service("caffeineCacheStore")
-@ConditionalOnProperty(value = {"app.internal-cache.enable"}, havingValue = "true")
+@ConditionalOnProperty(value = {"internal-cache.enable"}, havingValue = "true")
 public class CaffeineCacheStoreImpl implements InternalCacheStore {
 
     @Qualifier("caffeineCacheManager")

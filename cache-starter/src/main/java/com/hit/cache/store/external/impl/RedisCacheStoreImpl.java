@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 @Primary
 @RequiredArgsConstructor
 @Service("redisCacheStore")
-@ConditionalOnProperty(value = {"app.external-cache.enable"}, havingValue = "true")
+@ConditionalOnProperty(value = {"external-cache.enable"}, havingValue = "true")
 public class RedisCacheStoreImpl implements ExternalCacheStore {
 
     private final RedisTemplate<String, String> stringRedisTemplate;
