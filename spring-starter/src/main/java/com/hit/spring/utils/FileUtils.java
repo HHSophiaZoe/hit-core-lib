@@ -1,5 +1,6 @@
 package com.hit.spring.utils;
 
+import com.hit.spring.core.constants.CommonConstant;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.collections4.CollectionUtils;
@@ -21,9 +22,12 @@ import java.util.zip.ZipOutputStream;
 @UtilityClass
 public class FileUtils {
 
-    private static final Path CURRENT_FOLDER = Paths.get(System.getProperty("user.dir"));
-
-    private static final Path RESOURCES_PATH = CURRENT_FOLDER.resolve(Paths.get("src/main/resources"));
+    public static String validPath(String path) {
+        if (path.startsWith(CommonConstant.CommonSymbol.FORWARD_SLASH)) {
+            path = path.substring(1);
+        }
+        return path;
+    }
 
     public static String getFilename(String path) {
         return FilenameUtils.getName(path);
@@ -39,7 +43,7 @@ public class FileUtils {
 
     public void createDirectories(String... paths) throws IOException {
         for (String pathFolder : paths) {
-            Path path = RESOURCES_PATH.resolve(Paths.get(pathFolder));
+            Path path = Paths.get(validPath(pathFolder));
             if (!Files.exists(path)) {
                 Files.createDirectories(path);
             }
@@ -47,7 +51,7 @@ public class FileUtils {
     }
 
     public Path createDirectories(String path) throws IOException {
-        Path pathResult = RESOURCES_PATH.resolve(Paths.get(path));
+        Path pathResult = Paths.get(validPath(path));
         if (!Files.exists(pathResult)) {
             Files.createDirectories(pathResult);
         }
@@ -64,7 +68,7 @@ public class FileUtils {
     public static byte[] zipFolder(String... sourceFolderPaths) throws IOException {
         List<File> fileList = new ArrayList<>();
         for (String pathFolder : sourceFolderPaths) {
-            File sourceFolder = new File(RESOURCES_PATH.resolve(pathFolder).toString());
+            File sourceFolder = new File(pathFolder);
             fileList.add(sourceFolder);
         }
 
@@ -143,9 +147,9 @@ public class FileUtils {
      * @param folderPath Đường dẫn của folder (trong phạm vi folder resources), example: "upload/xxx/xxx"
      * @return boolean
      */
-    public static boolean isFolderNotExists(String folderPath) {
-        Path path = RESOURCES_PATH.resolve(Paths.get(folderPath));
-        return !Files.exists(path);
+    public static boolean isFolderExists(String folderPath) {
+        Path path = Paths.get(folderPath);
+        return Files.exists(path);
     }
 
     /**
@@ -155,7 +159,7 @@ public class FileUtils {
      * @return File
      */
     public static File getFileByPath(String pathFile) {
-        Path path = RESOURCES_PATH.resolve(Paths.get(pathFile));
+        Path path = Paths.get(pathFile);
         return path.toFile();
     }
 
@@ -167,7 +171,7 @@ public class FileUtils {
      */
     @SneakyThrows
     public static byte[] getBytesFileByPath(String pathFile) {
-        Path path = RESOURCES_PATH.resolve(Paths.get(pathFile));
+        Path path = Paths.get(pathFile);
         return Files.readAllBytes(path);
     }
 
