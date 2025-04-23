@@ -1,27 +1,20 @@
-package com.hit.cache.store.internal.impl;
+package com.hit.cache.store.internal;
 
-import com.hit.cache.store.internal.InternalCacheStore;
-import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.function.Function;
 
 @Slf4j
-@Primary
-@RequiredArgsConstructor
-@Service("caffeineCacheStore")
-@ConditionalOnProperty(value = {"internal-cache.enable"}, havingValue = "true")
-public class CaffeineCacheStoreImpl implements InternalCacheStore {
+public abstract class CaffeineCacheStoreImpl implements BaseInternalCacheStore {
 
-    @Qualifier("caffeineCacheManager")
-    private final CacheManager caffeineCacheManager;
+    @Setter(onMethod_ = {@Autowired, @Qualifier("caffeineCacheManager")})
+    private CacheManager caffeineCacheManager;
 
     @Override
     public void putAll(String cacheName, Map<Object, Object> data) {

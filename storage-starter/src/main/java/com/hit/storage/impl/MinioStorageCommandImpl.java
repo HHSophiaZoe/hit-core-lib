@@ -8,7 +8,7 @@ import io.minio.messages.Item;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
-import com.hit.storage.StorageService;
+import com.hit.storage.BaseStorageCommand;
 import com.hit.storage.config.StorageFileConfig;
 import com.hit.storage.constant.FileExtensionEnum;
 import com.hit.storage.data.FileEntryDTO;
@@ -22,7 +22,7 @@ import java.util.stream.StreamSupport;
 
 @Slf4j
 @SuppressWarnings({"java:S112"})
-public class MinioStorageServiceImpl implements StorageService, AutoCloseable {
+public class MinioStorageCommandImpl implements BaseStorageCommand {
 
     private MinioClient minioClient;
 
@@ -31,7 +31,7 @@ public class MinioStorageServiceImpl implements StorageService, AutoCloseable {
     private final Integer expireTime;
 
     @SneakyThrows
-    public MinioStorageServiceImpl(StorageFileConfig config) {
+    public MinioStorageCommandImpl(StorageFileConfig config) {
         String endpoint = config.getEndpoint();
         String accessKey = config.getUsername();
         String secretKey = config.getPassword();

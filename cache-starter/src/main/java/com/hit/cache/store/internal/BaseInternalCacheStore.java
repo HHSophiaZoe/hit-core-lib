@@ -3,7 +3,7 @@ package com.hit.cache.store.internal;
 import java.util.Map;
 import java.util.function.Function;
 
-public interface InternalCacheStore {
+public interface BaseInternalCacheStore {
 
     void putAll(String cacheName, Map<Object, Object> data);
 

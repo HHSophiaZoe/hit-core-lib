@@ -9,7 +9,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.integration.file.remote.session.Session;
 import org.springframework.integration.ftp.session.DefaultFtpSessionFactory;
 import org.springframework.integration.ftp.session.FtpRemoteFileTemplate;
-import com.hit.storage.StorageService;
+import com.hit.storage.BaseStorageCommand;
 import com.hit.storage.config.StorageFileConfig;
 import com.hit.storage.constant.FileExtensionEnum;
 import com.hit.storage.data.FileEntryDTO;
@@ -23,11 +23,11 @@ import java.util.Collections;
 import java.util.List;
 
 @Slf4j
-public class FtpStorageServiceImpl implements StorageService, AutoCloseable {
+public class FtpStorageCommandImpl implements BaseStorageCommand {
 
     private final Session<FTPFile> session;
 
-    public FtpStorageServiceImpl(StorageFileConfig config) {
+    public FtpStorageCommandImpl(StorageFileConfig config) {
         log.info("====> connect ftp {}", config.getHost());
         DefaultFtpSessionFactory ftpFileSessionFactory = new DefaultFtpSessionFactory();
         ftpFileSessionFactory.setHost(config.getHost());

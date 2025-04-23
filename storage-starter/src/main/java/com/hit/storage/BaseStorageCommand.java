@@ -7,7 +7,7 @@ import com.hit.storage.data.FileEntryDTO;
 import java.io.InputStream;
 import java.util.List;
 
-public interface StorageService extends AutoCloseable {
+public interface BaseStorageCommand extends AutoCloseable {
 
     List<FileEntryDTO> listFiles(String path);
 

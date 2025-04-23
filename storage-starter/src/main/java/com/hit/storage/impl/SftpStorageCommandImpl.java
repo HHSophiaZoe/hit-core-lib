@@ -1,8 +1,9 @@
 package com.hit.storage.impl;
 
+import com.hit.storage.config.StorageFileConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
-import com.hit.storage.StorageService;
+import com.hit.storage.BaseStorageCommand;
 import com.hit.storage.constant.FileExtensionEnum;
 import com.hit.storage.data.FileEntryDTO;
 
@@ -10,7 +11,11 @@ import java.io.InputStream;
 import java.util.List;
 
 @Slf4j
-public class SftpStorageServiceImpl implements StorageService, AutoCloseable {
+public class SftpStorageCommandImpl implements BaseStorageCommand {
+
+    public SftpStorageCommandImpl(StorageFileConfig config) {
+
+    }
 
     @Override
     public List<FileEntryDTO> listFiles(String path) {

@@ -29,6 +29,14 @@ public class FileUtils {
         return path;
     }
 
+    /**
+     * @param folderPath Location of folder, example: "upload/xxx/xxx"
+     */
+    public static boolean isFolderExists(String folderPath) {
+        Path path = Paths.get(folderPath);
+        return Files.exists(path);
+    }
+
     public static String getFilename(String path) {
         return FilenameUtils.getName(path);
     }
@@ -41,13 +49,28 @@ public class FileUtils {
         return FilenameUtils.removeExtension(filename);
     }
 
-    public void createDirectories(String... paths) throws IOException {
+    /**
+     * @param pathFile Location to get file, example: "upload/xxx/xxx/fileName.xxx"
+     */
+    public static File getFile(String pathFile) {
+        Path path = Paths.get(pathFile);
+        return path.toFile();
+    }
+
+    /**
+     * @param pathFile Location to get file, example: "upload/xxx/xxx/fileName.xxx"
+     */
+    public static byte[] getBytesFile(String pathFile) throws IOException {
+        Path path = Paths.get(pathFile);
+        return Files.readAllBytes(path);
+    }
+
+    public List<Path> createDirectories(String... paths) throws IOException {
+        List<Path> pathList = new ArrayList<>();
         for (String pathFolder : paths) {
-            Path path = Paths.get(validPath(pathFolder));
-            if (!Files.exists(path)) {
-                Files.createDirectories(path);
-            }
+            pathList.add(createDirectories(pathFolder));
         }
+        return pathList;
     }
 
     public Path createDirectories(String path) throws IOException {
@@ -59,11 +82,33 @@ public class FileUtils {
     }
 
     /**
+     * @param inputStream File data to save
+     * @param uploadPath  Location to save file, example: "upload/xxx/xxx"
+     * @param filename    File name to save, example: "example.txt"
+     */
+    public static Path saveFile(InputStream inputStream, String uploadPath, String filename) throws IOException {
+        Path path = createDirectories(uploadPath);
+        return saveFile(inputStream, path, filename);
+    }
+
+    /**
+     * @param inputStream File data to save
+     * @param uploadPath  Location to save file
+     * @param filename    File name to save, example: "example.txt"
+     */
+    public static Path saveFile(InputStream inputStream, Path uploadPath, String filename) throws IOException {
+        try (InputStream is = inputStream) {
+            Path filePath = uploadPath.resolve(filename);
+            Files.copy(is, filePath, StandardCopyOption.REPLACE_EXISTING);
+            return filePath;
+        } catch (IOException ioe) {
+            throw new IOException("Could not save file: " + filename);
+        }
+    }
+
+    /**
      * Zip a folder or multiple folder
-     *
-     * @param sourceFolderPaths Mảng các đường dẫn của folder cần zip (trong phạm vi folder resources),
-     *                          Example: ["upload/xxx/xxx", "upload/xxx/xxx"]
-     * @return byte[]
+     * @param sourceFolderPaths Array of folder paths to zip, example: ["upload/xxx/xxx", "upload/xxx/xxx"]
      */
     public static byte[] zipFolder(String... sourceFolderPaths) throws IOException {
         List<File> fileList = new ArrayList<>();
@@ -90,17 +135,14 @@ public class FileUtils {
 
     /**
      * Zip a file or multiple file
-     *
-     * @param filePaths Mảng các đường dẫn của file cần zip (trong phạm vi folder resources),
-     *                  Example: ["upload/xxx/fileName.xxx", "upload/xxx/fileName.xxx"]
-     * @return byte[]
+     * @param filePaths Array of file paths to zip, example: ["upload/xxx/fileName.xxx", "upload/xxx/fileName.xxx"]
      */
     public static byte[] zipFileByPath(String... filePaths) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         try {
             for (String pathFile : filePaths) {
-                File file = getFileByPath(pathFile);
+                File file = getFile(pathFile);
                 addToZip(file.getParentFile().getPath(), zipOutputStream, file);
             }
             zipOutputStream.close();
@@ -111,73 +153,7 @@ public class FileUtils {
     }
 
     /**
-     * Save file upload to Resources
-     *
-     * @param inputStream File cần lưu
-     * @param uploadPath  Vị trí cần lưu (trong phạm vi folder resources), example: "upload/xxx/xxx"
-     * @param filename Tên file để lưu, example: "example.txt"
-     * @return String
-     */
-    public static Path saveFile(InputStream inputStream, String uploadPath, String filename) throws IOException {
-        Path path = createDirectories(uploadPath);
-        return saveFile(inputStream, path, filename);
-    }
-
-    /**
-     * Save file upload to Resources
-     *
-     * @param inputStream File cần lưu
-     * @param uploadPath  Vị trí cần lưu
-     * @param filename Tên file để lưu, example: "example.txt"
-     * @return String
-     */
-    public static Path saveFile(InputStream inputStream, Path uploadPath, String filename) throws IOException {
-        try (InputStream is = inputStream) {
-            Path filePath = uploadPath.resolve(filename);
-            Files.copy(is, filePath, StandardCopyOption.REPLACE_EXISTING);
-            return filePath;
-        } catch (IOException ioe) {
-            throw new IOException("Could not save file: " + filename);
-        }
-    }
-
-    /**
-     * Check folder in Resources
-     *
-     * @param folderPath Đường dẫn của folder (trong phạm vi folder resources), example: "upload/xxx/xxx"
-     * @return boolean
-     */
-    public static boolean isFolderExists(String folderPath) {
-        Path path = Paths.get(folderPath);
-        return Files.exists(path);
-    }
-
-    /**
-     * Lấy ra file ở trong thư mục resources theo đường dẫn
-     *
-     * @param pathFile Đường dẫn file cần lấy (trong phạm vi folder resources), example: "upload/xxx/fileName.xxx"
-     * @return File
-     */
-    public static File getFileByPath(String pathFile) {
-        Path path = Paths.get(pathFile);
-        return path.toFile();
-    }
-
-    /**
-     * Lấy ra dữ liệu file ở trong thư mục resources theo đường dẫn
-     *
-     * @param pathFile - đường dẫn file cần lấy (trong phạm vi folder resources), example: "upload/xxx/fileName.xxx"
-     * @return byte[]
-     */
-    @SneakyThrows
-    public static byte[] getBytesFileByPath(String pathFile) {
-        Path path = Paths.get(pathFile);
-        return Files.readAllBytes(path);
-    }
-
-    /**
-     * Tạo và thêm các entry là file hoặc folder vào zip
-     *
+     * Tạo và thêm các entry là file or folder vào zip
      * @param basePath Base path file
      * @param toAdd    File đưa vào entry
      */

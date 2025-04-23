@@ -1,13 +1,15 @@
-package com.hit.cache.store.external.impl;
+package com.hit.cache.store.external;
 
 import com.hit.cache.config.properties.ExternalCacheConfigProperties;
 import com.hit.cache.config.serializer.RedisSerializer;
-import com.hit.cache.store.external.ExternalCacheStore;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.RedissonMultiLock;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisCallback;
@@ -20,19 +22,19 @@ import java.util.*;
 import java.util.function.Supplier;
 
 @Slf4j
-@Primary
-@RequiredArgsConstructor
-@Service("redisCacheStore")
-@ConditionalOnProperty(value = {"external-cache.enable"}, havingValue = "true")
-public class RedisCacheStoreImpl implements ExternalCacheStore {
+public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
 
-    private final RedisTemplate<String, String> stringRedisTemplate;
+    @Setter(onMethod_ = {@Autowired})
+    private RedisTemplate<String, String> stringRedisTemplate;
 
-    private final ExternalCacheConfigProperties cacheConfigProp;
+    @Setter(onMethod_ = {@Autowired})
+    private ExternalCacheConfigProperties cacheConfigProp;
 
-    private final RedissonClient redissonClient;
+    @Setter(onMethod_ = {@Autowired})
+    private RedissonClient redissonClient;
 
-    private final RedisSerializer redisSerializer;
+    @Setter(onMethod_ = {@Autowired})
+    private RedisSerializer redisSerializer;
 
     private String keyGen(String key) {
         return this.cacheConfigProp.getApplicationCache() + this.cacheConfigProp.getDelimiter() + key;
@@ -61,12 +63,12 @@ public class RedisCacheStoreImpl implements ExternalCacheStore {
     }
 
     @Override
-    public <K extends Comparable<? super K>, V> void putObjectAsHash(String key, Map<K, V> value) {
+    public <K, V> void putObjectAsHash(String key, Map<K, V> value) {
         this.putObjectAsHash(key, value, this.cacheConfigProp.getCacheDefaultExpire());
     }
 
     @Override
-    public <K extends Comparable<? super K>, V> void putObjectAsHash(String key, Map<K, V> value, long expire) {
+    public <K, V> void putObjectAsHash(String key, Map<K, V> value, long expire) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache put: key = {}, value = {}", keyGen, value);
         byte[] rawKey = redisSerializer.serializerRaw(keyGen);
@@ -86,7 +88,7 @@ public class RedisCacheStoreImpl implements ExternalCacheStore {
     }
 
     @Override
-    public <K extends Comparable<? super K>, V> void putObjectToHash(String key, K hashKey, V hashValue) {
+    public <K, V> void putObjectToHash(String key, K hashKey, V hashValue) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache put: key = {}, hashKey = {}, hashValue = {}", keyGen, hashKey, hashValue);
         this.stringRedisTemplate.opsForHash()
@@ -94,7 +96,7 @@ public class RedisCacheStoreImpl implements ExternalCacheStore {
     }
 
     @Override
-    public <K extends Comparable<? super K>, V> Map<K, V> getObjectAsHash(String key, Class<K> objectClassKey,
+    public <K, V> Map<K, V> getObjectAsHash(String key, Class<K> objectClassKey,
                                                                           Class<V> objectClassValue) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCacheTemplate get: key = {}", keyGen);
@@ -116,7 +118,7 @@ public class RedisCacheStoreImpl implements ExternalCacheStore {
     }
 
     @Override
-    public <K extends Comparable<? super K>, V> V getObjectFromHash(String key, K hashKey, Class<V> objectClassValue) {
+    public <K, V> V getObjectFromHash(String key, K hashKey, Class<V> objectClassValue) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache get: key = {}, hashKey = {}", keyGen, hashKey);
         String hashValueStr = (String) this.stringRedisTemplate.opsForHash()
@@ -126,7 +128,7 @@ public class RedisCacheStoreImpl implements ExternalCacheStore {
 
     @Override
     @SafeVarargs
-    public final <K extends Comparable<? super K>> void deleteHashValue(String key, K... hashKeys) {
+    public final <K> void deleteHashValue(String key, K... hashKeys) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache del: key = {}, hashKeys = {}", keyGen, hashKeys);
         Object[] hashKeysStr = Arrays.stream(hashKeys).map(redisSerializer::serializer).toArray(Object[]::new);
@@ -144,7 +146,7 @@ public class RedisCacheStoreImpl implements ExternalCacheStore {
     public boolean hasKey(String key) {
         try {
             String keyGen = this.keyGen(key);
-            return Boolean.TRUE.equals(this.stringRedisTemplate.hasKey(keyGen));
+            return this.stringRedisTemplate.hasKey(keyGen);
         } catch (Exception e) {
             return false;
         }

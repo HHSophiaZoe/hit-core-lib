@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +21,7 @@ import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @ConditionalOnProperty(
-        value = {"spring.kafka.producer.enabled"},
+        value = {"messaging.kafka.enable"},
         havingValue = "true"
 )
 public abstract class KafkaPublisher {
@@ -36,23 +37,35 @@ public abstract class KafkaPublisher {
         this.objectMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
     }
 
-    public <T> void pushAsync(T payload, String topic) {
-        this.sendMessageAsync(payload, topic, null);
+    public <T> void pushAsync(String topic, T message) {
+        this.sendMessageAsync(topic, null, message, new HashMap<>(), null);
     }
 
-    public <T> void pushAsync(T payload, String topic, ListenableFutureCallback<String> callback) {
-        this.sendMessageAsync(payload, topic, callback);
+    public <T> void pushAsync(String topic, String key, T message, Map<String, String> headers) {
+        this.sendMessageAsync(topic, key, message, headers,null);
     }
 
-    public <T> boolean pushSync(T payload, String topic) {
-        return this.sendMessageSync(payload, topic, new HashMap<>(), null);
+    public <T> void pushAsync(String topic, T message, ListenableFutureCallback<String> callback) {
+        this.sendMessageAsync(topic, null, message, new HashMap<>(), callback);
     }
 
-    public <T> boolean pushSync(T payload, String topic, Map<String, byte[]> headers, Integer partition) {
-        return this.sendMessageSync(payload, topic, headers, partition);
+    public <T> void pushAsync(String topic, T message, Map<String, String> headers) {
+        this.sendMessageAsync(topic, null, message, headers, null);
     }
 
-    private <T> void sendMessageAsync(T data, final String topic, final ListenableFutureCallback<String> callback) {
+    public <T> boolean pushSync(String topic, T message) {
+        return this.sendMessageSync(topic, null, message, new HashMap<>());
+    }
+
+    public <T> boolean pushSync(String topic, T message, Map<String, String> headers) {
+        return this.sendMessageSync(topic, null, message, headers);
+    }
+
+    public <T> boolean pushSync(String topic, String key, T message, Map<String, String> headers) {
+        return this.sendMessageSync(topic, key, message, headers);
+    }
+
+    protected <T> void sendMessageAsync(final String topic, String key, T data, Map<String, String> headers, final ListenableFutureCallback<String> callback) {
         final String message;
         try {
             message = this.objectMapper.writeValueAsString(data);
@@ -61,23 +74,23 @@ public abstract class KafkaPublisher {
             return;
         }
 
-        CompletableFuture<SendResult<String, String>> future = this.kafkaTemplate.send(topic, message);
+        ProducerRecord<String, String> rc = new ProducerRecord<>(topic, key, message);
+        this.addHeader(headers, rc);
+        CompletableFuture<SendResult<String, String>> future = this.kafkaTemplate.send(rc);
         if (callback != null) {
             future.whenComplete((result, ex) -> {
                 if (ex != null) {
-                    KafkaPublisher.log.info("xxxx> Unable to send message=[ {} ] to topic: {} FAIL !!! \n Reason: {}"
-                            , message, topic, ex.getMessage(), ex);
+                    log.debug("xxxx> Unable to send message=[ {} ] to topic: {} FAIL !!! Reason: {}", message, topic, ex.getMessage(), ex);
                     callback.onFailure(ex);
                 } else {
-                    KafkaPublisher.log.info("===> Sent message=[ {} ] with offset=[ {} ] to topic: {} SUCCESS !!!",
-                            message, result.getRecordMetadata().offset(), topic);
+                    log.debug("===> Sent message=[ {} ] with offset=[ {} ] to topic: {} SUCCESS !!!", message, result.getRecordMetadata().offset(), topic);
                     callback.onSuccess(message);
                 }
             });
         }
     }
 
-    private <T> boolean sendMessageSync(T data, final String topic, Map<String, byte[]> headers, Integer partition) {
+    protected <T> boolean sendMessageSync(final String topic, String key, T data, Map<String, String> headers) {
         final String message;
         try {
             message = this.objectMapper.writeValueAsString(data);
@@ -86,25 +99,14 @@ public abstract class KafkaPublisher {
             return false;
         }
 
-        ProducerRecord<String, String> rc;
-        if (partition == null) {
-            rc = new ProducerRecord<>(topic, message);
-        } else {
-            rc = new ProducerRecord<>(topic, partition, "", message);
-        }
-
-        if (!headers.isEmpty()) {
-            for (Entry<String, byte[]> item : headers.entrySet()) {
-                rc.headers().add(new RecordHeader(item.getKey(), item.getValue()));
-            }
-        }
-
+        ProducerRecord<String, String> rc = new ProducerRecord<>(topic, key, message);
+        this.addHeader(headers, rc);
         CompletableFuture<SendResult<String, String>> future = this.kafkaTemplate.send(rc);
         future.whenComplete((result, ex) -> {
             if (ex == null) {
-                KafkaPublisher.log.info("===> Sent message=[ {} ] with offset=[ {} ] to topic: {} SUCCESS !!!", message, result.getRecordMetadata().offset(), topic);
+                log.debug("===> Sent message=[ {} ] with offset=[ {} ] to topic: {} SUCCESS !!!", message, result.getRecordMetadata().offset(), topic);
             } else {
-                KafkaPublisher.log.info("xxxx> Unable to send message=[ {} ] to topic: {} FAIL !!! \n Reason: {}", message, topic, ex.getMessage(), ex);
+                log.debug("xxxx> Unable to send message=[ {} ] to topic: {} FAIL !!! Reason: {}", message, topic, ex.getMessage(), ex);
             }
         });
 
@@ -112,9 +114,13 @@ public abstract class KafkaPublisher {
             future.get();
             return true;
         } catch (InterruptedException | ExecutionException var9) {
-            log.error("sendMessageSync exception: {}", var9.getMessage());
+            log.error("Send message sync exception: {}", var9.getMessage());
             Thread.currentThread().interrupt();
             return false;
         }
+    }
+
+    private void addHeader(Map<String, String> headers, ProducerRecord<String, String> rc) {
+        headers.forEach((key, value) -> rc.headers().add(new RecordHeader(key, value.getBytes(StandardCharsets.UTF_8))));
     }
 }

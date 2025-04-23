@@ -73,8 +73,7 @@ public abstract class RestTemplateServiceBase {
             httpEntity = new HttpEntity<>(headers);
         }
         try {
-            log.debug("Call api [{}]-[{}] \n\tBody: {} \n\tHeaders: {}", method, url, DataUtils.parserLog(body),
-                    headers.toString());
+            log.debug("Call api [{}]-[{}] \n\tBody: {} \n\tHeaders: {}", method, url, DataUtils.parserLog(body), headers.toString());
             return template.exchange(url, method, httpEntity, responseType);
         } catch (ResourceAccessException e) {
             log.error("Call api timeout [{}]-[{}]", method, url);
