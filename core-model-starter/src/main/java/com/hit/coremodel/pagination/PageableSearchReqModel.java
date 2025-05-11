@@ -3,17 +3,17 @@ package com.hit.coremodel.pagination;
 import com.hit.coremodel.query.Search;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.List;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaginationSearchRequest extends PaginationRequest {
+@EqualsAndHashCode(callSuper = true)
+public class PageableSearchReqModel extends PageableReqModel {
 
     @Parameter(description = "List of property to search")
     private List<Search> searches;

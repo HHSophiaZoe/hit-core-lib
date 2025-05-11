@@ -1,26 +1,26 @@
 package com.hit.rest.base;
 
-
-import com.hit.coremodel.pagination.PaginationRequest;
-import com.hit.coremodel.pagination.PaginationResponse;
-import com.hit.coremodel.pagination.PaginationSearchRequest;
-import com.hit.spring.core.data.response.CommonResponse;
+import com.hit.coremodel.pagination.PageResModel;
+import com.hit.coremodel.pagination.PageableReqModel;
+import com.hit.coremodel.pagination.PageableSearchReqModel;
 
 import java.util.List;
 import java.util.Set;
 
-public interface IService<RS, ID> {
+public interface IService<M, ID> {
 
-    RS getById(ID id);
+    M getById(ID id);
 
-    List<RS> getByIds(List<ID> ids);
+    M getBasicById(ID id);
 
-    PaginationResponse<RS> select(PaginationRequest request);
+    List<M> getByIds(List<ID> ids);
 
-    PaginationResponse<RS> search(PaginationSearchRequest request);
+    PageResModel<M> select(PageableReqModel request);
 
-    CommonResponse deleteById(ID id);
+    PageResModel<M> search(PageableSearchReqModel request);
 
-    CommonResponse deleteByIds(Set<ID> ids);
+    Object deleteById(ID id);
+
+    Object deleteByIds(Set<ID> ids);
 
 }

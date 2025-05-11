@@ -3,17 +3,15 @@ package com.hit.coremodel.pagination;
 import com.hit.coremodel.query.Filter;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.List;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaginationRequest {
+public class PageableReqModel {
 
     public static final Integer PAGE_NUM_DEFAULT = 1;
     public static final Integer PAGE_SIZE_DEFAULT = 10;

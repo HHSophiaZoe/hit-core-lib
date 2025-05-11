@@ -1,24 +1,23 @@
 package com.hit.coremodel.pagination;
 
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
-@Setter
-@Getter
+@Data
 @NoArgsConstructor
-public class PaginationResponse<T> {
+public class PageResModel<T> {
 
     private PagingMeta meta;
 
     private List<T> items;
 
-    public PaginationResponse(PagingMeta meta, List<T> items) {
+    public PageResModel(PagingMeta meta, List<T> items) {
         this.meta = meta;
         if (CollectionUtils.isEmpty(items)) {
             this.items = Collections.emptyList();
@@ -31,11 +30,27 @@ public class PaginationResponse<T> {
         return CollectionUtils.isEmpty(items) ? Collections.emptyList() : items;
     }
 
-    public <N> PaginationResponse<N> map(Function<? super T, ? extends N> mapper) {
-        PaginationResponse<N> newPage = new PaginationResponse<>();
+    public <N> PageResModel<N> map(Function<? super T, ? extends N> mapper) {
+        PageResModel<N> newPage = new PageResModel<>();
         newPage.setItems(CollectionUtils.isEmpty(items) ? null : items.stream().<N>map(mapper).toList());
         newPage.setMeta(this.meta);
         return newPage;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PagingMeta {
+
+        private Long totalElements;
+
+        private Integer totalPages;
+
+        private Integer pageNum;
+
+        private Integer pageSize;
+
+        private Boolean loadMoreAble;
+
+    }
 }

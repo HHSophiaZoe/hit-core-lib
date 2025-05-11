@@ -1,7 +1,7 @@
 package com.hit.spring.config.bind;
 
 import com.hit.coremodel.pagination.Order;
-import com.hit.coremodel.pagination.PaginationRequest;
+import com.hit.coremodel.pagination.PageableReqModel;
 import com.hit.coremodel.query.Filter;
 import com.hit.spring.annotation.PaginationParameter;
 import com.hit.spring.core.constants.CommonConstant.CommonSymbol;
@@ -33,42 +33,42 @@ public class PaginationArgumentResolver implements HandlerMethodArgumentResolver
     }
 
     @Override
-    public PaginationRequest resolveArgument(MethodParameter methodParameter,
-                                             ModelAndViewContainer modelAndViewContainer,
-                                             NativeWebRequest nativeWebRequest,
-                                             WebDataBinderFactory webDataBinderFactory) {
+    public PageableReqModel resolveArgument(MethodParameter methodParameter,
+                                            ModelAndViewContainer modelAndViewContainer,
+                                            NativeWebRequest nativeWebRequest,
+                                            WebDataBinderFactory webDataBinderFactory) {
         HttpServletRequest request = (HttpServletRequest) nativeWebRequest.getNativeRequest();
         try {
             Map<String, Object> data = request.getParameterMap().entrySet()
                     .stream()
                     .filter(stringEntry -> stringEntry.getValue().length == 1)
                     .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue()[0]));
-            PaginationRequest paginationRequest = (PaginationRequest) JsonMapper.getObjectMapper().convertValue(data, methodParameter.getParameterType());
-            return parser(request.getParameterMap(), paginationRequest == null ? new PaginationRequest() : paginationRequest);
+            PageableReqModel pageableReqModel = (PageableReqModel) JsonMapper.getObjectMapper().convertValue(data, methodParameter.getParameterType());
+            return parser(request.getParameterMap(), pageableReqModel == null ? new PageableReqModel() : pageableReqModel);
         } catch (Exception e) {
             log.error("fail to resolve argument: ", e);
             return parser(request.getParameterMap());
         }
     }
 
-    private static PaginationRequest parser(Map<String, String[]> parameters) {
-        return parser(parameters, new PaginationRequest());
+    private static PageableReqModel parser(Map<String, String[]> parameters) {
+        return parser(parameters, new PageableReqModel());
     }
 
-    private static PaginationRequest parser(Map<String, String[]> parameters, PaginationRequest request) {
-        int page = PaginationRequest.PAGE_NUM_DEFAULT;
+    private static PageableReqModel parser(Map<String, String[]> parameters, PageableReqModel request) {
+        int page = PageableReqModel.PAGE_NUM_DEFAULT;
         if (parameters.containsKey("page") && isNotEmpty(parameters.get("page")[0])) {
-            page = NumberUtils.toInt(parameters.get("page")[0], PaginationRequest.PAGE_NUM_DEFAULT);
+            page = NumberUtils.toInt(parameters.get("page")[0], PageableReqModel.PAGE_NUM_DEFAULT);
         }
         request.setPage(page);
 
-        int pageSize = PaginationRequest.PAGE_SIZE_DEFAULT;
+        int pageSize = PageableReqModel.PAGE_SIZE_DEFAULT;
         if (parameters.containsKey("page_size") && isNotEmpty(parameters.get("page_size")[0])) {
-            pageSize = NumberUtils.toInt(parameters.get("page_size")[0], PaginationRequest.PAGE_SIZE_DEFAULT);
+            pageSize = NumberUtils.toInt(parameters.get("page_size")[0], PageableReqModel.PAGE_SIZE_DEFAULT);
         } else if (parameters.containsKey("pageSize") && isNotEmpty(parameters.get("pageSize")[0])) {
-            pageSize = NumberUtils.toInt(parameters.get("pageSize")[0], PaginationRequest.PAGE_SIZE_DEFAULT);
+            pageSize = NumberUtils.toInt(parameters.get("pageSize")[0], PageableReqModel.PAGE_SIZE_DEFAULT);
         }
-        pageSize = pageSize < 0 ? PaginationRequest.PAGE_SIZE_DEFAULT : pageSize;
+        pageSize = pageSize < 0 ? PageableReqModel.PAGE_SIZE_DEFAULT : pageSize;
         request.setPageSize(pageSize);
 
         if (parameters.containsKey("sorts") && isNotEmpty(parameters.get("sorts")[0])) {

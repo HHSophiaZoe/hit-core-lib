@@ -1,8 +1,8 @@
 package com.hit.jpa;
 
-import com.hit.coremodel.pagination.PaginationRequest;
-import com.hit.coremodel.pagination.PaginationResponse;
-import com.hit.coremodel.pagination.PaginationSearchRequest;
+import com.hit.coremodel.pagination.PageableReqModel;
+import com.hit.coremodel.pagination.PageResModel;
+import com.hit.coremodel.pagination.PageableSearchReqModel;
 import com.hit.jpa.querydsl.QueryDSLRepository;
 import com.hit.jpa.querydsl.QueryDSLRepositoryImpl;
 import com.hit.jpa.utils.SqlUtils;
@@ -65,26 +65,26 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     protected abstract Class<T> getEntityClass();
 
     @Override
-    public PaginationResponse<T> search(PaginationRequest request) {
+    public PageResModel<T> search(PageableReqModel request) {
         Pageable pageable = SqlUtils.createPageable(request);
         Specification<T> specification = SqlUtils.createSpecificationPagination(request, this.getEntityClass());
         Page<T> page = this.jpaRepository.findAll(specification, pageable);
-        return new PaginationResponse<>(SqlUtils.buildPagingMeta(request, page), page.getContent());
+        return new PageResModel<>(SqlUtils.buildPagingMeta(request, page), page.getContent());
     }
 
-    protected PaginationResponse<T> search(PaginationRequest request, Predicate condition) {
+    protected PageResModel<T> search(PageableReqModel request, Predicate condition) {
         return null;
     }
 
     @Override
-    public PaginationResponse<T> search(PaginationSearchRequest request) {
+    public PageResModel<T> search(PageableSearchReqModel request) {
         Pageable pageable = SqlUtils.createPageable(request);
         Specification<T> specification = SqlUtils.createSpecificationPaginationSearch(request, this.getEntityClass());
         Page<T> page = this.jpaRepository.findAll(specification, pageable);
-        return new PaginationResponse<>(SqlUtils.buildPagingMeta(request, page), page.getContent());
+        return new PageResModel<>(SqlUtils.buildPagingMeta(request, page), page.getContent());
     }
 
-    protected PaginationResponse<T> search(PaginationSearchRequest request, Predicate condition) {
+    protected PageResModel<T> search(PageableSearchReqModel request, Predicate condition) {
         return null;
     }
 

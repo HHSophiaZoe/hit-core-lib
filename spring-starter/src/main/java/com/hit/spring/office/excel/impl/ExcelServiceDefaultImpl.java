@@ -209,8 +209,7 @@ public class ExcelServiceDefaultImpl implements IExcelService {
         try {
             T instance = classConfig.getDeclaredConstructor().newInstance();
             excelCells.forEach((fieldName, excelCell) -> {
-                String capitalizedFieldName = StringUtils.capitalize(fieldName);
-                Method setter = this.getSetter(classConfig, capitalizedFieldName);
+                Method setter = ReflectUtils.getSetter(classConfig, fieldName);
                 Cell cell = row.getCell(excelCell.index());
                 if (setter != null && cell != null) {
                     Object cellValue;
@@ -274,19 +273,6 @@ public class ExcelServiceDefaultImpl implements IExcelService {
             log.error(e.getMessage(), e);
         }
         return listHeader;
-    }
-
-    private Method getSetter(Class<?> clazz, String capitalizedFieldName) {
-        try {
-            Method getter = clazz.getDeclaredMethod("get" + capitalizedFieldName);
-            return clazz.getDeclaredMethod("set" + capitalizedFieldName, getter.getReturnType());
-        } catch (Exception e) {
-            if (clazz.getSuperclass() != null) {
-                return getSetter(clazz.getSuperclass(), capitalizedFieldName);
-            }
-            log.error(String.valueOf(e));
-        }
-        return null;
     }
 
     private void setFieldValue(Object instance, Method setter, Object value) {

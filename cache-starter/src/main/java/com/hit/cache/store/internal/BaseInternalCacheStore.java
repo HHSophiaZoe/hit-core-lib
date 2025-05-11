@@ -7,7 +7,7 @@ public interface BaseInternalCacheStore {
 
     void putAll(String cacheName, Map<Object, Object> data);
 
-    void put(String cacheName, Object k, Object v);
+    void put(String cacheName, Object key, Object v);
 
     <T> T get(String cacheName, Object key, Class<T> type);
 

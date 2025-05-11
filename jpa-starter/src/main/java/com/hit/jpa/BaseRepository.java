@@ -1,9 +1,8 @@
 package com.hit.jpa;
 
-import com.hit.coremodel.pagination.PaginationRequest;
-import com.hit.coremodel.pagination.PaginationResponse;
-import com.hit.coremodel.pagination.PaginationSearchRequest;
-import com.querydsl.core.types.Predicate;
+import com.hit.coremodel.pagination.PageableReqModel;
+import com.hit.coremodel.pagination.PageResModel;
+import com.hit.coremodel.pagination.PageableSearchReqModel;
 
 import java.util.Collection;
 import java.util.List;
@@ -11,9 +10,9 @@ import java.util.Map;
 
 public interface BaseRepository<T, ID> {
 
-    PaginationResponse<T> search(PaginationRequest request);
+    PageResModel<T> search(PageableReqModel request);
 
-    PaginationResponse<T> search(PaginationSearchRequest request);
+    PageResModel<T> search(PageableSearchReqModel request);
 
     List<ID> getAllId();
 

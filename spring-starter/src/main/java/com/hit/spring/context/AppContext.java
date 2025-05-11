@@ -20,7 +20,6 @@ public class AppContext {
     @Getter
     private static DataConverter dataConverter;
 
-
     @Autowired
     AppContext(@Qualifier("dataConverter") DataConverter dataConverter, ObjectMapper objectMapper) {
         setDataConverter(dataConverter);

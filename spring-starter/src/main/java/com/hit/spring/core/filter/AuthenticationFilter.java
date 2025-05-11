@@ -2,6 +2,7 @@ package com.hit.spring.core.filter;
 
 import com.hit.spring.config.properties.SecurityProperties;
 import com.hit.spring.context.SecurityContext;
+import com.hit.spring.core.constants.CommonConstant;
 import com.hit.spring.core.constants.HeaderConstant;
 import com.hit.spring.core.data.model.SimpleSecurityUser;
 import com.hit.spring.core.exception.BaseResponseException;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -24,6 +26,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Order(3)
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(value = {"app.security.filter.authentication"}, havingValue = "true")
 public class AuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
@@ -47,8 +50,8 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                     throw new BaseResponseException(ResponseStatusCodeEnum.UNAUTHORIZED_ERROR);
                 }
                 SecurityContext.setSimpleSecurityUser(SimpleSecurityUser.initSystemAdmin());
-            } else if (StringUtils.isNotEmpty(userToken) && userToken.startsWith("Bearer")) {
-                String token = userToken.replaceFirst("Bearer", "").trim();
+            } else if (StringUtils.isNotEmpty(userToken) && userToken.startsWith(CommonConstant.BEARER_TOKEN)) {
+                String token = userToken.replaceFirst(CommonConstant.BEARER_TOKEN, CommonConstant.EMPTY_STRING).trim();
                 SimpleSecurityUser simpleSecurityUser = this.extractAuthentication(token);
                 SecurityContext.setAccessToken(userToken);
                 SecurityContext.setSimpleSecurityUser(simpleSecurityUser);

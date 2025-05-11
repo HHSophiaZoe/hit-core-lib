@@ -1,13 +1,13 @@
 package com.hit.rest.base;
 
 import com.hit.jpa.BaseRepository;
-import com.hit.spring.core.data.mapper.ResponseMapper;
-import com.hit.spring.core.data.response.ItemPermissionResponse;
+import com.hit.spring.core.data.mapper.DomainMapper;
+import com.hit.rest.model.ItemPermission;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class BaseCmsService<RS extends ItemPermissionResponse, E, ID, Repo extends BaseRepository<E, ID>, Map extends ResponseMapper<RS, E>>
-        extends BaseService<RS, E, ID, Repo, Map> implements IService<RS, ID> {
+public abstract class BaseCmsService<M extends ItemPermission, E, ID, Repo extends BaseRepository<E, ID>, Map extends DomainMapper<E, M>>
+        extends BaseService<M, E, ID, Repo, Map> implements IService<M, ID> {
 
     // Processing
 

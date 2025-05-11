@@ -1,24 +1,23 @@
 package com.hit.rest.base;
 
-import com.hit.coremodel.pagination.PaginationRequest;
-import com.hit.coremodel.pagination.PaginationResponse;
-import com.hit.coremodel.pagination.PaginationSearchRequest;
+import com.hit.coremodel.pagination.PageResModel;
+import com.hit.coremodel.pagination.PageableReqModel;
+import com.hit.coremodel.pagination.PageableSearchReqModel;
 import com.hit.jpa.BaseRepository;
-import com.hit.spring.core.constants.MessageResponse;
-import com.hit.spring.core.data.mapper.ResponseMapper;
-import com.hit.spring.core.data.response.CommonResponse;
+import com.hit.spring.core.data.mapper.DomainMapper;
 import com.hit.spring.core.exception.BaseResponseException;
 import com.hit.spring.core.exception.ResponseStatusCodeEnum;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 @Slf4j
-public abstract class BaseService<RS, E, ID, Repo extends BaseRepository<E, ID>, Map extends ResponseMapper<RS, E>> implements IService<RS, ID> {
+public abstract class BaseService<M, E, ID, Repo extends BaseRepository<E, ID>, Map extends DomainMapper<E, M>> implements IService<M, ID> {
 
     @Setter(onMethod_ = {@Autowired})
     protected Map mapper;
@@ -26,39 +25,57 @@ public abstract class BaseService<RS, E, ID, Repo extends BaseRepository<E, ID>,
     @Setter(onMethod_ = {@Autowired})
     protected Repo repository;
 
-    public RS getById(ID id) {
+    @Override
+    @Transactional
+    public M getById(ID id) {
         E e = repository.getOne(id);
         if (e == null) throw new BaseResponseException(ResponseStatusCodeEnum.RESOURCE_NOT_FOUND);
-        return mapper.toResponse(e);
+        return mapper.toModel(e);
     }
 
-    public List<RS> getByIds(List<ID> ids) {
+    @Override
+    @Transactional
+    public M getBasicById(ID id) {
+        E e = repository.getOne(id);
+        if (e == null) throw new BaseResponseException(ResponseStatusCodeEnum.RESOURCE_NOT_FOUND);
+        return mapper.toBasicModel(e);
+    }
+
+    @Override
+    @Transactional
+    public List<M> getByIds(List<ID> ids) {
         List<E> list = repository.getAllByIdIn(ids);
-        return mapper.toResponses(list);
-    }
-
-    public PaginationResponse<RS> select(PaginationRequest request) {
-        PaginationResponse<E> poPaginationResponse = repository.search(request);
-        return poPaginationResponse.map(mapper::toResponse);
-    }
-
-    public PaginationResponse<RS> search(PaginationSearchRequest request) {
-        PaginationResponse<E> poPaginationResponse = repository.search(request);
-        return poPaginationResponse.map(mapper::toResponse);
+        return mapper.toModels(list);
     }
 
     @Override
-    public CommonResponse deleteById(ID id) {
+    @Transactional
+    public PageResModel<M> select(PageableReqModel request) {
+        PageResModel<E> poPageResModel = repository.search(request);
+        return poPageResModel.map(mapper::toModel);
+    }
+
+    @Override
+    @Transactional
+    public PageResModel<M> search(PageableSearchReqModel request) {
+        PageResModel<E> poPageResModel = repository.search(request);
+        return poPageResModel.map(mapper::toModel);
+    }
+
+    @Override
+    @Transactional
+    public Object deleteById(ID id) {
         repository.delete(id);
-        return new CommonResponse(Boolean.TRUE, MessageResponse.DELETE_SUCCESS);
+        return Boolean.TRUE;
     }
 
     @Override
-    public CommonResponse deleteByIds(Set<ID> ids) {
+    @Transactional
+    public Object deleteByIds(Set<ID> ids) {
         List<ID> allId = repository.getAllId(ids);
         if (allId.size() == ids.size()) {
             repository.delete(ids);
-            return new CommonResponse(Boolean.TRUE, MessageResponse.DELETE_SUCCESS);
+            return Boolean.TRUE;
         }
 
         List<ID> idNotExists = new ArrayList<>();

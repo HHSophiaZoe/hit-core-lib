@@ -1,11 +1,11 @@
-package com.hit.spring.core.data.response;
+package com.hit.rest.model;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class ItemPermissionResponse {
+public class ItemPermission {
 
     private String action;
 

@@ -19,6 +19,7 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
@@ -29,6 +30,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Order(4)
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(value = {"app.security.filter.authorization"}, havingValue = "true")
 public class AuthorizationFilter extends OncePerRequestFilter {
 
     @Setter(onMethod_ = {@Autowired(required = false)})
@@ -54,7 +56,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
                 userPrincipal.setMethod(request.getMethod());
                 userPrincipal.setUri(request.getRequestURI());
                 userPrincipal.setUser(SecurityContext.getSimpleSecurityUser());
-                return httpService.postBlocking(securityProperties.getApiCheckPermissionUrl(), userPrincipal, new HttpHeaders(), responseType);
+                return httpService.postBlocking(securityProperties.getFilter().getApiCheckPermissionUrl(), userPrincipal, new HttpHeaders(), responseType);
             });
             GeneralResponse<Boolean> isPermissionRes = httpResponse.getResponse();
             log.debug("Authorization is permission response: {}", DataUtils.parserLog(isPermissionRes));

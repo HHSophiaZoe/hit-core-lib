@@ -1,8 +1,8 @@
 package com.hit.jpa.utils;
 
-import com.hit.coremodel.pagination.PaginationRequest;
-import com.hit.coremodel.pagination.PaginationSearchRequest;
-import com.hit.coremodel.pagination.PagingMeta;
+import com.hit.coremodel.pagination.PageableReqModel;
+import com.hit.coremodel.pagination.PageResModel;
+import com.hit.coremodel.pagination.PageableSearchReqModel;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.Predicate;
 import lombok.experimental.UtilityClass;
@@ -21,7 +21,7 @@ import java.util.Optional;
 @UtilityClass
 public class SqlUtils {
 
-    public static Pageable createPageable(PaginationRequest request) {
+    public static Pageable createPageable(PageableReqModel request) {
         if (request.getSorts() == null || request.getSorts().isEmpty()) {
             return PageRequest.of(request.getPage(), request.getPageSize());
         }
@@ -38,7 +38,7 @@ public class SqlUtils {
     }
 
 
-    public <E> Specification<E> createSpecificationPagination(PaginationRequest request, Class<E> entityClass) {
+    public <E> Specification<E> createSpecificationPagination(PageableReqModel request, Class<E> entityClass) {
         return (root, query, criteriaBuilder) -> {
             // generate filter predicate if contains filter query
             return Optional.ofNullable(request.getFilters())
@@ -50,7 +50,7 @@ public class SqlUtils {
         };
     }
 
-    public <E> Specification<E> createSpecificationPaginationSearch(PaginationSearchRequest request, Class<E> entityClass) {
+    public <E> Specification<E> createSpecificationPaginationSearch(PageableSearchReqModel request, Class<E> entityClass) {
         return (root, query, criteriaBuilder) -> {
             // add condition base from PaginationRequest
             Specification<E> baseSpec = createSpecificationPagination(request, entityClass);
@@ -67,8 +67,8 @@ public class SqlUtils {
         };
     }
 
-    public static <T> PagingMeta buildPagingMeta(PaginationRequest request, Page<T> pages) {
-        return new PagingMeta(
+    public static <T> PageResModel.PagingMeta buildPagingMeta(PageableReqModel request, Page<T> pages) {
+        return new PageResModel.PagingMeta(
                 pages.getTotalElements(), pages.getTotalPages(),
                 request.getPage(), request.getPageSize(),
                 isLoadMoreAble(pages.getTotalElements(), request.getPageSize(), request.getPageSize())

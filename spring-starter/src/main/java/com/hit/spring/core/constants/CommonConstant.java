@@ -16,6 +16,7 @@ public class CommonConstant {
     public static final Long TWO_VALUE = 2L;
     public static final Long THREE_VALUE = 3L;
     public static final String EMPTY_STRING = "";
+    public static final String BEARER_TOKEN = "Bearer";
 
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static class CommonSymbol {

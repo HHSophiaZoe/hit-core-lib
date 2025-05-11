@@ -5,12 +5,12 @@ import org.mapstruct.Named;
 
 import java.util.List;
 
-public interface ResponseMapper<Rs, E> {
+public interface ResponseMapper<M, Rs> {
 
     @Named("toResponse")
-    Rs toResponse(E e);
+    Rs toResponse(M e);
 
     @IterableMapping(qualifiedByName = "toResponse")
-    List<Rs> toResponses(List<E> list);
+    List<Rs> toResponses(List<M> list);
 
 }

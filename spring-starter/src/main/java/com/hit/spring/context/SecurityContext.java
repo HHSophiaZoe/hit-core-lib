@@ -10,7 +10,7 @@ import java.util.Map;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SecurityContext {
 
-    private static final ThreadLocal<Map<String, Object>> contextManage = new ThreadLocal<>();
+    private static final ThreadLocal<Map<String, Object>> CONTEXT_MANAGE = new ThreadLocal<>();
 
     private static final String AUTHENTICATION = "AUTHENTICATION";
     private static final String ACCESS_TOKEN = "ACCESS_TOKEN";
@@ -20,9 +20,9 @@ public class SecurityContext {
     }
 
     public static SimpleSecurityUser getSimpleSecurityUser() {
-        if (contextManage.get() != null &&
-                contextManage.get().containsKey(AUTHENTICATION)) {
-            return (SimpleSecurityUser) contextManage.get().get(AUTHENTICATION);
+        if (CONTEXT_MANAGE.get() != null &&
+                CONTEXT_MANAGE.get().containsKey(AUTHENTICATION)) {
+            return (SimpleSecurityUser) CONTEXT_MANAGE.get().get(AUTHENTICATION);
         }
         return null;
     }
@@ -32,25 +32,26 @@ public class SecurityContext {
     }
 
     public static String getAccessToken() {
-        if (contextManage.get() != null &&
-                contextManage.get().containsKey(ACCESS_TOKEN)) {
-            return (String) contextManage.get().get(AUTHENTICATION);
+        if (CONTEXT_MANAGE.get() != null &&
+                CONTEXT_MANAGE.get().containsKey(ACCESS_TOKEN)) {
+            return (String) CONTEXT_MANAGE.get().get(AUTHENTICATION);
         }
         return null;
     }
 
     private static void set(String key, Object value) {
-        if (contextManage.get() != null) {
-            Map<String, Object> dataMap = contextManage.get();
+        if (CONTEXT_MANAGE.get() != null) {
+            Map<String, Object> dataMap = CONTEXT_MANAGE.get();
             dataMap.put(key, value);
         } else {
             Map<String, Object> dataMap = new HashMap<>();
             dataMap.put(key, value);
-            contextManage.set(dataMap);
+            CONTEXT_MANAGE.set(dataMap);
         }
     }
+
     public static void clearContext() {
-        contextManage.remove();
+        CONTEXT_MANAGE.remove();
     }
 
 }

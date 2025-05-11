@@ -17,15 +17,22 @@ import java.util.Set;
 @ConfigurationProperties("app.security")
 public class SecurityProperties {
 
+    private Filter filter;
+
     private Set<String> apiWhitelist = new HashSet<>(List.of(
             "/swagger-ui", "/springdoc", "/v3/api-docs", "/actuator/health", "/auth/login"
     ));
 
-    private String apiCheckPermissionUrl;
-
     private String serverKey = "com.hit";
 
     private Jwt jwt;
+
+    @Value("${app.security.apiWhitelist:}")
+    public void setApiWhitelist(String[] apiWhitelistArray) {
+        if (apiWhitelistArray != null && apiWhitelistArray.length > 0) {
+            this.apiWhitelist.addAll(Arrays.asList(apiWhitelistArray));
+        }
+    }
 
     @Setter
     @Getter
@@ -35,11 +42,12 @@ public class SecurityProperties {
         private Integer refreshExpire = 60; // minutes
     }
 
-    @Value("${app.security.apiWhitelist:}")
-    public void setApiWhitelist(String[] apiWhitelistArray) {
-        if (apiWhitelistArray != null && apiWhitelistArray.length > 0) {
-            this.apiWhitelist.addAll(Arrays.asList(apiWhitelistArray));
-        }
+    @Setter
+    @Getter
+    public static class Filter {
+        private Boolean authentication = true;
+        private Boolean authorization = false;
+        private String apiCheckPermissionUrl;
     }
 
 }
