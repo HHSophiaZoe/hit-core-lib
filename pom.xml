@@ -27,8 +27,6 @@
         <spring-boot.version>3.3.6</spring-boot.version>
         <rxjava3.version>3.1.8</rxjava3.version>
         <rxjava-stream.version>1.2.1</rxjava-stream.version>
-<!--        <kafka.version>3.4.1</kafka.version>-->
-<!--        <spring-kafka.version>3.0.15</spring-kafka.version>-->
         <caffeine.version>3.1.8</caffeine.version>
         <jsonwebtoken.version>0.9.1</jsonwebtoken.version>
         <cloudinary-http44.version>1.32.2</cloudinary-http44.version>
