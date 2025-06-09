@@ -4,8 +4,6 @@ import com.hit.spring.config.properties.DefaultHttpClientProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.ConnectionPool;
-import okhttp3.OkHttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.cookie.StandardCookieSpec;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -24,14 +22,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.SSLContext;
 import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Slf4j
 @Configuration
@@ -55,30 +50,12 @@ public class DefaultRestTemplateConfig {
 
     @Bean("defaultClientHttpRequestFactory")
     public ClientHttpRequestFactory defaultClientHttpRequestFactory() {
-        if (DefaultHttpClientProperties.ClientType.OK_HTTP.equals(properties.getType())) {
-            log.info("===> Init okHttp client factory !!!");
-            return this.okHttp3ClientHttpRequestFactory();
-        } else if (DefaultHttpClientProperties.ClientType.APACHE_HTTP_CLIENT.equals(properties.getType())) {
+        if (DefaultHttpClientProperties.ClientType.APACHE_HTTP_CLIENT.equals(properties.getType())) {
             log.info("===> Init apache http client !!!");
             return this.httpComponentsClientHttpRequestFactory();
         } else {
             throw new UnsupportedOperationException("Unsupported ClientType !!!");
         }
-    }
-
-    private ClientHttpRequestFactory okHttp3ClientHttpRequestFactory() {
-        DefaultHttpClientProperties.Connection connection = properties.getConnection();
-        DefaultHttpClientProperties.ConnectionPool connectionPool = properties.getConnectionPool();
-
-        ConnectionPool connectionPoolConfig = new ConnectionPool(connectionPool.getMaxIdle(),
-                connection.getKeepAlive(), SECONDS);
-        OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .connectionPool(connectionPoolConfig)
-                .connectTimeout(connection.getConnectTimeout(), SECONDS)
-                .readTimeout(connection.getResponseTimeout(), SECONDS)
-                .writeTimeout(connection.getResponseTimeout(), SECONDS)
-                .build();
-        return new OkHttp3ClientHttpRequestFactory(okHttpClient);
     }
 
     private HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory() {

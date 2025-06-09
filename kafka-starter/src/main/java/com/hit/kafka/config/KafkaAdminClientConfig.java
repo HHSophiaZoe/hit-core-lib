@@ -4,8 +4,10 @@ import com.hit.kafka.config.properties.KafkaAdminProperties;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -24,10 +26,10 @@ public class KafkaAdminClientConfig {
 
     @Bean
     @ConditionalOnMissingBean
-    public AdminClient adminClient() {
+    public AdminClient adminClient(ObjectProvider<SslBundles> sslBundles) {
         Map<String, Object> config = new HashMap<>();
         config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaAdminProperties.getBootstrapServers());
-        config.putAll(kafkaAdminProperties.buildProperties());
+        config.putAll(kafkaAdminProperties.buildProperties(sslBundles.getIfAvailable()));
         return AdminClient.create(config);
     }
 }

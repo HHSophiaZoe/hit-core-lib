@@ -192,4 +192,23 @@ public class KafkaListenerProperties extends KafkaProperties.Listener {
         super.setAutoStartup(autoStartup);
     }
 
+    @Override
+    public Boolean getChangeConsumerThreadName() {
+        return super.getChangeConsumerThreadName();
+    }
+
+    @Override
+    public void setChangeConsumerThreadName(Boolean changeConsumerThreadName) {
+        super.setChangeConsumerThreadName(changeConsumerThreadName);
+    }
+
+    @Override
+    public boolean isObservationEnabled() {
+        return super.isObservationEnabled();
+    }
+
+    @Override
+    public void setObservationEnabled(boolean observationEnabled) {
+        super.setObservationEnabled(observationEnabled);
+    }
 }

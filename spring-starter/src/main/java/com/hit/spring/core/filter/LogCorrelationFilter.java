@@ -3,6 +3,7 @@ package com.hit.spring.core.filter;
 import com.hit.spring.config.properties.ApplicationProperties;
 import com.hit.spring.core.constants.enums.TrackingContextEnum;
 import com.hit.spring.utils.DataUtils;
+import com.hit.spring.utils.StringUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,8 +36,8 @@ public class LogCorrelationFilter extends OncePerRequestFilter {
 
 
     private void generateCorrelationIdIfNotExists(String xCorrelationId) {
-        String correlationId = org.apache.commons.lang3.StringUtils.isEmpty(xCorrelationId)
-                ? DataUtils.genCorrelationId(this.appProperties.getApplicationShortName()) : xCorrelationId;
+        String correlationId = StringUtils.isEmpty(xCorrelationId)
+                ? DataUtils.genCorrelationId(this.appProperties.getName()) : xCorrelationId;
         ThreadContext.put(TrackingContextEnum.CORRELATION_ID.getKey(), correlationId);
     }
 }

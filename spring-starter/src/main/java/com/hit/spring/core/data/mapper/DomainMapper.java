@@ -50,7 +50,7 @@ public interface DomainMapper<E, M> {
             ReflectUtils.copyBasicFields(e, model);
             return model;
         } catch (Exception ex) {
-            throw new RuntimeException("toBasicModel error: " + ex.getMessage(), ex);
+            throw new IllegalStateException("toBasicModel error: " + ex.getMessage(), ex);
         }
     }
 

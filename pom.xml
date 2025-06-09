@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.10</version>
+        <version>3.3.6</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -24,11 +24,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!--    Core    -->
-        <spring-boot.version>3.1.10</spring-boot.version>
+        <spring-boot.version>3.3.6</spring-boot.version>
         <rxjava3.version>3.1.8</rxjava3.version>
         <rxjava-stream.version>1.2.1</rxjava-stream.version>
-        <kafka.version>3.4.1</kafka.version>
-        <spring-kafka.version>3.0.15</spring-kafka.version>
+<!--        <kafka.version>3.4.1</kafka.version>-->
+<!--        <spring-kafka.version>3.0.15</spring-kafka.version>-->
         <caffeine.version>3.1.8</caffeine.version>
         <jsonwebtoken.version>0.9.1</jsonwebtoken.version>
         <cloudinary-http44.version>1.32.2</cloudinary-http44.version>
@@ -78,6 +78,18 @@
                     <artifactId>spring-boot-starter-logging</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <!--    test    -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <!--    logging    -->
@@ -134,5 +146,10 @@
             <optional>true</optional>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.f4b6a3</groupId>
+            <artifactId>ulid-creator</artifactId>
+            <version>5.2.3</version>
+        </dependency>
     </dependencies>
 </project>

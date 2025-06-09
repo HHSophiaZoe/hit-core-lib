@@ -17,7 +17,7 @@ import java.util.Set;
 @ConfigurationProperties("app.security")
 public class SecurityProperties {
 
-    private Filter filter;
+    private Filter filter = new Filter();
 
     private Set<String> apiWhitelist = new HashSet<>(List.of(
             "/swagger-ui", "/springdoc", "/v3/api-docs", "/actuator/health", "/auth/login"
@@ -25,14 +25,9 @@ public class SecurityProperties {
 
     private String serverKey = "com.hit";
 
-    private Jwt jwt;
+    private Jwt jwt = new Jwt();
 
-    @Value("${app.security.apiWhitelist:}")
-    public void setApiWhitelist(String[] apiWhitelistArray) {
-        if (apiWhitelistArray != null && apiWhitelistArray.length > 0) {
-            this.apiWhitelist.addAll(Arrays.asList(apiWhitelistArray));
-        }
-    }
+    private Cors cors = new Cors();
 
     @Setter
     @Getter
@@ -50,4 +45,21 @@ public class SecurityProperties {
         private String apiCheckPermissionUrl;
     }
 
+    @Setter
+    @Getter
+    public static class Cors {
+        private List<String> allowedOrigins = List.of("*");
+        private List<String> allowedHeaders = List.of("*");
+        private List<String> allowedMethods = List.of("*");
+        private List<String> exposedHeaders;
+        private Boolean allowCredentials;
+        private Long maxAge = 3600L;
+    }
+
+    @Value("${app.security.apiWhitelist:}")
+    public void setApiWhitelist(String[] apiWhitelistArray) {
+        if (apiWhitelistArray != null && apiWhitelistArray.length > 0) {
+            this.apiWhitelist.addAll(Arrays.asList(apiWhitelistArray));
+        }
+    }
 }

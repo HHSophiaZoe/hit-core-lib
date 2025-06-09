@@ -1,9 +1,8 @@
 package com.hit.spring.config.email;
 
-import com.hit.spring.config.condition.ConditionalOnMailEnabled;
+import com.hit.spring.config.condition.annotation.ConditionalOnMailEnable;
 import com.hit.spring.config.properties.MailProperties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -13,7 +12,7 @@ import java.util.Properties;
 
 @Configuration
 @RequiredArgsConstructor
-@ConditionalOnMailEnabled
+@ConditionalOnMailEnable
 public class MailConfig {
 
     private final MailProperties mailProperties;

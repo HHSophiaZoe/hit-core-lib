@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 
 @Slf4j
@@ -28,7 +29,7 @@ public class ApiUtils {
         } catch (ResourceAccessException ex) {
             log.error("handleResponseInternal TIMEOUT", ex);
             throw new BaseResponseException(ResponseStatusCodeEnum.INTERNAL_GENERAL_SERVER_ERROR);
-        } catch (HttpClientErrorException | HttpServerErrorException ex) {
+        } catch (HttpStatusCodeException ex) {
             TypeReference<GeneralResponse<T>> responseType = new TypeReference<>() {
             };
             return new InternalResponse<GeneralResponse<T>>()
@@ -46,7 +47,7 @@ public class ApiUtils {
         } catch (ResourceAccessException ex) {
             log.error("handleResponseInternalReturnData TIMEOUT", ex);
             throw new BaseResponseException(ResponseStatusCodeEnum.INTERNAL_GENERAL_SERVER_ERROR);
-        } catch (HttpClientErrorException | HttpServerErrorException ex) {
+        } catch (HttpStatusCodeException ex) {
             TypeReference<GeneralResponse<T>> responseType = new TypeReference<>() {
             };
             GeneralResponse<T> generalResponse = JsonMapper.decodeValue(ex.getResponseBodyAsString(), responseType);

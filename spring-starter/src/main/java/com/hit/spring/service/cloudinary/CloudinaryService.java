@@ -2,11 +2,10 @@ package com.hit.spring.service.cloudinary;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.hit.spring.config.condition.ConditionalOnCloudinaryEnabled;
+import com.hit.spring.config.condition.annotation.ConditionalOnCloudinaryEnable;
 import com.hit.spring.core.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,7 +15,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnCloudinaryEnabled
+@ConditionalOnCloudinaryEnable
 public class CloudinaryService {
 
     private final Cloudinary cloudinary;

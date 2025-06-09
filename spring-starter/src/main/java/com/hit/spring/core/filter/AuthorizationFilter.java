@@ -8,6 +8,7 @@ import com.hit.spring.core.exception.ResponseStatusCodeEnum;
 import com.hit.spring.core.factory.GeneralResponse;
 import com.hit.spring.core.factory.InternalResponse;
 import com.hit.spring.core.factory.ResponseFactory;
+import com.hit.spring.security.authorization.AuthorizationHandler;
 import com.hit.spring.service.http.HttpService;
 import com.hit.spring.utils.ApiUtils;
 import com.hit.spring.utils.DataUtils;
@@ -33,11 +34,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @ConditionalOnProperty(value = {"app.security.filter.authorization"}, havingValue = "true")
 public class AuthorizationFilter extends OncePerRequestFilter {
 
-    @Setter(onMethod_ = {@Autowired(required = false)})
-    private HttpService httpService;
-
     @Setter(onMethod_ = {@Autowired})
     private SecurityProperties securityProperties;
+
+    @Setter(onMethod_ = {@Autowired})
+    private AuthorizationHandler authorizationHandler;
 
     @SneakyThrows
     @Override
@@ -48,20 +49,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
                 return;
             }
-
-            InternalResponse<GeneralResponse<Boolean>> httpResponse = ApiUtils.handleResponseInternal(() -> {
-                ParameterizedTypeReference<GeneralResponse<Boolean>> responseType = new ParameterizedTypeReference<>() {
-                };
-                UserPrincipal userPrincipal = new UserPrincipal();
-                userPrincipal.setMethod(request.getMethod());
-                userPrincipal.setUri(request.getRequestURI());
-                userPrincipal.setUser(SecurityContext.getSimpleSecurityUser());
-                return httpService.postBlocking(securityProperties.getFilter().getApiCheckPermissionUrl(), userPrincipal, new HttpHeaders(), responseType);
-            });
-            GeneralResponse<Boolean> isPermissionRes = httpResponse.getResponse();
-            log.debug("Authorization is permission response: {}", DataUtils.parserLog(isPermissionRes));
-
-            if (!ResponseStatusCodeEnum.SUCCESS.code().equals(isPermissionRes.getStatus().getCode()) || !Boolean.TRUE.equals(isPermissionRes.getData())) {
+            if (!authorizationHandler.handle(request)) {
                 throw new BaseResponseException(ResponseStatusCodeEnum.FORBIDDEN_ERROR);
             }
             filterChain.doFilter(request, response);

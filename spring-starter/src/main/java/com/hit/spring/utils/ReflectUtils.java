@@ -217,7 +217,7 @@ public class ReflectUtils {
         return annotations;
     }
 
-    public static <E, M> void copyBasicFields(E source, M target) {
+    public static <E, M> void copyBasicFields(E source, M target) throws InvocationTargetException, IllegalAccessException {
         Class<?> sourceClass = source.getClass();
         Class<?> targetClass = target.getClass();
         Field[] declaredTargetFields = targetClass.getDeclaredFields();
@@ -238,6 +238,7 @@ public class ReflectUtils {
                 }
             } catch (Exception ex) {
                 log.debug("Failed to copy field '{}': {}", targetField.getName(), ex.getMessage());
+                throw ex;
             }
         }
     }

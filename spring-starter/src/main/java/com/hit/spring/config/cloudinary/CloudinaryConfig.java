@@ -1,10 +1,9 @@
 package com.hit.spring.config.cloudinary;
 
 import com.cloudinary.Cloudinary;
-import com.hit.spring.config.condition.ConditionalOnCloudinaryEnabled;
+import com.hit.spring.config.condition.annotation.ConditionalOnCloudinaryEnable;
 import com.hit.spring.config.properties.CloudinaryProperties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,7 +12,7 @@ import java.util.Map;
 
 @Configuration
 @RequiredArgsConstructor
-@ConditionalOnCloudinaryEnabled
+@ConditionalOnCloudinaryEnable
 public class CloudinaryConfig {
 
     private final CloudinaryProperties cloudinaryProperties;

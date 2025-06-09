@@ -2,6 +2,7 @@ package com.hit.spring.config.properties;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.boot.autoconfigure.task.TaskExecutionProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,10 +13,24 @@ import org.springframework.context.annotation.Configuration;
 public class TaskExecutorProperties {
 
     private Boolean enable = Boolean.FALSE;
-    private int coreSize = 10;
-    private int maxSize = 30;
-    private int queueCapacity = 100;
-    private String threadNamePrefix = "core-task";
-    private int keepAliveSeconds = 1;
+    private String threadNamePrefix;
+    private Pool pool = new Pool();
+    private Simple simple = new Simple();
+
+    @Setter
+    @Getter
+    public static class Pool {
+        private int coreSize = 10;
+        private int maxSize = 30;
+        private int queueCapacity = 1000;
+        private boolean allowCoreThreadTimeout = true;
+        private int keepAliveSeconds = 60;
+    }
+
+    @Setter
+    @Getter
+    public static class Simple {
+        private Integer concurrencyLimit;
+    }
 
 }

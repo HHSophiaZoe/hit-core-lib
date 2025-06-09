@@ -1,6 +1,6 @@
 package com.hit.spring.service.mail;
 
-import com.hit.spring.config.condition.ConditionalOnMailEnabled;
+import com.hit.spring.config.condition.annotation.ConditionalOnMailEnable;
 import com.hit.spring.core.data.request.SendMailRequest;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import java.util.Objects;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnMailEnabled
+@ConditionalOnMailEnable
 public class MailService {
 
     private final JavaMailSender mailSender;

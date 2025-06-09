@@ -35,9 +35,9 @@ public class DefaultHttpClientProperties {
     @Getter
     public static class ConnectionPool {
 
-        private int maxTotal = 100; // Only applies to RestTemplate
+        private int maxTotal = 100; // Only applies to APACHE_HTTP_CLIENT
 
-        private int defaultMaxPerRoute = 10; // Only applies to RestTemplate
+        private int defaultMaxPerRoute = 10; // Only applies to APACHE_HTTP_CLIENT
 
         private int maxIdle = 20; // Only applies to OkHttp
 
@@ -45,7 +45,9 @@ public class DefaultHttpClientProperties {
 
     @Getter
     public enum ClientType {
-        OK_HTTP, APACHE_HTTP_CLIENT
+        @Deprecated
+        OK_HTTP,
+        APACHE_HTTP_CLIENT
     }
 
 }

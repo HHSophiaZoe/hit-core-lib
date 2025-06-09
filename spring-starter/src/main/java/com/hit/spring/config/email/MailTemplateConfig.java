@@ -1,6 +1,6 @@
 package com.hit.spring.config.email;
 
-import com.hit.spring.config.condition.ConditionalOnMailEnabled;
+import com.hit.spring.config.condition.annotation.ConditionalOnMailEnable;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -10,7 +10,7 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import java.nio.charset.StandardCharsets;
 
 @Configuration
-@ConditionalOnMailEnabled
+@ConditionalOnMailEnable
 public class MailTemplateConfig {
 
     @Bean

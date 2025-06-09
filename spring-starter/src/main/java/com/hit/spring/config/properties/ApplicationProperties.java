@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties("app")
 public class ApplicationProperties {
 
-    private String applicationShortName;
+    private String name = "HIT-APP";
 
     private Boolean enableLogRequestHttp;
 

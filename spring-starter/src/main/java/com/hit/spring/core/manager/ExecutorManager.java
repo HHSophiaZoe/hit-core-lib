@@ -1,141 +1,168 @@
 package com.hit.spring.core.manager;
 
-import com.hit.spring.context.SecurityContext;
-import com.hit.spring.core.exception.BusinessException;
-import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.ThreadContext;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
-import java.util.function.Consumer;
-
-import static com.hit.spring.core.constants.enums.TrackingContextEnum.CORRELATION_ID;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-@ConditionalOnProperty(
-        value = {"app.task.executor.enable"},
-        havingValue = "true"
-)
-public class ExecutorManager {
+public class ExecutorManager extends ExecutorBaseManager {
 
-    @Qualifier(value = "threadPoolTaskExecutor")
-    private final ThreadPoolTaskExecutor threadPoolTaskExecutor;
-
-    public void runTask(Runnable runnable) {
-        threadPoolTaskExecutor.execute(new WrappedTask(runnable));
+    public enum FailureStrategy {
+        DEFAULT,              // Fail to throw exception
+        IGNORE_ERRORS,        // Continue despite errors
     }
 
-    public <T> Future<T> runCallable(Callable<T> callable) {
-        return threadPoolTaskExecutor.submit(new WrappedCallable<>(callable));
+    public void zipTasks(FailureStrategy strategy, Runnable... runnables) {
+        this.zipTasks(executor, strategy, runnables);
     }
 
-    public void zipTasksIgnoreException(Runnable... runnables) {
+    public void zipTasks(AsyncTaskExecutor executor, FailureStrategy strategy, Runnable... runnables) {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        Arrays.stream(runnables).forEach(runnable -> {
-            CompletableFuture<Void> future = this.runCompletable(runnable)
-                    .exceptionally(ex -> {
-                        log.error("runCompletable error: {}", ex.getMessage(), ex);
-                        return null;
-                    });
+        for (Runnable runnable : runnables) {
+            CompletableFuture<Void> future;
+            switch (strategy) {
+                case DEFAULT:
+                    future = this.runCompletable(runnable, executor);
+                    break;
+                case IGNORE_ERRORS:
+                    future = this.runCompletable(runnable, executor)
+                            .exceptionally(ex -> {
+                                log.error("runCompletable {} error: {}", runnable, ex.getMessage(), ex);
+                                return null;
+                            });
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown strategy: " + strategy);
+            }
             futures.add(future);
-        });
-        this.joinCompletableFutures(futures);
-    }
-
-    /**
-     * @param items    Cac item can run task
-     * @param function Func thuc hien logic run tung task
-     * @param <T>      Kieu du lieu item
-     *                 Example: executorManager.zipTasksIgnoreException(
-     *                 List.of(1, 2, 3),
-     *                 number -> {
-     *                 if (number == 1) {
-     *                 throw new RuntimeException("exception");
-     *                 }
-     *                 System.out.println(num);
-     *                 // logic for number here
-     *                 }
-     *                 );
-     */
-    public <T> void zipTasksIgnoreException(List<T> items, Consumer<T> function) {
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
-        items.forEach(item -> {
-            CompletableFuture<Void> future = this.runCompletable(() ->
-                    function.accept(item)
-            ).exceptionally(ex -> {
-                log.error("runCompletable error: {}", ex.getMessage(), ex);
-                return null;
-            });
-            futures.add(future);
-        });
-        this.joinCompletableFutures(futures);
-    }
-
-    private CompletableFuture<Void> runCompletable(Runnable runnable) {
-        return CompletableFuture.runAsync(new WrappedTask(runnable), threadPoolTaskExecutor);
-    }
-
-    private void joinCompletableFutures(List<CompletableFuture<Void>> cfs) {
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(cfs.toArray(new CompletableFuture[0]));
+        }
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
         allFutures.join();
     }
 
-    private static class WrappedCallable<T> implements Callable<T> {
-
-        private final Callable<T> task;
-        private final String correlationId;
-
-        private WrappedCallable(Callable<T> task) {
-            this.task = task;
-            this.correlationId = ThreadContext.get(CORRELATION_ID.getKey());
-        }
-
-        @Override
-        public T call() {
-            try {
-                ThreadContext.put(CORRELATION_ID.getKey(), correlationId);
-                return task.call();
-            } catch (Exception e) {
-                throw new BusinessException(e.getMessage(), e);
-            } finally {
-                ThreadContext.clearAll();
-                SecurityContext.clearContext();
-            }
-        }
+    public <T1, T2, R> R zipTasksReturn(Callable<T1> t1, Callable<T2> t2, BiFunction<T1, T2, R> zipper) {
+        return zipTasksReturn(executor, t1, t2, zipper);
     }
 
-    private static class WrappedTask implements Runnable {
-
-        private final Runnable task;
-        private final String correlationId;
-
-        WrappedTask(Runnable task) {
-            this.task = task;
-            this.correlationId = ThreadContext.get(CORRELATION_ID.getKey());
-        }
-
-        @Override
-        public void run() {
-            try {
-                ThreadContext.put(CORRELATION_ID.getKey(), correlationId);
-                task.run();
-            } catch (Exception e) {
-                throw new BusinessException(e.getMessage(), e);
-            } finally {
-                ThreadContext.clearAll();
-                SecurityContext.clearContext();
-            }
-        }
+    @SuppressWarnings({"unchecked"})
+    public <T1, T2, R> R zipTasksReturn(AsyncTaskExecutor executor, Callable<T1> t1, Callable<T2> t2, BiFunction<T1, T2, R> zipper) {
+        return zipInternal(
+                objects -> zipper.apply((T1) objects[0], (T2) objects[1]),
+                runCompletable(t1, executor),
+                runCompletable(t2, executor)
+        );
     }
+
+    public <T1, T2, T3, R> R zipTasksReturn(Callable<T1> t1, Callable<T2> t2, Callable<T3> t3, Function3<T1, T2, T3, R> zipper) {
+        return zipTasksReturn(executor, t1, t2, t3, zipper);
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public <T1, T2, T3, R> R zipTasksReturn(AsyncTaskExecutor executor, Callable<T1> t1, Callable<T2> t2, Callable<T3> t3, Function3<T1, T2, T3, R> zipper) {
+        return zipInternal(
+                objects -> zipper.apply((T1) objects[0], (T2) objects[1], (T3) objects[2]),
+                runCompletable(t1, executor),
+                runCompletable(t2, executor),
+                runCompletable(t3, executor)
+        );
+    }
+
+    public <T1, T2, T3, T4, R> R zipTasksReturn(Callable<T1> t1, Callable<T2> t2, Callable<T3> t3, Callable<T4> t4,
+                                                Function4<T1, T2, T3, T4, R> zipper) {
+        return zipTasksReturn(executor, t1, t2, t3, t4, zipper);
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public <T1, T2, T3, T4, R> R zipTasksReturn(AsyncTaskExecutor executor, Callable<T1> t1, Callable<T2> t2, Callable<T3> t3,
+                                                Callable<T4> t4, Function4<T1, T2, T3, T4, R> zipper) {
+        return zipInternal(
+                objects -> zipper.apply((T1) objects[0], (T2) objects[1], (T3) objects[2], (T4) objects[3]),
+                runCompletable(t1, executor),
+                runCompletable(t2, executor),
+                runCompletable(t3, executor),
+                runCompletable(t4, executor)
+        );
+    }
+
+    public <T1, T2, T3, T4, T5, R> R zipTasksReturn(Callable<T1> t1, Callable<T2> t2, Callable<T3> t3, Callable<T4> t4,
+                                                    Callable<T5> t5, Function5<T1, T2, T3, T4, T5, R> zipper) {
+        return zipTasksReturn(executor, t1, t2, t3, t4, t5, zipper);
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public <T1, T2, T3, T4, T5, R> R zipTasksReturn(AsyncTaskExecutor executor, Callable<T1> t1, Callable<T2> t2, Callable<T3> t3,
+                                                    Callable<T4> t4, Callable<T5> t5, Function5<T1, T2, T3, T4, T5, R> zipper) {
+        return zipInternal(
+                objects -> zipper.apply((T1) objects[0], (T2) objects[1], (T3) objects[2], (T4) objects[3], (T5) objects[4]),
+                runCompletable(t1, executor),
+                runCompletable(t2, executor),
+                runCompletable(t3, executor),
+                runCompletable(t4, executor),
+                runCompletable(t5, executor)
+        );
+    }
+
+    public <T1, T2, T3, T4, T5, T6, R> R zipTasksReturn(Callable<T1> t1, Callable<T2> t2, Callable<T3> t3, Callable<T4> t4,
+                                                        Callable<T5> t5, Callable<T6> t6, Function6<T1, T2, T3, T4, T5, T6, R> zipper) {
+        return zipTasksReturn(executor, t1, t2, t3, t4, t5, t6, zipper);
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public <T1, T2, T3, T4, T5, T6, R> R zipTasksReturn(AsyncTaskExecutor executor, Callable<T1> t1, Callable<T2> t2, Callable<T3> t3, Callable<T4> t4,
+                                                        Callable<T5> t5, Callable<T6> t6, Function6<T1, T2, T3, T4, T5, T6, R> zipper) {
+        return zipInternal(
+                objects -> zipper.apply((T1) objects[0], (T2) objects[1], (T3) objects[2], (T4) objects[3], (T5) objects[4], (T6) objects[5]),
+                runCompletable(t1, executor),
+                runCompletable(t2, executor),
+                runCompletable(t3, executor),
+                runCompletable(t4, executor),
+                runCompletable(t5, executor),
+                runCompletable(t6, executor)
+        );
+    }
+
+// internal methods
+    @SneakyThrows
+    private <R> R zipInternal(Function<Object[], R> zipper, CompletableFuture<?>... futures) {
+        return CompletableFuture
+                .allOf(futures)
+                .thenApply(v -> {
+                    Object[] results = new Object[futures.length];
+                    for (int i = 0; i < futures.length; i++) {
+                        results[i] = futures[i].join();
+                    }
+                    return zipper.apply(results);
+                })
+                .join();
+    }
+
+    @FunctionalInterface
+    public interface Function3<T1, T2, T3, R> {
+        R apply(T1 t1, T2 t2, T3 t3);
+    }
+
+    @FunctionalInterface
+    public interface Function4<T1, T2, T3, T4, R> {
+        R apply(T1 t1, T2 t2, T3 t3, T4 t4);
+    }
+
+    @FunctionalInterface
+    public interface Function5<T1, T2, T3, T4, T5, R> {
+        R apply(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5);
+    }
+
+    @FunctionalInterface
+    public interface Function6<T1, T2, T3, T4, T5, T6, R> {
+        R apply(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6);
+    }
+
 }

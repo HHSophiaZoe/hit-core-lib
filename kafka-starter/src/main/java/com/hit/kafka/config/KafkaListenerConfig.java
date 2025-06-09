@@ -71,6 +71,8 @@ public class KafkaListenerConfig {
         map.from(kafkaListenerProperties::getLogContainerConfig).to(containerProperties::setLogContainerConfig);
         map.from(kafkaListenerProperties::isMissingTopicsFatal).to(containerProperties::setMissingTopicsFatal);
         map.from(kafkaListenerProperties::isImmediateStop).to(containerProperties::setStopImmediate);
+        map.from(kafkaListenerProperties::isObservationEnabled).to(containerProperties::setObservationEnabled);
+        map.from(kafkaListenerProperties::getChangeConsumerThreadName).to(factory::setChangeConsumerThreadName);
     }
 
 }

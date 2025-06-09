@@ -33,7 +33,7 @@ public class JsonMapper {
         try {
             return getObjectMapper().writeValueAsString(obj);
         } catch (Exception e) {
-            log.error("encode ERROR {}", e.getMessage(), e);
+            log.error("encode {} ERROR {}", obj, e.getMessage(), e);
             throw new BusinessException("Failed to encode as JSON: " + e.getMessage(), e);
         }
     }
@@ -49,7 +49,7 @@ public class JsonMapper {
         try {
             return getObjectMapper().writeValueAsBytes(obj);
         } catch (Exception e) {
-            log.error("encode ERROR {}", e.getMessage(), e);
+            log.error("encode {} ERROR {}", obj, e.getMessage(), e);
             throw new BusinessException("Failed to encode as byte: " + e.getMessage());
         }
     }
@@ -67,7 +67,7 @@ public class JsonMapper {
         try {
             return getObjectMapper().readValue(str, clazz);
         } catch (JsonProcessingException e) {
-            log.error("decodeValue ERROR {}", e.getMessage(), e);
+            log.error("decodeValue {} ERROR {}", str, e.getMessage(), e);
             throw new BusinessException("Failed to decode: " + e.getMessage(), e);
         }
     }
@@ -85,7 +85,7 @@ public class JsonMapper {
         try {
             return getObjectMapper().readValue(str, type);
         } catch (Exception e) {
-            log.error("decodeValue ERROR {}", e.getMessage(), e);
+            log.error("decodeValue {} ERROR {}", str, e.getMessage(), e);
             throw new BusinessException("Failed to decode: " + e.getMessage(), e);
         }
     }

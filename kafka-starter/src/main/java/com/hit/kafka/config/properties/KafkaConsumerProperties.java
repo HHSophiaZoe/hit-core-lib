@@ -4,12 +4,16 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.PropertyMapper;
+import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.util.unit.DataSize;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Setter
@@ -32,14 +36,25 @@ public class KafkaConsumerProperties extends KafkaProperties.Consumer {
 
     private int fetchMaxWaitMs = 500;
 
+    private KafkaProperties.Ssl ssl = new KafkaProperties.Ssl();
+
+    private KafkaProperties.Security security = new KafkaProperties.Security();
+
+    private Map<String, String> properties = new HashMap<>();
+
     @Override
     public KafkaProperties.Ssl getSsl() {
-        return super.getSsl();
+        return this.ssl;
     }
 
     @Override
     public KafkaProperties.Security getSecurity() {
-        return super.getSecurity();
+        return this.security;
+    }
+
+    @Override
+    public Map<String, String> getProperties() {
+        return this.properties;
     }
 
     @Override
@@ -173,8 +188,22 @@ public class KafkaConsumerProperties extends KafkaProperties.Consumer {
     }
 
     @Override
-    public Map<String, Object> buildProperties() {
-        return super.buildProperties();
+    public Map<String, Object> buildProperties(SslBundles sslBundles) {
+        com.hit.kafka.config.properties.KafkaProperties.Properties properties = new com.hit.kafka.config.properties.KafkaProperties.Properties();
+        PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+        map.from(this::getAutoCommitInterval).asInt(Duration::toMillis).to(properties.in("auto.commit.interval.ms"));
+        map.from(this::getAutoOffsetReset).to(properties.in("auto.offset.reset"));
+        map.from(this::getBootstrapServers).to(properties.in("bootstrap.servers"));
+        map.from(this::getClientId).to(properties.in("client.id"));
+        map.from(this::getEnableAutoCommit).to(properties.in("enable.auto.commit"));
+        map.from(this::getFetchMaxWait).asInt(Duration::toMillis).to(properties.in("fetch.max.wait.ms"));
+        map.from(this::getFetchMinSize).asInt(DataSize::toBytes).to(properties.in("fetch.min.bytes"));
+        map.from(this::getGroupId).to(properties.in("group.id"));
+        map.from(this::getHeartbeatInterval).asInt(Duration::toMillis).to(properties.in("heartbeat.interval.ms"));
+        map.from(() -> this.getIsolationLevel().name().toLowerCase(Locale.ROOT)).to(properties.in("isolation.level"));
+        map.from(this::getKeyDeserializer).to(properties.in("key.deserializer"));
+        map.from(this::getValueDeserializer).to(properties.in("value.deserializer"));
+        map.from(this::getMaxPollRecords).to(properties.in("max.poll.records"));
+        return properties.with(this.getSsl(), this.getSecurity(), this.getProperties(), sslBundles);
     }
-
 }

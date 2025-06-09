@@ -1,42 +1,32 @@
 package com.hit.spring.utils;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.util.StdDateFormat;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.hit.spring.core.constants.CommonConstant;
+import com.hit.spring.core.json.JsonMapper;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 import java.util.Random;
-import java.util.TimeZone;
-import java.util.UUID;
+
+import static com.hit.spring.core.constants.CommonConstant.CommonSymbol.SHIFT_DASH;
+import static com.hit.spring.core.constants.CommonConstant.EMPTY_STRING;
 
 @Slf4j
 @UtilityClass
 public class DataUtils {
 
-    private final Random random = new Random();
+    private final SecureRandom random = new SecureRandom();
 
     public static String parserLog(Object data) {
         try {
-            ObjectMapper mapper = new ObjectMapper()
-                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                    .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-                    .registerModule(new JavaTimeModule())
-                    .setDateFormat(new StdDateFormat().withColonInTimeZone(true))
-                    .setTimeZone(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
-            return mapper.writeValueAsString(data);
+            return JsonMapper.encode(data);
         } catch (Exception e) {
-            log.error("parserLog error: {}", e.getMessage(), e);
-            return "";
+            return EMPTY_STRING;
         }
     }
 
@@ -48,22 +38,18 @@ public class DataUtils {
         if (correlationIdByte != null) {
             return new String(correlationIdByte);
         }
-        String uuId = UUID.randomUUID().toString().replace("-", "").toLowerCase();
-        return (appName + "-" + uuId).trim();
+        return (appName + SHIFT_DASH + TraceUtils.generateTraceId()).trim();
     }
 
     public String generateOTP(Integer length) {
-        String numbers = "0123456789";
-
         StringBuilder otp = new StringBuilder();
-
         for (int i = 0; i < length; i++) {
-            otp.append(numbers.charAt(random.nextInt(numbers.length())));
+            otp.append(random.nextInt(10)); // 0-9
         }
         return otp.toString();
     }
 
-    public static String formatCurrency(BigInteger amount) {
+    public static String formatCurrencyVND(BigInteger amount) {
         Locale locale = Locale.forLanguageTag("vi-VN");
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(locale);
         symbols.setDecimalSeparator('.');
@@ -153,7 +139,7 @@ public class DataUtils {
 
     public static String safeToString(Object obj) {
         if (ObjectUtils.isEmpty(obj)) {
-            return CommonConstant.EMPTY_STRING;
+            return EMPTY_STRING;
         }
         return String.valueOf(obj);
     }
