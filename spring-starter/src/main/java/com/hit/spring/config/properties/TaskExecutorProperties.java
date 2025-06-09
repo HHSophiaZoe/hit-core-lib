@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 public class TaskExecutorProperties {
 
     private Boolean enable = Boolean.FALSE;
-    private String threadNamePrefix;
+    private String threadNamePrefix = "app.task.executor-";
     private Pool pool = new Pool();
     private Simple simple = new Simple();
 
