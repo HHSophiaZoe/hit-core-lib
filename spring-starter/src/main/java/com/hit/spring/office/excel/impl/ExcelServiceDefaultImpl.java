@@ -2,7 +2,7 @@ package com.hit.spring.office.excel.impl;
 
 import com.hit.spring.core.converter.DataConverter;
 import com.hit.spring.core.exception.BusinessException;
-import com.hit.spring.core.extension.streaming.DataStream;
+import com.hit.spring.core.reactive.DataStream;
 import com.hit.spring.office.annotation.ExcelCell;
 import com.hit.spring.office.annotation.ExcelConfigurable;
 import com.hit.spring.office.excel.CellStyleCreator;
@@ -129,10 +129,9 @@ public class ExcelServiceDefaultImpl implements IExcelService {
     }
 
     @Override
-    public <T, R> SXSSFWorkbook insertBigDataToWorkbook(SXSSFWorkbook workbook, Class<R> classConfig,
-                                                        DataStream<List<T>> dataStream, Function<T, R> mapper,
-                                                        Map<String, String> context,
-                                                        Map<String, List<String>> dataSheetDropdown) {
+    public <T, R> void streamDataToWorkbook(SXSSFWorkbook workbook, Class<R> classConfig,
+                                            DataStream<List<T>> dataStream, Function<T, R> mapper,
+                                            Map<String, String> context, Map<String, List<String>> dataSheetDropdown) {
         Objects.requireNonNull(workbook, "Workbook must not be null");
         ExcelConfigurable excelConfigurable = ReflectUtils.getAnnotationInClass(classConfig, ExcelConfigurable.class)
                 .orElseThrow(() -> new BusinessException(EXCEL_CONFIG_ERR_MESSAGE));
@@ -162,10 +161,9 @@ public class ExcelServiceDefaultImpl implements IExcelService {
                     log.error("Error while processing data: {}", error.getMessage(), error);
                 },
                 () -> {
-                    log.info("Successfully insert big data to workbook");
+                    log.info("Successfully stream data to workbook");
                 }
         );
-        return workbook;
     }
 
     @Override

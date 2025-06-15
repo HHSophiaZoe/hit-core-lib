@@ -1,6 +1,4 @@
-package com.hit.spring.core.extension.streaming;
-
-import com.hit.spring.core.extension.Emitter;
+package com.hit.spring.core.reactive;
 
 import java.util.function.Consumer;
 
@@ -35,7 +33,6 @@ public class DataStream<T> {
         });
     }
 
-    @FunctionalInterface
     public interface DataStreamSource<T> {
         void subscribe(Emitter<T> emitter);
     }

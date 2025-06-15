@@ -1,8 +1,6 @@
 package com.hit.cache.store.external;
 
-import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 public interface BaseExternalCacheStore {
 
@@ -29,7 +27,5 @@ public interface BaseExternalCacheStore {
     boolean hasKey(String key);
 
     void watchKey(String key);
-
-    <T> T lockAndHandle(List<String> keyLocks, Supplier<T> handler);
 
 }

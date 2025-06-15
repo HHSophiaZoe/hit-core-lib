@@ -198,7 +198,7 @@ public class ExecutorManager extends ExecutorManagerBase {
                 .get(taskExecutorProperties.getTaskTimeoutSeconds(), TimeUnit.SECONDS);
     }
 
-    private static void cleanFutureTasks(List<Future<?>> futures) {
+    protected void cleanFutureTasks(List<Future<?>> futures) {
         for (Future<?> future : futures) {
             if (!future.isDone()) {
                 future.cancel(true);

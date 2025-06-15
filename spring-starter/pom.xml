@@ -13,11 +13,6 @@
 	<name>spring-starter-library</name>
 	<description>Spring starter library</description>
 
-	<properties>
-		<rxjava3.version>3.1.8</rxjava3.version>
-		<rxjava-stream.version>1.2.1</rxjava-stream.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>com.hit</groupId>
@@ -174,18 +169,6 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>33.0.0-jre</version>
-		</dependency>
-
-		<dependency>
-			<groupId>io.reactivex.rxjava3</groupId>
-			<artifactId>rxjava</artifactId>
-			<version>${rxjava3.version}</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/io.reactivex/rxjava-reactive-streams -->
-		<dependency>
-			<groupId>io.reactivex</groupId>
-			<artifactId>rxjava-reactive-streams</artifactId>
-			<version>${rxjava-stream.version}</version>
 		</dependency>
 	</dependencies>
 

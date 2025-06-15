@@ -157,16 +157,4 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
         this.stringRedisTemplate.watch(keyGen);
     }
 
-    @Override
-    public <T> T lockAndHandle(List<String> keyLocks, Supplier<T> handler) {
-        RLock[] locks = keyLocks.stream().map(redissonClient::getLock).toArray(RLock[]::new);
-        RedissonMultiLock multiLock = new RedissonMultiLock(locks);
-        try {
-            multiLock.lock();
-            return handler.get();
-        } finally {
-            multiLock.unlock();
-        }
-    }
-
 }

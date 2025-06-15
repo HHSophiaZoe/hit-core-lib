@@ -30,10 +30,7 @@ import java.util.Map;
 @Slf4j
 @EnableCaching
 @Configuration
-@ConditionalOnProperty(
-        value = {"external-cache.enable"},
-        havingValue = "true"
-)
+@ConditionalOnProperty(value = {"external-cache.enable"}, havingValue = "true")
 public class RedisCacheConfig {
 
     @Bean

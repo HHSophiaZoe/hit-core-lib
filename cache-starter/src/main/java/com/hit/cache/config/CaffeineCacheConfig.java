@@ -12,10 +12,7 @@ import org.springframework.context.annotation.Configuration;
 
 @EnableCaching
 @Configuration
-@ConditionalOnProperty(
-        value = {"internal-cache.enable"},
-        havingValue = "true"
-)
+@ConditionalOnProperty(value = {"internal-cache.enable"}, havingValue = "true")
 public class CaffeineCacheConfig {
 
 

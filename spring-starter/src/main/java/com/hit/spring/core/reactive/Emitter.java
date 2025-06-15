@@ -1,4 +1,4 @@
-package com.hit.spring.core.extension;
+package com.hit.spring.core.reactive;
 
 public interface Emitter<T> {
     void onNext(T chunk);
