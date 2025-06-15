@@ -2,6 +2,7 @@ package com.hit.spring.office.excel.impl;
 
 import com.hit.spring.core.converter.DataConverter;
 import com.hit.spring.core.exception.BusinessException;
+import com.hit.spring.core.extension.streaming.DataStream;
 import com.hit.spring.office.annotation.ExcelCell;
 import com.hit.spring.office.annotation.ExcelConfigurable;
 import com.hit.spring.office.excel.CellStyleCreator;
@@ -9,14 +10,16 @@ import com.hit.spring.office.excel.CellStyleCreatorFactory;
 import com.hit.spring.office.excel.IExcelService;
 import com.hit.spring.utils.DataUtils;
 import com.hit.spring.utils.ReflectUtils;
-import com.hit.spring.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFRow;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Component;
@@ -27,6 +30,7 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.replaceEach;
@@ -124,58 +128,45 @@ public class ExcelServiceDefaultImpl implements IExcelService {
         return data;
     }
 
-//    @Override
-//    public <T, R> Single<SXSSFWorkbook> insertBigDataToWorkbook(SXSSFWorkbook workbook, Class<R> classConfig,
-//                                                                Flowable<List<T>> flowableData, Function<T, R> mapper,
-//                                                                Map<String, String> context,
-//                                                                Map<String, List<String>> dataSheetDropdown) {
-//        Objects.requireNonNull(workbook, "Workbook must not be null");
-//        ExcelConfigurable excelConfigurable = ReflectUtils.getAnnotationInClass(classConfig, ExcelConfigurable.class)
-//                .orElseThrow(() -> new BusinessException(EXCEL_CONFIG_ERR_MESSAGE));
-//        Map<String, ExcelCell> excelCells = ReflectUtils.getMapAnnotationInFields(classConfig, ExcelCell.class);
-//        SXSSFSheet sheet = workbook.getSheetAt(excelConfigurable.sheetIndex());
-//        if (ObjectUtils.isEmpty(sheet)) {
-//            throw new BusinessException(EXCEL_TEMPLATE_INVALID_ERR_MESSAGE);
-//        }
-//        XSSFSheet xssfSheet = workbook.getXSSFWorkbook().getSheetAt(excelConfigurable.sheetIndex());
-//
-//        Single<SXSSFWorkbook> preProcessTask = Single.fromCallable(() -> {
-//            this.processContext(xssfSheet, context, excelConfigurable.placeholderRowIndexes());
-//            return workbook;
-//        });
-//        return preProcessTask
-//                .flatMap(result ->
-//                        this.streamingData(result, sheet, flowableData, mapper, excelConfigurable, excelCells)
-//                                .map(workbookResult -> {
-//                                    this.insertDataToSheetSuggest(workbookResult, dataSheetDropdown);
-//                                    return workbookResult;
-//                                })
-//                )
-//                .onErrorResumeNext(error -> {
-//                    log.error("insertBigDataToWorkbook failed: {}", error.getMessage());
-//                    return Single.error(new BusinessException("Insert data to Workbook error"));
-//                });
-//    }
-//
-//    private <T, R> Single<SXSSFWorkbook> streamingData(SXSSFWorkbook workbook, SXSSFSheet sheet, Flowable<List<T>> flowableData,
-//                                                       Function<T, R> mapper, ExcelConfigurable excelConfigurable,
-//                                                       Map<String, ExcelCell> excelCells) {
-//        CellStyleCreator cellStyleCreator = cellStyleCreatorFactory.createCellStyleCreator(workbook, excelConfigurable.cellStyleCreator());
-//        AtomicInteger currentRowIdx = new AtomicInteger(excelConfigurable.startRow());
-//        return flowableData
-//                .doOnNext(dataList -> {
-//                    for (T data : dataList) {
-//                        R dataMapper = mapper.apply(data);
-//                        SXSSFRow currentRow = sheet.createRow(currentRowIdx.get());
-//                        // Insert data into the row
-//                        this.insertDataToRow(cellStyleCreator, currentRow, dataMapper, excelCells);
-//                        currentRowIdx.getAndIncrement();
-//                    }
-//                })
-//                .doOnError(error -> log.error("Error while processing data: {}", error.getMessage(), error))
-//                .ignoreElements()
-//                .andThen(Single.just(workbook));
-//    }
+    @Override
+    public <T, R> SXSSFWorkbook insertBigDataToWorkbook(SXSSFWorkbook workbook, Class<R> classConfig,
+                                                        DataStream<List<T>> dataStream, Function<T, R> mapper,
+                                                        Map<String, String> context,
+                                                        Map<String, List<String>> dataSheetDropdown) {
+        Objects.requireNonNull(workbook, "Workbook must not be null");
+        ExcelConfigurable excelConfigurable = ReflectUtils.getAnnotationInClass(classConfig, ExcelConfigurable.class)
+                .orElseThrow(() -> new BusinessException(EXCEL_CONFIG_ERR_MESSAGE));
+        Map<String, ExcelCell> excelCells = ReflectUtils.getMapAnnotationInFields(classConfig, ExcelCell.class);
+        SXSSFSheet sheet = workbook.getSheetAt(excelConfigurable.sheetIndex());
+        if (ObjectUtils.isEmpty(sheet)) {
+            throw new BusinessException(EXCEL_TEMPLATE_INVALID_ERR_MESSAGE);
+        }
+        XSSFSheet xssfSheet = workbook.getXSSFWorkbook().getSheetAt(excelConfigurable.sheetIndex());
+
+        this.processContext(xssfSheet, context, excelConfigurable.placeholderRowIndexes());
+        this.insertDataToSheetSuggest(workbook, dataSheetDropdown);
+
+        CellStyleCreator cellStyleCreator = cellStyleCreatorFactory.createCellStyleCreator(workbook, excelConfigurable.cellStyleCreator());
+        AtomicInteger currentRowIdx = new AtomicInteger(excelConfigurable.startRow());
+        dataStream.subscribe(
+                batch -> {
+                    for (T data : batch) {
+                        R dataMapper = mapper.apply(data);
+                        SXSSFRow currentRow = sheet.createRow(currentRowIdx.get());
+                        // Insert data into the row
+                        this.insertDataToRow(cellStyleCreator, currentRow, dataMapper, excelCells);
+                        currentRowIdx.getAndIncrement();
+                    }
+                },
+                error -> {
+                    log.error("Error while processing data: {}", error.getMessage(), error);
+                },
+                () -> {
+                    log.info("Successfully insert big data to workbook");
+                }
+        );
+        return workbook;
+    }
 
     @Override
     public <T> void insertDataToWorkbook(Workbook workbook, Class<T> classConfig, List<T> dataList,

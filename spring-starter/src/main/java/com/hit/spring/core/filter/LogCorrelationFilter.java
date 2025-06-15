@@ -37,7 +37,7 @@ public class LogCorrelationFilter extends OncePerRequestFilter {
 
     private void generateCorrelationIdIfNotExists(String xCorrelationId) {
         String correlationId = StringUtils.isEmpty(xCorrelationId)
-                ? DataUtils.genCorrelationId(this.appProperties.getName()) : xCorrelationId;
+                ? TrackingContextEnum.genCorrelationId(this.appProperties.getName()) : xCorrelationId;
         ThreadContext.put(TrackingContextEnum.CORRELATION_ID.getKey(), correlationId);
     }
 }

@@ -11,9 +11,7 @@ import java.security.SecureRandom;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
-import java.util.Random;
 
-import static com.hit.spring.core.constants.CommonConstant.CommonSymbol.SHIFT_DASH;
 import static com.hit.spring.core.constants.CommonConstant.EMPTY_STRING;
 
 @Slf4j
@@ -28,17 +26,6 @@ public class DataUtils {
         } catch (Exception e) {
             return EMPTY_STRING;
         }
-    }
-
-    public static String genCorrelationId(String appName) {
-        return genCorrelationId(null, appName);
-    }
-
-    public static String genCorrelationId(byte[] correlationIdByte, String appName) {
-        if (correlationIdByte != null) {
-            return new String(correlationIdByte);
-        }
-        return (appName + SHIFT_DASH + TraceUtils.generateTraceId()).trim();
     }
 
     public String generateOTP(Integer length) {

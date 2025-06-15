@@ -2,7 +2,6 @@ package com.hit.spring.config.properties;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.boot.autoconfigure.task.TaskExecutionProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,6 +13,7 @@ public class TaskExecutorProperties {
 
     private Boolean enable = Boolean.FALSE;
     private String threadNamePrefix = "app.task.executor-";
+    private int taskTimeoutSeconds = 30;
     private Pool pool = new Pool();
     private Simple simple = new Simple();
 
