@@ -21,7 +21,7 @@ public @interface DistributedLock {
 
     boolean readLock() default false;
 
-    long transactionTtlSec() default 60L;
+    long transactionTtlSec() default 30L;
 
     long waitTimeMs() default 0L;
 
