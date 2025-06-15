@@ -18,7 +18,7 @@ public class DistributedLockException extends RuntimeException {
     }
 
     public DistributedLockException(DistributedLockData data) {
-        super("ParodyLock: cannot wait for key " + data.name() + "::" + data.value());
+        super("DistributedLock: cannot wait for key " + data.name() + "::" + data.value());
         this.data = data;
     }
 
