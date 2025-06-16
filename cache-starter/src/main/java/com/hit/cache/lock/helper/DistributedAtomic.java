@@ -1,4 +1,4 @@
-package com.hit.cache.lock;
+package com.hit.cache.lock.helper;
 
 public interface DistributedAtomic {
 

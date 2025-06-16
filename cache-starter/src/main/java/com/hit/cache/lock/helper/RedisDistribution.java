@@ -1,4 +1,4 @@
-package com.hit.cache.lock;
+package com.hit.cache.lock.helper;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

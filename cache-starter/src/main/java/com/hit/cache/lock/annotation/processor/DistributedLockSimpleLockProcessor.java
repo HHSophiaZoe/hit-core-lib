@@ -1,7 +1,7 @@
 package com.hit.cache.lock.annotation.processor;
 
 import com.github.f4b6a3.ulid.UlidCreator;
-import com.hit.cache.lock.DistributedAtomic;
+import com.hit.cache.lock.helper.DistributedAtomic;
 import com.hit.cache.lock.annotation.DistributedLock;
 import com.hit.cache.lock.exception.DistributedLockException;
 import lombok.RequiredArgsConstructor;

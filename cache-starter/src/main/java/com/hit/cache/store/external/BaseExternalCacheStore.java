@@ -26,6 +26,4 @@ public interface BaseExternalCacheStore {
 
     boolean hasKey(String key);
 
-    void watchKey(String key);
-
 }

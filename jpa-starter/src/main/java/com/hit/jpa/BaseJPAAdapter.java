@@ -45,7 +45,7 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
 
     @PostConstruct
     private void init() {
-        Metamodel metamodel = entityManager.getMetamodel();
+        Metamodel metamodel = getEntityManager().getMetamodel();
         EntityType<T> entityType = metamodel.entity(this.getEntityClass());
         SingularAttribute<? super T, ?> idAttribute = entityType.getId(Object.class);
         if (idAttribute.getJavaMember() instanceof Field idField) {

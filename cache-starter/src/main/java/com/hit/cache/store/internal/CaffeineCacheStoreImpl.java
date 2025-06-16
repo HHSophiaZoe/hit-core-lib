@@ -14,7 +14,7 @@ import java.util.function.Function;
 public abstract class CaffeineCacheStoreImpl implements BaseInternalCacheStore {
 
     @Setter(onMethod_ = {@Autowired, @Qualifier("caffeineCacheManager")})
-    private CacheManager caffeineCacheManager;
+    protected CacheManager caffeineCacheManager;
 
     @Override
     public void putAll(String cacheName, Map<Object, Object> data) {

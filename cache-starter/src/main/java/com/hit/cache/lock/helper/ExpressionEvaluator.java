@@ -1,4 +1,4 @@
-package com.hit.cache.lock;
+package com.hit.cache.lock.helper;
 
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.expression.AnnotatedElementKey;

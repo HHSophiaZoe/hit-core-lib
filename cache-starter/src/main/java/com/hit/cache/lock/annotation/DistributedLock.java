@@ -23,8 +23,8 @@ public @interface DistributedLock {
 
     long transactionTtlSec() default 30L;
 
-    long waitTimeMs() default 0L;
+    long waitTimeMs() default 1000L; // Max total lock wait time
 
-    long waitIntervalMs() default 1000L;
+    long waitIntervalMs() default 500L; // Wait time between retries
 
 }

@@ -2,41 +2,32 @@ package com.hit.cache.store.external;
 
 import com.hit.cache.config.properties.ExternalCacheConfigProperties;
 import com.hit.cache.config.serializer.RedisSerializer;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.RedissonMultiLock;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.*;
-import java.util.function.Supplier;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
 
     @Setter(onMethod_ = {@Autowired})
-    private RedisTemplate<String, String> stringRedisTemplate;
+    protected RedisTemplate<String, String> stringRedisTemplate;
 
     @Setter(onMethod_ = {@Autowired})
-    private ExternalCacheConfigProperties cacheConfigProp;
+    protected ExternalCacheConfigProperties cacheConfigProp;
 
     @Setter(onMethod_ = {@Autowired})
-    private RedissonClient redissonClient;
+    protected RedisSerializer redisSerializer;
 
-    @Setter(onMethod_ = {@Autowired})
-    private RedisSerializer redisSerializer;
-
-    private String keyGen(String key) {
+    protected String keyGen(String key) {
         return this.cacheConfigProp.getApplicationCache() + this.cacheConfigProp.getDelimiter() + key;
     }
 
@@ -150,11 +141,6 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
         } catch (Exception e) {
             return false;
         }
-    }
-
-    public void watchKey(String key) {
-        String keyGen = this.keyGen(key);
-        this.stringRedisTemplate.watch(keyGen);
     }
 
 }
