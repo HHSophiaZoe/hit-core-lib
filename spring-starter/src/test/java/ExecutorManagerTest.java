@@ -1,6 +1,6 @@
 import com.hit.spring.SpringStarterConfig;
 import com.hit.spring.core.manager.ExecutorManager;
-import com.hit.spring.utils.ThreadUtils;
+import com.hit.spring.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.jupiter.api.Assertions;
@@ -12,7 +12,7 @@ import org.springframework.test.context.TestPropertySource;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.hit.spring.core.constants.enums.TrackingContextEnum.CORRELATION_ID;
+import static com.hit.spring.core.constant.enums.TrackingContextEnum.CORRELATION_ID;
 
 @Slf4j
 @SpringBootTest(classes = SpringStarterConfig.class)

@@ -6,7 +6,7 @@ import com.hit.spring.core.data.model.UserPrincipal;
 import com.hit.spring.core.exception.BaseResponseException;
 import com.hit.spring.core.exception.ResponseStatusCodeEnum;
 import com.hit.spring.security.annotation.UserPrincipalRequest;
-import com.hit.spring.utils.IPAddressUtils;
+import com.hit.spring.util.IPAddressUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;

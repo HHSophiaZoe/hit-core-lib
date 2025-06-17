@@ -3,7 +3,7 @@ package com.hit.spring.core.data.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hit.spring.config.locale.Translator;
-import com.hit.spring.utils.TimeUtils;
+import com.hit.spring.util.TimeUtils;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

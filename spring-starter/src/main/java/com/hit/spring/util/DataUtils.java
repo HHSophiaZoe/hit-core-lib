@@ -1,4 +1,4 @@
-package com.hit.spring.utils;
+package com.hit.spring.util;
 
 import com.hit.spring.core.json.JsonMapper;
 import lombok.experimental.UtilityClass;
@@ -12,7 +12,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
-import static com.hit.spring.core.constants.CommonConstant.EMPTY_STRING;
+import static com.hit.spring.core.constant.CommonConstant.EMPTY_STRING;
 
 @Slf4j
 @UtilityClass

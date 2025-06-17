@@ -1,4 +1,4 @@
-package com.hit.spring.core.constants.enums;
+package com.hit.spring.core.constant.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

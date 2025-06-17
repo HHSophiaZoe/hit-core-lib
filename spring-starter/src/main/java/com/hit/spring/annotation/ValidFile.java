@@ -1,7 +1,7 @@
 package com.hit.spring.annotation;
 
 import com.hit.spring.annotation.validator.FileValidator;
-import com.hit.spring.core.constants.enums.FileExtensionEnum;
+import com.hit.spring.core.constant.enums.FileExtensionEnum;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 

@@ -84,7 +84,7 @@ public abstract class BaseService<M, E, ID, Repo extends BaseRepository<E, ID>, 
                 idNotExists.add(id);
             }
         }
-        throw new BaseResponseException(ResponseStatusCodeEnum.DELETE_RESOURCES_NOT_FOUND, new String[]{idNotExists.toString()});
+        throw new BaseResponseException(ResponseStatusCodeEnum.SHOW_RESOURCES_NOT_FOUND, new String[]{idNotExists.toString()});
     }
 
 }

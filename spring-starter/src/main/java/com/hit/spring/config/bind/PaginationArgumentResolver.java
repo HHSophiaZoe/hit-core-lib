@@ -4,7 +4,7 @@ import com.hit.coremodel.pagination.Order;
 import com.hit.coremodel.pagination.PageableReqModel;
 import com.hit.coremodel.query.Filter;
 import com.hit.spring.annotation.PaginationParameter;
-import com.hit.spring.core.constants.CommonConstant.CommonSymbol;
+import com.hit.spring.core.constant.CommonConstant.CommonSymbol;
 import com.hit.spring.core.json.JsonMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;

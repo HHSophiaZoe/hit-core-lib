@@ -1,7 +1,7 @@
 package com.hit.spring.service.http.impl;
 
 import com.hit.spring.core.exception.HttpClientTimeout;
-import com.hit.spring.utils.DataUtils;
+import com.hit.spring.util.DataUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;

@@ -1,6 +1,6 @@
 package com.hit.spring.core.converter;
 
-import com.hit.spring.utils.DataUtils;
+import com.hit.spring.util.DataUtils;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;

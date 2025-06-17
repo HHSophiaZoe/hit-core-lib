@@ -1,7 +1,7 @@
 package com.hit.spring.annotation.validator;
 
 import com.hit.spring.annotation.ValidDateTime;
-import com.hit.spring.utils.TimeUtils;
+import com.hit.spring.util.TimeUtils;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.apache.commons.lang3.ObjectUtils;

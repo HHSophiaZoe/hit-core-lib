@@ -1,9 +1,8 @@
 package com.hit.spring.core.filter;
 
 import com.hit.spring.config.properties.ApplicationProperties;
-import com.hit.spring.core.constants.enums.TrackingContextEnum;
-import com.hit.spring.utils.DataUtils;
-import com.hit.spring.utils.StringUtils;
+import com.hit.spring.core.constant.enums.TrackingContextEnum;
+import com.hit.spring.util.StringUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

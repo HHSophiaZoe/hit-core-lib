@@ -1,6 +1,6 @@
 package com.hit.cache.config;
 
-import com.hit.cache.config.properties.ExternalCacheConfigProperties;
+import com.hit.cache.config.properties.CacheConfigProperties;
 import com.hit.cache.config.serializer.RedisSerializer;
 import com.hit.cache.config.serializer.RedisSerializerImpl;
 import lombok.SneakyThrows;
@@ -30,7 +30,7 @@ import java.util.Map;
 @Slf4j
 @EnableCaching
 @Configuration
-@ConditionalOnProperty(value = {"external-cache.enable"}, havingValue = "true")
+@ConditionalOnProperty(value = {"cache.external.enable"}, havingValue = "true")
 public class RedisCacheConfig {
 
     @Bean
@@ -46,25 +46,24 @@ public class RedisCacheConfig {
     }
 
     @Bean
-    public CacheManager redisCacheManager(
-            RedissonConnectionFactory redissonConnectionFactory,
-            ExternalCacheConfigProperties properties) {
+    public CacheManager redisCacheManager(RedissonConnectionFactory redissonConnectionFactory, CacheConfigProperties properties) {
+        CacheConfigProperties.ExternalCacheConfigProperties externalProperties = properties.getExternal();
         Map<String, RedisCacheConfiguration> config = new HashMap<>();
-        for (Map.Entry<String, Long> cachesWithTtl : properties.getCacheExpirations().entrySet()) {
+        for (Map.Entry<String, Long> cachesWithTtl : externalProperties.getCacheExpirations().entrySet()) {
             config.put(cachesWithTtl.getKey(), this.createDefaultCacheConfiguration(properties,
                     cachesWithTtl.getValue()));
         }
         return RedisCacheManager
                 .builder(redissonConnectionFactory)
-                .cacheDefaults(this.createDefaultCacheConfiguration(properties, properties.getCacheDefaultExpire()))
+                .cacheDefaults(this.createDefaultCacheConfiguration(properties, externalProperties.getDefaultExpireSec()))
                 .withInitialCacheConfigurations(config).build();
     }
 
-    public RedisCacheConfiguration createDefaultCacheConfiguration(ExternalCacheConfigProperties properties, long ttl) {
+    public RedisCacheConfiguration createDefaultCacheConfiguration(CacheConfigProperties properties, long ttl) {
         return RedisCacheConfiguration.defaultCacheConfig()
                 .serializeValuesWith(this.getJdkSerialization())
                 .computePrefixWith(cacheName -> {
-                    String prefix = properties.getApplicationCache() + properties.getDelimiter();
+                    String prefix = properties.getAppCache() + properties.getDelimiter();
                     if (!cacheName.isEmpty()) {
                         prefix += cacheName + properties.getDelimiter();
                     }
@@ -92,8 +91,8 @@ public class RedisCacheConfig {
 
     @SneakyThrows
     @Bean(destroyMethod = "shutdown")
-    public RedissonClient redissonClient(ExternalCacheConfigProperties properties) {
+    public RedissonClient redissonClient(CacheConfigProperties properties) {
         log.info("Create RedissonClient");
-        return Redisson.create(properties.getRedisson());
+        return Redisson.create(properties.getExternal().getRedisson());
     }
 }

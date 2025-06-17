@@ -1,17 +1,10 @@
 package com.hit.spring.core.filter;
 
 import com.hit.spring.config.properties.SecurityProperties;
-import com.hit.spring.context.SecurityContext;
-import com.hit.spring.core.data.model.UserPrincipal;
 import com.hit.spring.core.exception.BaseResponseException;
 import com.hit.spring.core.exception.ResponseStatusCodeEnum;
-import com.hit.spring.core.factory.GeneralResponse;
-import com.hit.spring.core.factory.InternalResponse;
 import com.hit.spring.core.factory.ResponseFactory;
 import com.hit.spring.security.authorization.AuthorizationHandler;
-import com.hit.spring.service.http.HttpService;
-import com.hit.spring.utils.ApiUtils;
-import com.hit.spring.utils.DataUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,9 +14,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 

@@ -1,6 +1,6 @@
-package com.hit.cache.lock.annotation;
+package com.hit.cache.lock;
 
-import com.hit.cache.lock.exception.DistributedLockException;
+import com.hit.cache.exception.DistributedLockException;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -19,7 +19,7 @@ public @interface DistributedLock {
 
     boolean enabled() default true;
 
-    boolean readLock() default false;
+    boolean readLock() default false; // Allows creation of multiple identical keys
 
     long transactionTtlSec() default 30L;
 

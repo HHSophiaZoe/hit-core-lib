@@ -1,9 +1,10 @@
-package com.hit.cache.lock.annotation.processor;
+package com.hit.cache.lock.processor;
 
 import com.github.f4b6a3.ulid.UlidCreator;
-import com.hit.cache.lock.helper.DistributedAtomic;
-import com.hit.cache.lock.annotation.DistributedLock;
-import com.hit.cache.lock.exception.DistributedLockException;
+import com.hit.cache.helper.DistributedAtomic;
+import com.hit.cache.lock.DistributedLock;
+import com.hit.cache.exception.DistributedLockException;
+import com.hit.cache.util.CacheUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -17,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
 @Aspect
 @Configuration
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = {"external-cache.enable"}, havingValue = "true")
+@ConditionalOnProperty(value = {"cache.external.enable"}, havingValue = "true")
 public class DistributedLockSimpleLockProcessor extends DistributedLockAbstractProcessor {
 
     private final DistributedAtomic distributedAtomic;
@@ -37,7 +38,7 @@ public class DistributedLockSimpleLockProcessor extends DistributedLockAbstractP
 
         if (StringUtils.isEmpty(value)) return pjp.proceed();
 
-        String key = this.buildKey(name, value);
+        String key = CacheUtils.buildCacheKey(name, value);
         long startTime = System.currentTimeMillis();
         do {
             String uniqueValue = UlidCreator.getMonotonicUlid().toString();
@@ -67,10 +68,10 @@ public class DistributedLockSimpleLockProcessor extends DistributedLockAbstractP
             }
         } while (waitTimeMs > 0);
 
-        log.warn("DistributedLock timeout: cannot wait for key '{}' after {} ms", value, waitTimeMs);
+        log.warn("DistributedLock timeout: cannot wait for key '{}' after {} ms", value, System.currentTimeMillis() - startTime);
         if (distributedLock.exception() != DistributedLockException.None.class) {
-            throw distributedLock.exception().getDeclaredConstructor(DistributedLockException.DistributedLockData.class)
-                    .newInstance(new DistributedLockException.DistributedLockData(name, value));
+            throw distributedLock.exception().getDeclaredConstructor(DistributedLockException.class)
+                    .newInstance(new DistributedLockException(key));
         }
         return null;
     }
@@ -80,9 +81,9 @@ public class DistributedLockSimpleLockProcessor extends DistributedLockAbstractP
         return Boolean.TRUE.equals(distributedAtomic.deleteKeyVal(key, val + suffix));
     }
 
-    private boolean acquireLock(String key, String value, long ttl, boolean readLock) { // Tạo đc key -> trả về true
+    private boolean acquireLock(String key, String value, long ttl, boolean readLock) { // Created key -> return true
         return readLock
-                ? distributedAtomic.setIfAbsentWithSuffix(key, value, ttl, READ_LOCK_SUFFIX) // Nếu có chứa READ_LOCK_SUFFIX thì tạo key mới
+                ? distributedAtomic.setIfAbsentWithSuffix(key, value, ttl, READ_LOCK_SUFFIX) // If it contains READ_LOCK_SUFFIX, create a new key when value is different
                 : distributedAtomic.setIfAbsent(key, value, ttl);
     }
 }

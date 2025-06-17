@@ -9,7 +9,7 @@ public interface ResponseStatusCodeEnum {
     ResponseStatusCode BUSINESS_ERROR = ResponseStatusCode.builder().code("BUSINESS_ERROR").httpStatus(HttpStatus.BAD_REQUEST).build();
     ResponseStatusCode VALIDATION_ERROR = ResponseStatusCode.builder().code("VALIDATION_ERROR").httpStatus(HttpStatus.BAD_REQUEST).build();
     ResponseStatusCode RESOURCE_NOT_FOUND = ResponseStatusCode.builder().code("RESOURCE_NOT_FOUND").httpStatus(HttpStatus.BAD_REQUEST).build();
-    ResponseStatusCode DELETE_RESOURCES_NOT_FOUND = ResponseStatusCode.builder().code("DELETE_RESOURCES_NOT_FOUND").httpStatus(HttpStatus.BAD_REQUEST).build();
+    ResponseStatusCode SHOW_RESOURCES_NOT_FOUND = ResponseStatusCode.builder().code("SHOW_RESOURCES_NOT_FOUND").httpStatus(HttpStatus.BAD_REQUEST).build();
 
     // Auth
     ResponseStatusCode UNAUTHORIZED_ERROR = ResponseStatusCode.builder().code("AUTH001").httpStatus(HttpStatus.UNAUTHORIZED).build();

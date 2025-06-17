@@ -4,23 +4,25 @@ import java.util.Map;
 
 public interface BaseExternalCacheStore {
 
-    <T> void putObject(String key, T value);
+    <T> void put(String key, T value);
 
-    <T> void putObject(String key, T value, long expireSeconds);
+    <T> void put(String key, T value, long expireSeconds);
 
-    <T> T getObject(String key, Class<T> objectClass);
+    <T> boolean putIfAbsent(String key, T value, long expireSeconds);
 
-    <K, V> void putObjectAsHash(String key, Map<K, V> value);
+    <T> T get(String key, Class<T> objectClass);
 
-    <K, V> void putObjectAsHash(String key, Map<K, V> value, long expireSeconds);
+    <K, V> void putAsHash(String key, Map<K, V> value);
 
-    <K, V> void putObjectToHash(String key, K hashKey, V hashValue);
+    <K, V> void putAsHash(String key, Map<K, V> value, long expireSeconds);
 
-    <K, V> Map<K, V> getObjectAsHash(String key, Class<K> objectClassKey, Class<V> objectClassValue);
+    <K, V> void putToHash(String key, K hashKey, V hashValue);
 
-    <K, V> V getObjectFromHash(String key, K hashKey, Class<V> objectClassValue);
+    <K, V> Map<K, V> getAsHash(String key, Class<K> objectClassKey, Class<V> objectClassValue);
 
-    <K> void deleteHashValue(String key, K... hashKeys);
+    <K, V> V getFromHash(String key, K hashKey, Class<V> objectClassValue);
+
+    <K> void delHashValue(String key, K... hashKeys);
 
     void delete(String key);
 

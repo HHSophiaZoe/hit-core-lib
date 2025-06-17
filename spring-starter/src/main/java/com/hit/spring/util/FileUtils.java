@@ -1,7 +1,6 @@
-package com.hit.spring.utils;
+package com.hit.spring.util;
 
-import com.hit.spring.core.constants.CommonConstant;
-import lombok.SneakyThrows;
+import com.hit.spring.core.constant.CommonConstant;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;

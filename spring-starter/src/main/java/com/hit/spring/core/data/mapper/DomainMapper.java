@@ -1,6 +1,6 @@
 package com.hit.spring.core.data.mapper;
 
-import com.hit.spring.utils.ReflectUtils;
+import com.hit.spring.util.ReflectUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.mapstruct.IterableMapping;
 import org.mapstruct.Named;

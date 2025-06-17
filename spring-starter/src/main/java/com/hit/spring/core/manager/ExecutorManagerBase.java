@@ -1,10 +1,8 @@
 package com.hit.spring.core.manager;
 
 import com.hit.spring.config.properties.TaskExecutorProperties;
-import com.hit.spring.core.exception.ExecutorException;
 import com.hit.spring.core.extension.Procedure;
 import lombok.Setter;
-import org.apache.logging.log4j.ThreadContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -13,9 +11,6 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
-
-import static com.hit.spring.core.constants.enums.TrackingContextEnum.CORRELATION_ID;
 
 public abstract class ExecutorManagerBase {
 

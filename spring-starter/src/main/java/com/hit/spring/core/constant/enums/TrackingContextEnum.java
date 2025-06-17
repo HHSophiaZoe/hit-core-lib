@@ -1,12 +1,10 @@
-package com.hit.spring.core.constants.enums;
+package com.hit.spring.core.constant.enums;
 
-import com.hit.spring.utils.TraceUtils;
+import com.hit.spring.util.TraceUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.UUID;
-
-import static com.hit.spring.core.constants.CommonConstant.CommonSymbol.SHIFT_DASH;
+import static com.hit.spring.core.constant.CommonConstant.CommonSymbol.SHIFT_DASH;
 
 @Getter
 @AllArgsConstructor

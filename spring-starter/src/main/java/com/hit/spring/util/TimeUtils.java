@@ -1,4 +1,4 @@
-package com.hit.spring.utils;
+package com.hit.spring.util;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;

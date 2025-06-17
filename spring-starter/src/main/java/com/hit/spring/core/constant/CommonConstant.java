@@ -1,4 +1,4 @@
-package com.hit.spring.core.constants;
+package com.hit.spring.core.constant;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

@@ -2,8 +2,8 @@ package com.hit.spring.core.filter;
 
 import com.hit.spring.config.properties.SecurityProperties;
 import com.hit.spring.context.SecurityContext;
-import com.hit.spring.core.constants.CommonConstant;
-import com.hit.spring.core.constants.HeaderConstant;
+import com.hit.spring.core.constant.CommonConstant;
+import com.hit.spring.core.constant.HeaderConstant;
 import com.hit.spring.core.data.model.SimpleSecurityUser;
 import com.hit.spring.core.exception.BaseResponseException;
 import com.hit.spring.core.exception.BusinessException;

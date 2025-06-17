@@ -1,4 +1,4 @@
-package com.hit.spring.utils;
+package com.hit.spring.util;
 
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressSeqRange;

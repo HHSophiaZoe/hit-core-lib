@@ -1,12 +1,12 @@
 package com.hit.spring.core.manager;
 
-import com.hit.spring.core.constants.enums.TrackingContextEnum;
+import com.hit.spring.core.constant.enums.TrackingContextEnum;
 import com.hit.spring.core.exception.ExecutorException;
 import com.hit.spring.core.extension.Procedure;
 import org.apache.logging.log4j.ThreadContext;
 
-import static com.hit.spring.core.constants.enums.TrackingContextEnum.CORRELATION_ID;
-import static com.hit.spring.core.constants.enums.TrackingContextEnum.THREAD_ID;
+import static com.hit.spring.core.constant.enums.TrackingContextEnum.CORRELATION_ID;
+import static com.hit.spring.core.constant.enums.TrackingContextEnum.THREAD_ID;
 
 public class WrappedRunnable implements Runnable {
 

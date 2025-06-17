@@ -1,4 +1,4 @@
-package com.hit.spring.utils;
+package com.hit.spring.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.hit.spring.core.extension.SupplierThrowable;
@@ -12,8 +12,6 @@ import com.hit.spring.core.json.JsonMapper;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 

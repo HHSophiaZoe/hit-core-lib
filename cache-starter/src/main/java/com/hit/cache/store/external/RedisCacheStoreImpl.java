@@ -1,12 +1,13 @@
 package com.hit.cache.store.external;
 
-import com.hit.cache.config.properties.ExternalCacheConfigProperties;
+import com.hit.cache.config.properties.CacheConfigProperties;
 import com.hit.cache.config.serializer.RedisSerializer;
+import com.hit.cache.helper.CacheContext;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisCallback;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
@@ -19,47 +20,62 @@ import java.util.Map;
 public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
 
     @Setter(onMethod_ = {@Autowired})
-    protected RedisTemplate<String, String> stringRedisTemplate;
+    protected StringRedisTemplate redisTemplate;
 
     @Setter(onMethod_ = {@Autowired})
-    protected ExternalCacheConfigProperties cacheConfigProp;
+    protected CacheConfigProperties cacheConfigProp;
 
     @Setter(onMethod_ = {@Autowired})
     protected RedisSerializer redisSerializer;
 
+    protected static final String OK = "OK";
+
     protected String keyGen(String key) {
-        return this.cacheConfigProp.getApplicationCache() + this.cacheConfigProp.getDelimiter() + key;
+        return this.cacheConfigProp.getAppCache() + this.cacheConfigProp.getDelimiter() + key;
     }
 
     @Override
-    public <T> void putObject(String key, T value) {
-        this.putObject(key, value, cacheConfigProp.getCacheDefaultExpire());
+    public <T> void put(String key, T value) {
+        this.put(key, value, cacheConfigProp.getExternal().getDefaultExpireSec());
     }
 
     @Override
-    public <T> void putObject(String key, T value, long expire) {
+    public <T> void put(String key, T value, long expire) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache put: key = {}, value = {}, expire = {}", keyGen, value, expire);
-        ValueOperations<String, String> ops = this.stringRedisTemplate.opsForValue();
+        ValueOperations<String, String> ops = this.redisTemplate.opsForValue();
         ops.set(keyGen, redisSerializer.serializer(value));
-        this.stringRedisTemplate.expire(keyGen, Duration.ofSeconds(expire));
+        this.redisTemplate.expire(keyGen, Duration.ofSeconds(expire));
     }
 
     @Override
-    public <T> T getObject(String key, Class<T> objectClass) {
+    public <T> boolean putIfAbsent(String key, T value, long expireSeconds) {
+        try {
+            return OK.equals(redisTemplate.execute(
+                    CacheContext.getSetIfAbsentScript(), Collections.singletonList(this.keyGen(key)),
+                    redisSerializer.serializer(value), String.valueOf(expireSeconds)
+            ));
+        } catch (Exception ex) {
+            log.error("error when call redis", ex);
+            return false;
+        }
+    }
+
+    @Override
+    public <T> T get(String key, Class<T> objectClass) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache get: key = {}", keyGen);
-        String valueStr = this.stringRedisTemplate.opsForValue().get(keyGen);
+        String valueStr = this.redisTemplate.opsForValue().get(keyGen);
         return redisSerializer.deserializer(valueStr, objectClass);
     }
 
     @Override
-    public <K, V> void putObjectAsHash(String key, Map<K, V> value) {
-        this.putObjectAsHash(key, value, this.cacheConfigProp.getCacheDefaultExpire());
+    public <K, V> void putAsHash(String key, Map<K, V> value) {
+        this.putAsHash(key, value, this.cacheConfigProp.getExternal().getDefaultExpireSec());
     }
 
     @Override
-    public <K, V> void putObjectAsHash(String key, Map<K, V> value, long expire) {
+    public <K, V> void putAsHash(String key, Map<K, V> value, long expire) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache put: key = {}, value = {}", keyGen, value);
         byte[] rawKey = redisSerializer.serializerRaw(keyGen);
@@ -69,7 +85,7 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
             byte[] hashValueRaw = redisSerializer.serializerRaw(entry.getValue());
             entries.put(hashKeyRaw, hashValueRaw);
         }
-        this.stringRedisTemplate.execute((RedisCallback<Object>) connection -> {
+        this.redisTemplate.execute((RedisCallback<Object>) connection -> {
             try (connection) {
                 connection.hMSet(rawKey, entries);
                 connection.expire(rawKey, expire);
@@ -79,20 +95,20 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
     }
 
     @Override
-    public <K, V> void putObjectToHash(String key, K hashKey, V hashValue) {
+    public <K, V> void putToHash(String key, K hashKey, V hashValue) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache put: key = {}, hashKey = {}, hashValue = {}", keyGen, hashKey, hashValue);
-        this.stringRedisTemplate.opsForHash()
+        this.redisTemplate.opsForHash()
                 .put(keyGen, redisSerializer.serializer(hashKey), redisSerializer.serializer(hashValue));
     }
 
     @Override
-    public <K, V> Map<K, V> getObjectAsHash(String key, Class<K> objectClassKey,
-                                                                          Class<V> objectClassValue) {
+    public <K, V> Map<K, V> getAsHash(String key, Class<K> objectClassKey,
+                                      Class<V> objectClassValue) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCacheTemplate get: key = {}", keyGen);
         Map<byte[], byte[]> entries =
-                this.stringRedisTemplate.execute((RedisCallback<Map<byte[], byte[]>>) connection -> {
+                this.redisTemplate.execute((RedisCallback<Map<byte[], byte[]>>) connection -> {
                     return connection.hGetAll(redisSerializer.serializerRaw(keyGen));
                 });
         if (entries == null || entries.isEmpty()) {
@@ -109,35 +125,35 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
     }
 
     @Override
-    public <K, V> V getObjectFromHash(String key, K hashKey, Class<V> objectClassValue) {
+    public <K, V> V getFromHash(String key, K hashKey, Class<V> objectClassValue) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache get: key = {}, hashKey = {}", keyGen, hashKey);
-        String hashValueStr = (String) this.stringRedisTemplate.opsForHash()
+        String hashValueStr = (String) this.redisTemplate.opsForHash()
                 .get(keyGen, redisSerializer.serializer(hashKey));
         return redisSerializer.deserializer(hashValueStr, objectClassValue);
     }
 
     @Override
     @SafeVarargs
-    public final <K> void deleteHashValue(String key, K... hashKeys) {
+    public final <K> void delHashValue(String key, K... hashKeys) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache del: key = {}, hashKeys = {}", keyGen, hashKeys);
         Object[] hashKeysStr = Arrays.stream(hashKeys).map(redisSerializer::serializer).toArray(Object[]::new);
-        this.stringRedisTemplate.opsForHash().delete(keyGen, hashKeysStr);
+        this.redisTemplate.opsForHash().delete(keyGen, hashKeysStr);
     }
 
     @Override
     public void delete(String key) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache delete: key = {}", keyGen);
-        stringRedisTemplate.delete(keyGen);
+        redisTemplate.delete(keyGen);
     }
 
     @Override
     public boolean hasKey(String key) {
         try {
             String keyGen = this.keyGen(key);
-            return this.stringRedisTemplate.hasKey(keyGen);
+            return this.redisTemplate.hasKey(keyGen);
         } catch (Exception e) {
             return false;
         }
