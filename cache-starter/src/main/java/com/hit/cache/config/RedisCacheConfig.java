@@ -40,7 +40,6 @@ public class RedisCacheConfig {
     }
 
     @Bean
-    @Primary
     public RedisSerializer myRedisSerializer() {
         return new RedisSerializerImpl();
     }
