@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 public class TaskExecutorProperties {
 
     private Boolean enable = Boolean.FALSE;
-    private String threadNamePrefix = "app.task.executor-";
+    private String threadNamePrefix = "app.executor-";
     private int taskTimeoutSeconds = 30;
     private Pool pool = new Pool();
     private Simple simple = new Simple();

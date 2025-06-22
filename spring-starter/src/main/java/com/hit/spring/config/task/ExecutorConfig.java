@@ -6,17 +6,21 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnThreading;
 import org.springframework.boot.autoconfigure.thread.Threading;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.Objects;
 import java.util.concurrent.ThreadPoolExecutor;
 
+@EnableAsync
 @Configuration
+@ConditionalOnAppExecutorEnable
 public class ExecutorConfig {
 
+    @Primary
     @Bean(name = {"appTaskExecutor"})
-    @ConditionalOnAppExecutorEnable
     @ConditionalOnThreading(Threading.PLATFORM)
     public ThreadPoolTaskExecutor appTaskExecutor(TaskExecutorProperties properties) {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -30,8 +34,8 @@ public class ExecutorConfig {
         return executor;
     }
 
+    @Primary
     @Bean(name = {"appTaskExecutor"})
-    @ConditionalOnAppExecutorEnable
     @ConditionalOnThreading(Threading.VIRTUAL)
     public SimpleAsyncTaskExecutor appTaskExecutorVirtualThreads(TaskExecutorProperties properties) {
         SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor();

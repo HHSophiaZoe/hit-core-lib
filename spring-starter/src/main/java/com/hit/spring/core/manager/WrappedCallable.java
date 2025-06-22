@@ -1,14 +1,11 @@
 package com.hit.spring.core.manager;
 
-import com.hit.spring.core.constant.enums.TrackingContextEnum;
+import com.hit.spring.context.TrackingContext;
 import com.hit.spring.core.exception.ExecutorException;
 import com.hit.spring.core.extension.Procedure;
 import org.apache.logging.log4j.ThreadContext;
 
 import java.util.concurrent.Callable;
-
-import static com.hit.spring.core.constant.enums.TrackingContextEnum.CORRELATION_ID;
-import static com.hit.spring.core.constant.enums.TrackingContextEnum.THREAD_ID;
 
 public class WrappedCallable<T> implements Callable<T> {
 
@@ -20,12 +17,12 @@ public class WrappedCallable<T> implements Callable<T> {
 
     protected WrappedCallable(Callable<T> task) {
         this.task = task;
-        this.correlationId = ThreadContext.get(CORRELATION_ID.getKey());
+        this.correlationId = TrackingContext.getCorrelationId();
     }
 
     protected WrappedCallable(Callable<T> task, Procedure acceptContext, Procedure clearContext) {
         this.task = task;
-        this.correlationId = ThreadContext.get(CORRELATION_ID.getKey());
+        this.correlationId = TrackingContext.getCorrelationId();
         this.acceptContext = acceptContext;
         this.clearContext = clearContext;
     }
@@ -33,8 +30,8 @@ public class WrappedCallable<T> implements Callable<T> {
     @Override
     public T call() {
         try {
-            ThreadContext.put(CORRELATION_ID.getKey(), correlationId);
-            ThreadContext.put(THREAD_ID.getKey(), TrackingContextEnum.genThreadId());
+            TrackingContext.setCorrelationId(correlationId);
+            TrackingContext.setThreadId();
             if (acceptContext != null) {
                 acceptContext.process();
             }

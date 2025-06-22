@@ -1,9 +1,10 @@
 import com.hit.spring.SpringStarterConfig;
+import com.hit.spring.context.TrackingContext;
 import com.hit.spring.core.manager.ExecutorManager;
 import com.hit.spring.util.ThreadUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.ThreadContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +13,6 @@ import org.springframework.test.context.TestPropertySource;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.hit.spring.core.constant.enums.TrackingContextEnum.CORRELATION_ID;
 
 @Slf4j
 @SpringBootTest(classes = SpringStarterConfig.class)
@@ -29,6 +28,12 @@ public class ExecutorManagerTimeoutTest {
     private ExecutorManager executorManager;
 
     private static final String CORRELATION_ID_DEFAULT = "unit-test";
+
+    @AfterEach
+    public void cleanup() {
+        TrackingContext.clearTrackingContext();
+        log.info("[ExecutorManagerTimeoutTest] cleanup");
+    }
 
     @Test
     @SneakyThrows
@@ -62,25 +67,25 @@ public class ExecutorManagerTimeoutTest {
         AtomicReference<String> CORRELATION_ID_2 = new AtomicReference<>();
         AtomicReference<String> CORRELATION_ID_3 = new AtomicReference<>();
         try {
-            ThreadContext.put(CORRELATION_ID.getKey(), CORRELATION_ID_DEFAULT);
+            TrackingContext.setCorrelationId(CORRELATION_ID_DEFAULT);
             log.info("[testZipTasksFailureStrategyERROR_CANCEL] CORRELATION_ID: {}", CORRELATION_ID_DEFAULT);
             executorManager.zipTasks(
                     ExecutorManager.FailureStrategy.ERROR_CANCEL,
                     () -> {
                         ThreadUtils.sleep(Duration.ofSeconds(8));
                         log.info("[testZipTasksFailureStrategyERROR_CANCEL] Step one");
-                        CORRELATION_ID_1.set(ThreadContext.get(CORRELATION_ID.getKey()));
+                        CORRELATION_ID_1.set(TrackingContext.getCorrelationId());
                     },
                     () -> {
                         ThreadUtils.sleep(Duration.ofSeconds(12));
                         log.info("[testZipTasksFailureStrategyERROR_CANCEL] Step two");
-                        CORRELATION_ID_2.set(ThreadContext.get(CORRELATION_ID.getKey()));
+                        CORRELATION_ID_2.set(TrackingContext.getCorrelationId());
                         throw new RuntimeException("Step two exception");
                     },
                     () -> {
                         ThreadUtils.sleep(Duration.ofSeconds(12));
                         log.info("[testZipTasksFailureStrategyERROR_CANCEL] Step three");
-                        CORRELATION_ID_3.set(ThreadContext.get(CORRELATION_ID.getKey()));
+                        CORRELATION_ID_3.set(TrackingContext.getCorrelationId());
                     }
             );
         } catch (Exception e) {

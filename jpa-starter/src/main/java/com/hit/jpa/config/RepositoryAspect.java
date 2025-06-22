@@ -22,7 +22,7 @@ public class RepositoryAspect {
         long executionTime = System.currentTimeMillis() - start;
         String message = joinPoint.getSignature() + " exec in " + executionTime + " ms";
         if (executionTime >= executionLimitMs) {
-            log.warn(message + " : SLOW QUERY");
+            log.warn("{} : SLOW QUERY", message);
         } else {
             log.debug(message);
         }

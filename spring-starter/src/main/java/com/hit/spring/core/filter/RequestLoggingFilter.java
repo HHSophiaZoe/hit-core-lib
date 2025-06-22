@@ -1,20 +1,22 @@
 package com.hit.spring.core.filter;
 
+import com.hit.spring.config.properties.SecurityProperties;
+import com.hit.spring.core.data.wrapper.CachedBodyRequestWrapper;
+import com.hit.spring.util.IPAddressUtils;
+import com.hit.spring.util.LoggingUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.ContentCachingRequestWrapper;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 
-import java.io.UnsupportedEncodingException;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Order(2)
@@ -22,63 +24,81 @@ import java.util.Map;
 @ConditionalOnProperty(value = {"app.enable-log-request-http"}, havingValue = "true")
 public class RequestLoggingFilter extends OncePerRequestFilter {
 
-    private final Map<String, String> replaceCharsError = new HashMap<>();
+    private final ActionLogRequest actionLogRequest;
 
-    public RequestLoggingFilter() {
-        this.replaceCharsError.put("\u0000", "");
+    private final SecurityProperties securityProperties;
+
+    public RequestLoggingFilter(@Autowired(required = false) ActionLogRequest actionLogRequest, SecurityProperties securityProperties) {
+        this.actionLogRequest = actionLogRequest;
+        this.securityProperties = securityProperties;
+    }
+
+    @FunctionalInterface
+    public interface ActionLogRequest {
+        void process(RequestLogData requestData, ResponseLogData responseData);
+    }
+
+    public record RequestLogData(String ip, String url, String header, String body, LocalDateTime requestTime) {
+    }
+
+    public record ResponseLogData(String url, String header, Integer status, String body, LocalDateTime responseTime) {
     }
 
     @Override
     @SneakyThrows
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
-        if (request.getRequestURI().contains("/swagger-ui") || request.getRequestURI().contains("/v3/api-docs")) {
+        if (securityProperties.getApiSkipLogRequest().stream().anyMatch(request.getRequestURI()::contains)) {
             filterChain.doFilter(request, response);
             return;
         }
-        StringBuilder str = new StringBuilder();
+        LocalDateTime requestTime = LocalDateTime.now();
         try {
-            ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
-            filterChain.doFilter(requestWrapper, response);
-            str.append("\n======> HTTP Request: ");
-            str.append("\nRequest to : ").append(this.getFullURL(requestWrapper));
-            str.append("\nMethod     : ").append(requestWrapper.getMethod());
-            str.append("\nHeader     : ").append(this.getHeaders(requestWrapper));
-            str.append("\nBody       : ").append(this.getBody(requestWrapper));
-            str.append(" \n");
-            log.info(str.toString());
+            CachedBodyRequestWrapper requestWrapper = new CachedBodyRequestWrapper(request);
+            ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
+
+            String url = LoggingUtils.getFullURL(requestWrapper);
+            RequestLogData requestLogData = new RequestLogData(
+                    IPAddressUtils.getClientIpAddress(requestWrapper),
+                    url,
+                    LoggingUtils.getHeaders(requestWrapper),
+                    LoggingUtils.getRequestBody(requestWrapper),
+                    requestTime
+            );
+            StringBuilder requestStr = new StringBuilder();
+            requestStr.append("\n======> HTTP Request: ");
+            requestStr.append("\nRequest to   : ").append(requestLogData.url());
+            requestStr.append("\nMethod       : ").append(requestWrapper.getMethod());
+            requestStr.append("\nHeader       : ").append(requestLogData.header());
+            requestStr.append("\nContent-Type : ").append(requestWrapper.getContentType());
+            requestStr.append("\nBody         : ").append(requestLogData.body());
+            requestStr.append(" \n");
+            log.info(requestStr.toString());
+
+            filterChain.doFilter(request, responseWrapper);
+
+            ResponseLogData responseLogData = new ResponseLogData(
+                    url,
+                    LoggingUtils.getHeaders(responseWrapper),
+                    responseWrapper.getStatus(),
+                    LoggingUtils.getResponseBody(responseWrapper),
+                    LocalDateTime.now()
+            );
+            StringBuilder responseStr = new StringBuilder();
+            responseStr.append("\n======> HTTP Response: ");
+            responseStr.append("\nResponse to : ").append(requestLogData.url());
+            responseStr.append("\nHeader      : ").append(responseLogData.header());
+            responseStr.append("\nStatus      : ").append(responseLogData.status());
+            responseStr.append("\nBody        : ").append(responseLogData.body());
+            responseStr.append(" \n");
+            log.info(responseStr.toString());
+
+            if (actionLogRequest != null) {
+                actionLogRequest.process(requestLogData, responseLogData);
+            }
+            responseWrapper.copyBodyToResponse();
         } catch (Exception ex) {
-            log.error(ex.getMessage(), ex);
+            log.error("Request logging error: {}", ex.getMessage(), ex);
         }
     }
 
-    public String getFullURL(HttpServletRequest request) {
-        StringBuilder requestURL = new StringBuilder(request.getRequestURL().toString());
-        String queryString = request.getQueryString();
-        return queryString == null ? requestURL.toString() : requestURL.append('?').append(queryString).toString();
-    }
-
-    public Map<String, String> getHeaders(HttpServletRequest request) {
-        Map<String, String> map = new HashMap<>();
-        Enumeration<String> headersName = request.getHeaderNames();
-        while (headersName.hasMoreElements()) {
-            String name = headersName.nextElement();
-            map.put(name, request.getHeader(name));
-        }
-        return map;
-    }
-
-    private String getBody(ContentCachingRequestWrapper requestWrapper) throws UnsupportedEncodingException {
-        byte[] content = requestWrapper.getContentAsByteArray();
-        if (content.length > 0) {
-            return this.replaceChars(new String(content, requestWrapper.getCharacterEncoding()));
-        }
-        return "";
-    }
-
-    public String replaceChars(String str) {
-        for (Map.Entry<String, String> entry : replaceCharsError.entrySet()) {
-            str = str.replace(entry.getKey(), entry.getValue());
-        }
-        return str;
-    }
 }

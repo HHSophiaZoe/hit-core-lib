@@ -1,7 +1,7 @@
 package com.hit.spring.core.filter;
 
 import com.hit.spring.config.properties.ApplicationProperties;
-import com.hit.spring.core.constant.enums.TrackingContextEnum;
+import com.hit.spring.context.TrackingContext;
 import com.hit.spring.util.StringUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.ThreadContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -26,17 +25,19 @@ public class LogCorrelationFilter extends OncePerRequestFilter {
     @SneakyThrows
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
         long time = System.currentTimeMillis();
-        this.generateCorrelationIdIfNotExists(request.getHeader(TrackingContextEnum.CORRELATION_ID.getKey()));
-        response.setHeader(TrackingContextEnum.CORRELATION_ID.getKey(), ThreadContext.get(TrackingContextEnum.CORRELATION_ID.getKey()));
+        String correlationId = this.generateCorrelationIdIfNotExists(request.getHeader(TrackingContext.CORRELATION_ID));
+        response.setHeader(TrackingContext.CORRELATION_ID, correlationId);
         filterChain.doFilter(request, response);
         log.info("{}: {} ms ", request.getRequestURI(), System.currentTimeMillis() - time);
-        ThreadContext.clearAll();
+        TrackingContext.clearTrackingContext();
     }
 
 
-    private void generateCorrelationIdIfNotExists(String xCorrelationId) {
+    private String generateCorrelationIdIfNotExists(String xCorrelationId) {
         String correlationId = StringUtils.isEmpty(xCorrelationId)
-                ? TrackingContextEnum.genCorrelationId(this.appProperties.getName()) : xCorrelationId;
-        ThreadContext.put(TrackingContextEnum.CORRELATION_ID.getKey(), correlationId);
+                ? TrackingContext.genCorrelationId(this.appProperties.getName())
+                : xCorrelationId;
+        TrackingContext.setCorrelationId(correlationId);
+        return correlationId;
     }
 }

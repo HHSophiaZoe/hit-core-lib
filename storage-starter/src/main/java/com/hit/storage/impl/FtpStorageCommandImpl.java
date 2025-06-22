@@ -64,7 +64,7 @@ public class FtpStorageCommandImpl implements BaseStorageCommand {
     @SneakyThrows
     public List<FileEntryDTO> listFiles(String path, FileExtensionEnum extension) {
         if (!session.exists(path)) {
-            log.info("[FTP] Not found path: {}", path);
+            log.info("[FTP] Not found path : {}", path);
             return Collections.emptyList();
         }
         return Arrays.stream(session.list(path))

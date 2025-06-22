@@ -15,4 +15,6 @@ public class ApplicationProperties {
 
     private Boolean enableLogRequestHttp;
 
+    private Boolean enableDebugLogRequestHttp;
+
 }

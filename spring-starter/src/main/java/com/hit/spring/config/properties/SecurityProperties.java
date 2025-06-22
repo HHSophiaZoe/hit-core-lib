@@ -23,6 +23,12 @@ public class SecurityProperties {
             "/swagger-ui", "/springdoc", "/v3/api-docs", "/actuator/health", "/auth/login"
     ));
 
+    private Set<String> apiSkipLogRequest =  new HashSet<>(List.of(
+            "/swagger-ui", "/springdoc", "/v3/api-docs", "/actuator/health"
+    ));
+
+    private Set<String> sensitiveFieldLogRequest = new HashSet<>(List.of("password"));
+
     private String serverKey = "com.hit";
 
     private Jwt jwt = new Jwt();
