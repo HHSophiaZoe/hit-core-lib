@@ -25,8 +25,11 @@ public class PageableReqModel {
     @Parameter(description = "List of property want to sort.")
     protected List<Order> sorts;
 
-    @Parameter(description = "List of property to filter")
+    @Parameter(description = "List of property to filter and")
     private List<Filter> filters;
+
+    @Parameter(description = "List of property to filter or")
+    private List<Filter> orFilters;
 
     public int getPage() {
         if (page == null || page < 1) {

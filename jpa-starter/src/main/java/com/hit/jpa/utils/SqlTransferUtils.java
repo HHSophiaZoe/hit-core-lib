@@ -3,6 +3,7 @@ package com.hit.jpa.utils;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -45,10 +46,12 @@ public class SqlTransferUtils {
                 return Boolean.parseBoolean(value);
             } else if (Date.class.isAssignableFrom(fieldType) || Temporal.class.isAssignableFrom(fieldType)) {
                 return parseDateTime(value, fieldType);
+            } else if (fieldType.isEnum()) {
+                return parseEnum(value, fieldType);
             }
             return value;
         } catch (Exception e) {
-            log.error("Error converting value '" + value + "' to " + fieldType.getName(), e);
+            log.error("Error converting value '{}' to {}", value, fieldType.getName(), e);
             return null;
         }
     }
@@ -73,9 +76,22 @@ public class SqlTransferUtils {
                 return new BigInteger(value);
             }
         } catch (NumberFormatException e) {
-            log.error("Error parsing number value '" + value + "' to " + fieldType.getName() + ": " + e.getMessage());
+            log.error("Error parsing number value '{}' to {}: {}", value, fieldType.getName(), e.getMessage());
         }
         return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object parseEnum(String value, Class<?> enumClass) {
+        if (StringUtils.isEmpty(value)) {
+            return null;
+        }
+        try {
+            return Enum.valueOf((Class<Enum>) enumClass, value.trim());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid enum value: {} for enum: {}", value, enumClass.getName());
+            return null;
+        }
     }
 
     public static void main(String[] args) {

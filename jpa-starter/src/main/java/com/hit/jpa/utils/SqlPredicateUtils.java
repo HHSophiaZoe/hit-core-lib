@@ -11,11 +11,10 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,22 +23,31 @@ import java.util.stream.Stream;
 public class SqlPredicateUtils {
 
     public static <E> List<Predicate> createPredicateFilters(List<Filter> filters, Class<E> entityClass,
-                                                             Root<E> root, CriteriaBuilder cb) {
+                                                             Root<E> root, CriteriaBuilder cb, Collection<String> columnAccess) {
+        if (CollectionUtils.isEmpty(filters)) {
+            return Collections.emptyList();
+        }
         return filters.stream()
-                .map(filter -> createPredicateFilter(filter, entityClass, root, cb))
+                .map(filter -> createPredicateFilter(filter, entityClass, root, cb, columnAccess))
                 .filter(Objects::nonNull)
                 .toList();
     }
 
-    public static <E> Predicate createPredicateFilter(Filter filter, Class<E> entityClass, Root<E> root, CriteriaBuilder cb) {
+    public static <E> Predicate createPredicateFilter(Filter filter, Class<E> entityClass, Root<E> root,
+                                                      CriteriaBuilder cb, Collection<String> columnAccess) {
         String columnName = filter.getName();
         String value = filter.getValue();
+        Operator operator = Operator.fromOperator(filter.getOperator());
         try {
+            if (!columnAccess.contains(columnName)) {
+                log.warn("[Filter] Cannot find path from column access: {}", columnName);
+                return null;
+            }
+
             Field field = SqlTransferUtils.findField(entityClass, columnName);
             if (field == null) throw new DBException("Invalid column: " + columnName);
 
             Class<?> columnType = field.getType();
-            Operator operator = Operator.fromOperator(filter.getOperator());
             Object convertedValue = convertFilterValue(operator, value, columnType);
             if (convertedValue == null) {
                 return cb.isNull(root.get(columnName));
@@ -62,16 +70,22 @@ public class SqlPredicateUtils {
     }
 
     public static <E> List<Predicate> createPredicateSearches(List<Search> searches, String keyword, Class<E> entityClass,
-                                                              Root<E> root, CriteriaBuilder cb) {
+                                                              Root<E> root, CriteriaBuilder cb, Collection<String> columnAccess) {
         return searches.stream()
-                .map(search -> createPredicateSearch(search, keyword, entityClass, root, cb))
+                .map(search -> createPredicateSearch(search, keyword, entityClass, root, cb, columnAccess))
                 .filter(Objects::nonNull)
                 .toList();
     }
 
-    public static <E> Predicate createPredicateSearch(Search search, String keyword, Class<E> entityClass, Root<E> root, CriteriaBuilder cb) {
+    public static <E> Predicate createPredicateSearch(Search search, String keyword, Class<E> entityClass, Root<E> root,
+                                                      CriteriaBuilder cb, Collection<String> columnAccess) {
         String columnName = search.getName();
         try {
+            if (!columnAccess.contains(columnName)) {
+                log.warn("[Search] Cannot find path from column access: {}", columnName);
+                return null;
+            }
+
             Field field = SqlTransferUtils.findField(entityClass, columnName);
             if (field == null) throw new DBException("Invalid column: " + columnName);
             if (field.getType() != String.class) {
@@ -92,7 +106,7 @@ public class SqlPredicateUtils {
         }
     }
 
-    private static Object convertFilterValue(Operator operator, String value, Class<?> columnType) {
+    public static Object convertFilterValue(Operator operator, String value, Class<?> columnType) {
         if (Operator.operatorFilterListValue().contains(operator.getValue())) {
             String[] values = value.split(",");
             if (values.length == 0) return null;

@@ -1,4 +1,4 @@
-package com.hit.jpa.config.properties;
+package com.hit.jpa.properties;
 
 import com.zaxxer.hikari.HikariConfig;
 import lombok.AllArgsConstructor;

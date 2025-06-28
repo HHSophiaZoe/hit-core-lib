@@ -1,7 +1,7 @@
 package com.hit.jpa.utils;
 
-import com.hit.coremodel.pagination.PageableReqModel;
 import com.hit.coremodel.pagination.PageResModel;
+import com.hit.coremodel.pagination.PageableReqModel;
 import com.hit.coremodel.pagination.PageableSearchReqModel;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.Predicate;
@@ -13,9 +13,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.util.CollectionUtils;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @UtilityClass
@@ -37,29 +37,41 @@ public class SqlUtils {
         return PageRequest.of(request.getPage(), request.getPageSize(), Sort.by(orders));
     }
 
-
-    public <E> Specification<E> createSpecificationPagination(PageableReqModel request, Class<E> entityClass) {
+    public <E> Specification<E> createSpecificationPagination(PageableReqModel request, Class<E> entityClass, Collection<String> columnAccess) {
         return (root, query, criteriaBuilder) -> {
-            // generate filter predicate if contains filter query
-            return Optional.ofNullable(request.getFilters())
-                    .map(filters -> {
-                        List<Predicate> predicateFilters = SqlPredicateUtils.createPredicateFilters(filters, entityClass, root, criteriaBuilder);
-                        return criteriaBuilder.and(predicateFilters.toArray(new Predicate[0]));
-                    })
-                    .orElseGet(criteriaBuilder::conjunction);
+
+            List<Predicate> predicates = new ArrayList<>();
+
+            List<Predicate> predicateFilters = SqlPredicateUtils.createPredicateFilters(request.getFilters(), entityClass, root, criteriaBuilder, columnAccess);
+            if (!CollectionUtils.isEmpty(predicateFilters)) {
+                Predicate andPredicate = criteriaBuilder.and(predicateFilters.toArray(new Predicate[0]));
+                predicates.add(andPredicate);
+            }
+
+            List<Predicate> orPredicateFilters = SqlPredicateUtils.createPredicateFilters(request.getOrFilters(), entityClass, root, criteriaBuilder, columnAccess);
+            if (!CollectionUtils.isEmpty(orPredicateFilters)) {
+                Predicate orPredicate = criteriaBuilder.or(orPredicateFilters.toArray(new Predicate[0]));
+                predicates.add(orPredicate);
+            }
+
+            if (predicates.isEmpty()) {
+                return criteriaBuilder.conjunction();
+            } else {
+                return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            }
         };
     }
 
-    public <E> Specification<E> createSpecificationPaginationSearch(PageableSearchReqModel request, Class<E> entityClass) {
+    public <E> Specification<E> createSpecificationPaginationSearch(PageableSearchReqModel request, Class<E> entityClass, Collection<String> columnAccess) {
         return (root, query, criteriaBuilder) -> {
             // add condition base from PaginationRequest
-            Specification<E> baseSpec = createSpecificationPagination(request, entityClass);
+            Specification<E> baseSpec = createSpecificationPagination(request, entityClass, columnAccess);
             Predicate basePredicate = baseSpec.toPredicate(root, query, criteriaBuilder);
 
             // generate search predicate if contain contains query
             Predicate searchPredicate = Optional.ofNullable(request.getSearches())
                     .map(searches -> {
-                        List<Predicate> predicateSearches = SqlPredicateUtils.createPredicateSearches(searches, request.getKeyword(), entityClass, root, criteriaBuilder);
+                        List<Predicate> predicateSearches = SqlPredicateUtils.createPredicateSearches(searches, request.getKeyword(), entityClass, root, criteriaBuilder, columnAccess);
                         return criteriaBuilder.or(predicateSearches.toArray(new Predicate[0]));
                     })
                     .orElseGet(criteriaBuilder::conjunction);

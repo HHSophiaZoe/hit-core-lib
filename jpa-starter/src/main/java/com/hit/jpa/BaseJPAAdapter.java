@@ -1,13 +1,17 @@
 package com.hit.jpa;
 
-import com.hit.coremodel.pagination.PageableReqModel;
 import com.hit.coremodel.pagination.PageResModel;
+import com.hit.coremodel.pagination.PageableReqModel;
 import com.hit.coremodel.pagination.PageableSearchReqModel;
-import com.hit.jpa.querydsl.QueryDSLRepository;
-import com.hit.jpa.querydsl.QueryDSLRepositoryImpl;
 import com.hit.jpa.utils.SqlUtils;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.Path;
 import com.querydsl.core.types.Predicate;
-import com.querydsl.core.types.dsl.EntityPathBase;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.core.types.dsl.SimplePath;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -17,20 +21,25 @@ import jakarta.persistence.metamodel.SingularAttribute;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.querydsl.EntityPathResolver;
+import org.springframework.data.querydsl.SimpleEntityPathResolver;
 
 import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Modifier;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Getter
 @NoArgsConstructor
+@SuppressWarnings({"unchecked"})
 public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> implements BaseRepository<T, ID> {
 
     @PersistenceContext(unitName = "defaultEntityManager")
@@ -39,72 +48,106 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     @Setter(onMethod_ = {@Autowired})
     protected R jpaRepository;
 
-    protected QueryDSLRepository<T, ID> dslRepository;
+    protected Field columnID;
 
-    protected Field fieldID;
+    protected Set<String> allColumnEntity;
 
+    protected EntityPath<T> entityPath;
+
+    protected JPAQueryFactory queryFactory;
+
+    @SneakyThrows
     @PostConstruct
     private void init() {
         Metamodel metamodel = getEntityManager().getMetamodel();
         EntityType<T> entityType = metamodel.entity(this.getEntityClass());
         SingularAttribute<? super T, ?> idAttribute = entityType.getId(Object.class);
         if (idAttribute.getJavaMember() instanceof Field idField) {
-            this.fieldID = idField;
+            this.columnID = idField;
         } else {
-            this.fieldID = (Field) idAttribute.getJavaMember();
+            this.columnID = (Field) idAttribute.getJavaMember();
         }
-        this.dslRepository = new QueryDSLRepositoryImpl<>(getEntityManager(), getEntityPath(), fieldID);
+
+        this.allColumnEntity = new HashSet<>();
+        // Get all fields from the QueryDSL entity path class
+        Field[] fields = this.entityPath.getClass().getFields();
+        for (Field field : fields) {
+            // Skip static fields and non-Path fields
+            if (Modifier.isStatic(field.getModifiers()) || !Path.class.isAssignableFrom(field.getType())) {
+                continue;
+            }
+            Path<?> path = (Path<?>) field.get(this.entityPath);
+            if (path != null) {
+                this.allColumnEntity.add(path.getMetadata().getName());
+            }
+        }
+
+        EntityPathResolver entityPathResolver = new SimpleEntityPathResolver("");
+        this.entityPath = entityPathResolver.createPath(this.getEntityClass());
+        this.queryFactory = new JPAQueryFactory(this.getEntityManager());
     }
 
     protected EntityManager getEntityManager() {
         return entityManager;
     }
 
-    protected abstract EntityPathBase<T> getEntityPath();
-
     protected abstract Class<T> getEntityClass();
+
+    @SneakyThrows
+    protected Set<String> getPageableColumnAccess() {
+        return this.allColumnEntity;
+    }
 
     @Override
     public PageResModel<T> search(PageableReqModel request) {
         Pageable pageable = SqlUtils.createPageable(request);
-        Specification<T> specification = SqlUtils.createSpecificationPagination(request, this.getEntityClass());
+        Specification<T> specification = SqlUtils.createSpecificationPagination(request, this.getEntityClass(), this.getPageableColumnAccess());
         Page<T> page = this.jpaRepository.findAll(specification, pageable);
         return new PageResModel<>(SqlUtils.buildPagingMeta(request, page), page.getContent());
-    }
-
-    protected PageResModel<T> search(PageableReqModel request, Predicate condition) {
-        return null;
     }
 
     @Override
     public PageResModel<T> search(PageableSearchReqModel request) {
         Pageable pageable = SqlUtils.createPageable(request);
-        Specification<T> specification = SqlUtils.createSpecificationPaginationSearch(request, this.getEntityClass());
+        Specification<T> specification = SqlUtils.createSpecificationPaginationSearch(request, this.getEntityClass(), this.getPageableColumnAccess());
         Page<T> page = this.jpaRepository.findAll(specification, pageable);
         return new PageResModel<>(SqlUtils.buildPagingMeta(request, page), page.getContent());
     }
 
-    protected PageResModel<T> search(PageableSearchReqModel request, Predicate condition) {
-        return null;
-    }
-
     @Override
     public List<ID> getAllId() {
-        return this.dslRepository.getAllId();
+        return this.getAllId(new BooleanBuilder());
     }
 
     @Override
     public List<ID> getAllId(Collection<ID> ids) {
-        return this.dslRepository.getAllId(ids);
+        PathBuilder<T> pathBuilder = new PathBuilder<>(entityPath.getType(), entityPath.getMetadata().getName());
+        SimplePath<ID> idPath = Expressions.path((Class<ID>) columnID.getType(), pathBuilder, columnID.getName());
+        return this.queryFactory.query()
+                .select(idPath)
+                .from(entityPath)
+                .where(idPath.in(ids))
+                .fetch();
     }
 
     protected List<ID> getAllId(Predicate condition) {
-        return this.dslRepository.getAllId(condition);
+        PathBuilder<T> pathBuilder = new PathBuilder<>(entityPath.getType(), entityPath.getMetadata().getName());
+        return this.queryFactory.query()
+                .select(Expressions.path((Class<ID>) columnID.getType(), pathBuilder, columnID.getName()))
+                .from(this.getEntityPath())
+                .where(condition)
+                .fetch();
     }
 
     @Override
     public List<T> getAll() {
         return this.jpaRepository.findAll();
+    }
+
+    protected List<T> getAll(Predicate condition) {
+        return queryFactory.selectFrom(entityPath)
+                .where(condition)
+                .fetch();
     }
 
     @Override
@@ -127,7 +170,7 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     }
 
     protected T getOne(Predicate condition) {
-        return this.dslRepository.getOne(condition).orElse(null);
+        return this.jpaRepository.findOne(condition).orElse(null);
     }
 
     @Override
