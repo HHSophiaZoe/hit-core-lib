@@ -4,7 +4,7 @@ import com.hit.coremodel.query.Filter;
 import com.hit.coremodel.query.Operator;
 import com.hit.coremodel.query.Search;
 import com.hit.coremodel.query.SearchOption;
-import com.hit.jpa.exception.DBException;
+import com.hit.jpa.exception.QueryException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
@@ -45,7 +45,7 @@ public class SqlPredicateUtils {
             }
 
             Field field = SqlTransferUtils.findField(entityClass, columnName);
-            if (field == null) throw new DBException("Invalid column: " + columnName);
+            if (field == null) throw new QueryException("Invalid column: " + columnName);
 
             Class<?> columnType = field.getType();
             Object convertedValue = convertFilterValue(operator, value, columnType);
@@ -65,7 +65,7 @@ public class SqlPredicateUtils {
                 default -> null;
             };
         } catch (Exception e) {
-            throw new DBException("Error processing filter for column: " + columnName, e);
+            throw new QueryException("Error processing filter for column: " + columnName, e);
         }
     }
 
@@ -87,9 +87,9 @@ public class SqlPredicateUtils {
             }
 
             Field field = SqlTransferUtils.findField(entityClass, columnName);
-            if (field == null) throw new DBException("Invalid column: " + columnName);
+            if (field == null) throw new QueryException("Invalid column: " + columnName);
             if (field.getType() != String.class) {
-                throw new DBException("Search field " + search.getName() + " invalid !!!");
+                throw new QueryException("Search field " + search.getName() + " invalid !!!");
             }
 
             SearchOption option = SearchOption.fromOption(search.getOption());
@@ -102,7 +102,7 @@ public class SqlPredicateUtils {
                 case LIKE_IGNORE_CASE_AND_ACCENT -> throw new UnsupportedOperationException("Unsupported operation LIKE_IGNORE_CASE_AND_ACCENT");
             };
         } catch (Exception e) {
-            throw new DBException("Error processing filter for column: " + columnName, e);
+            throw new QueryException("Error processing filter for column: " + columnName, e);
         }
     }
 
@@ -134,7 +134,7 @@ public class SqlPredicateUtils {
         if (String.class.equals(value.getClass())) {
             return cb.like(root.get(columnName), "%" + value + "%");
         }
-        throw new DBException(String.format("Operator 'like' not supported for data type %s", value.getClass()));
+        throw new QueryException(String.format("Operator 'like' not supported for data type %s", value.getClass()));
     }
 
 
@@ -144,7 +144,7 @@ public class SqlPredicateUtils {
     private static <E, T extends Comparable<T>> Predicate
     createPredicateComparisonOperator(Root<E> root, CriteriaBuilder cb, String columnName, Object value, Operator operator) {
         if (!(value instanceof Comparable<?>)) {
-            throw new DBException(String.format("Operator '%s' not supported for data type %s", operator, value.getClass()));
+            throw new QueryException(String.format("Operator '%s' not supported for data type %s", operator, value.getClass()));
         }
 
         @SuppressWarnings("unchecked")
@@ -155,7 +155,7 @@ public class SqlPredicateUtils {
             case LESS_THAN -> cb.lessThan(path, comparableValue);
             case GREATER_THAN_OR_EQUAL -> cb.greaterThanOrEqualTo(path, comparableValue);
             case LESS_THAN_OR_EQUAL -> cb.lessThanOrEqualTo(path, comparableValue);
-            default -> throw new DBException("Comparison unsupported operator: " + operator);
+            default -> throw new QueryException("Comparison unsupported operator: " + operator);
         };
     }
 

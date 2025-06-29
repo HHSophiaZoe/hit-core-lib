@@ -6,7 +6,7 @@ import com.hit.coremodel.query.Filter;
 import com.hit.coremodel.query.Operator;
 import com.hit.coremodel.query.Search;
 import com.hit.coremodel.query.SearchOption;
-import com.hit.jpa.exception.DBException;
+import com.hit.jpa.exception.QueryException;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.Predicate;
@@ -74,7 +74,7 @@ public class SqlDslPredicateUtils {
                 default -> null;
             };
         } catch (Exception e) {
-            throw new DBException("Error processing filter for column: " + columnName, e);
+            throw new QueryException("Error processing filter for column: " + columnName, e);
         }
     }
 
@@ -109,7 +109,7 @@ public class SqlDslPredicateUtils {
                 case LIKE_IGNORE_CASE_AND_ACCENT -> throw new UnsupportedOperationException("Unsupported operation LIKE_IGNORE_CASE_AND_ACCENT");
             };
         } catch (Exception e) {
-            throw new DBException("Error processing search for column: " + columnName, e);
+            throw new QueryException("Error processing search for column: " + columnName, e);
         }
     }
 
@@ -140,7 +140,7 @@ public class SqlDslPredicateUtils {
         } else if (path instanceof ComparablePath comparablePath) {
             return comparablePath.eq(value);
         }
-        throw new DBException("Unsupported path type for EQUAL operation: " + path.getClass());
+        throw new QueryException("Unsupported path type for EQUAL operation: " + path.getClass());
     }
 
     private static Predicate createNotEqualPredicate(Path<?> path, Object value) {
@@ -159,7 +159,7 @@ public class SqlDslPredicateUtils {
         } else if (path instanceof ComparablePath comparablePath) {
             return comparablePath.ne(value);
         }
-        throw new DBException("Unsupported path type for NOT_EQUAL operation: " + path.getClass());
+        throw new QueryException("Unsupported path type for NOT_EQUAL operation: " + path.getClass());
     }
 
     @SuppressWarnings("unchecked")
@@ -184,7 +184,7 @@ public class SqlDslPredicateUtils {
         } else if (path instanceof ComparablePath comparablePath) {
             inPredicate = comparablePath.in(values);
         } else {
-            throw new DBException("Unsupported path type for IN operation: " + path.getClass());
+            throw new QueryException("Unsupported path type for IN operation: " + path.getClass());
         }
 
         return negate ? inPredicate.not() : inPredicate;
@@ -192,21 +192,21 @@ public class SqlDslPredicateUtils {
 
     private static Predicate createLikePredicate(Path<?> path, Object value) {
         if (!(path instanceof StringPath stringPath)) {
-            throw new DBException("LIKE operator only supported for String fields");
+            throw new QueryException("LIKE operator only supported for String fields");
         }
         if (!(value instanceof String stringValue)) {
-            throw new DBException("LIKE operator requires String value");
+            throw new QueryException("LIKE operator requires String value");
         }
         return stringPath.containsIgnoreCase(stringValue);
     }
 
     private static Predicate createComparisonPredicate(Path<?> path, Object value, Operator operator) {
         if (!(value instanceof Comparable<?>)) {
-            throw new DBException(String.format("Operator '%s' not supported for data type %s", operator, value.getClass()));
+            throw new QueryException(String.format("Operator '%s' not supported for data type %s", operator, value.getClass()));
         }
 
         if (!(path instanceof ComparablePath)) {
-            throw new DBException(String.format("Operator '%s' not supported for path type %s", operator, path.getClass()));
+            throw new QueryException(String.format("Operator '%s' not supported for path type %s", operator, path.getClass()));
         }
 
         ComparablePath comparablePath = (ComparablePath) path;
@@ -216,7 +216,7 @@ public class SqlDslPredicateUtils {
             case LESS_THAN -> comparablePath.lt(comparableValue);
             case GREATER_THAN_OR_EQUAL -> comparablePath.goe(comparableValue);
             case LESS_THAN_OR_EQUAL -> comparablePath.loe(comparableValue);
-            default -> throw new DBException("Unsupported comparison operator: " + operator);
+            default -> throw new QueryException("Unsupported comparison operator: " + operator);
         };
     }
 
