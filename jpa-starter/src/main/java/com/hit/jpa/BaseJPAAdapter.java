@@ -3,6 +3,7 @@ package com.hit.jpa;
 import com.hit.coremodel.pagination.PageResModel;
 import com.hit.coremodel.pagination.PageableReqModel;
 import com.hit.coremodel.pagination.PageableSearchReqModel;
+import com.hit.jpa.utils.ChunkUtils;
 import com.hit.jpa.utils.SqlUtils;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.EntityPath;
@@ -54,6 +55,8 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     protected EntityPath<T> entityPath;
 
     protected JPAQueryFactory queryFactory;
+
+    protected static final Integer DEFAULT_BATCH_DELETE = 500;
 
     @SneakyThrows
     @PostConstruct
@@ -213,6 +216,9 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
 
     @Override
     public void delete(Collection<ID> ids) {
-        this.jpaRepository.deleteAllById(ids);
+        ChunkUtils.toChunks(ids, DEFAULT_BATCH_DELETE).forEach(chunk -> {
+            this.jpaRepository.deleteAllByIdInBatch(chunk.getItems());
+            log.debug("Delete {} entities size:{}, from:{}, to:{}", chunk.getItems().size(), chunk.getSize(), chunk.getFrom(), chunk.getTo());
+        });
     }
 }
