@@ -16,13 +16,13 @@ import org.springframework.context.annotation.Configuration;
 public class CaffeineCacheConfig {
 
 
-    @Bean("internalCaffeineConfig")
+    @Bean("caffeineConfig")
     public Caffeine<Object, Object> caffeineConfig(CacheConfigProperties properties) {
         return Caffeine.from(properties.getInternal().getCaffeine().getSpec());
     }
 
-    @Bean("caffeineCacheManager")
-    public CacheManager caffeineCacheManager(@Qualifier("internalCaffeineConfig") Caffeine<Object, Object> caffeine) {
+    @Bean("internalCacheManager")
+    public CacheManager caffeineCacheManager(@Qualifier("caffeineConfig") Caffeine<Object, Object> caffeine) {
         CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
         caffeineCacheManager.setCaffeine(caffeine);
         return caffeineCacheManager;

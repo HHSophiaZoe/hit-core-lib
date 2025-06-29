@@ -14,7 +14,7 @@ import java.util.List;
 public class SftpStorageCommandImpl implements BaseStorageCommand {
 
     public SftpStorageCommandImpl(StorageFileConfig config) {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override

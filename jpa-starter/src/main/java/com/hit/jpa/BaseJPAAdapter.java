@@ -23,6 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,9 +38,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Getter
 @NoArgsConstructor
-@SuppressWarnings({"unchecked"})
 public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> implements BaseRepository<T, ID> {
 
     @PersistenceContext(unitName = "defaultEntityManager")
@@ -82,13 +81,13 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
             }
         }
 
-        EntityPathResolver entityPathResolver = new SimpleEntityPathResolver("");
+        EntityPathResolver entityPathResolver = new SimpleEntityPathResolver(StringUtils.EMPTY);
         this.entityPath = entityPathResolver.createPath(this.getEntityClass());
         this.queryFactory = new JPAQueryFactory(this.getEntityManager());
     }
 
     protected EntityManager getEntityManager() {
-        return entityManager;
+        return this.entityManager;
     }
 
     protected abstract Class<T> getEntityClass();
@@ -120,6 +119,7 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public List<ID> getAllId(Collection<ID> ids) {
         PathBuilder<T> pathBuilder = new PathBuilder<>(entityPath.getType(), entityPath.getMetadata().getName());
         SimplePath<ID> idPath = Expressions.path((Class<ID>) columnID.getType(), pathBuilder, columnID.getName());
@@ -130,11 +130,12 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
                 .fetch();
     }
 
+    @SuppressWarnings("unchecked")
     protected List<ID> getAllId(Predicate condition) {
         PathBuilder<T> pathBuilder = new PathBuilder<>(entityPath.getType(), entityPath.getMetadata().getName());
         return this.queryFactory.query()
                 .select(Expressions.path((Class<ID>) columnID.getType(), pathBuilder, columnID.getName()))
-                .from(this.getEntityPath())
+                .from(entityPath)
                 .where(condition)
                 .fetch();
     }

@@ -44,7 +44,7 @@ public class RedisCacheConfig {
         return new RedisSerializerImpl();
     }
 
-    @Bean
+    @Bean("externalCacheManager")
     public CacheManager redisCacheManager(RedissonConnectionFactory redissonConnectionFactory, CacheConfigProperties properties) {
         CacheConfigProperties.ExternalCacheConfigProperties externalProperties = properties.getExternal();
         Map<String, RedisCacheConfiguration> config = new HashMap<>();
