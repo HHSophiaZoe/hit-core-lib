@@ -64,12 +64,6 @@
 			<version>${spring-boot.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-thymeleaf</artifactId>
-			<version>${spring-boot.version}</version>
-		</dependency>
-
 		<!--   Security   -->
 		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt -->
 		<dependency>
@@ -89,14 +83,7 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 			<version>${spring-boot.version}</version>
 		</dependency>
-
-		<!--   Cloudinary   -->
-		<dependency>
-			<groupId>com.cloudinary</groupId>
-			<artifactId>cloudinary-http44</artifactId>
-			<version>${cloudinary-http44.version}</version>
-		</dependency>
-
+		
 		<!--    Rest api    -->
 		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5 -->
 		<dependency>

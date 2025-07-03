@@ -13,7 +13,7 @@ import java.util.function.Function;
 @Slf4j
 public abstract class CaffeineCacheStoreImpl implements BaseInternalCacheStore {
 
-    @Setter(onMethod_ = {@Autowired, @Qualifier("caffeineCacheManager")})
+    @Setter(onMethod_ = {@Autowired, @Qualifier("internalCacheManager")})
     protected CacheManager caffeineCacheManager;
 
     @Override

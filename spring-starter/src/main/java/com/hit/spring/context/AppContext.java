@@ -3,7 +3,6 @@ package com.hit.spring.context;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hit.spring.config.properties.SecurityProperties;
 import com.hit.spring.core.converter.DataConverter;
-import com.hit.spring.service.cloudinary.CloudinaryService;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
