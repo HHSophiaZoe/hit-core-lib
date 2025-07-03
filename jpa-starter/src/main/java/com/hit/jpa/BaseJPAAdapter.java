@@ -70,6 +70,10 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
             this.columnID = (Field) idAttribute.getJavaMember();
         }
 
+        EntityPathResolver entityPathResolver = new SimpleEntityPathResolver(StringUtils.EMPTY);
+        this.entityPath = entityPathResolver.createPath(this.getEntityClass());
+        this.queryFactory = new JPAQueryFactory(this.getEntityManager());
+
         this.allColumnEntity = new HashSet<>();
         // Get all fields from the QueryDSL entity path class
         Field[] fields = this.entityPath.getClass().getFields();
@@ -83,10 +87,6 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
                 this.allColumnEntity.add(path.getMetadata().getName());
             }
         }
-
-        EntityPathResolver entityPathResolver = new SimpleEntityPathResolver(StringUtils.EMPTY);
-        this.entityPath = entityPathResolver.createPath(this.getEntityClass());
-        this.queryFactory = new JPAQueryFactory(this.getEntityManager());
     }
 
     protected EntityManager getEntityManager() {
