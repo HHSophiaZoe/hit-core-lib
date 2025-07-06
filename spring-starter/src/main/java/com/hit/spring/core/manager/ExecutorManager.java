@@ -199,7 +199,7 @@ public class ExecutorManager extends ExecutorManagerBase {
                     }
                     return zipper.apply(results);
                 })
-                .get(taskExecutorProperties.getTaskTimeoutSeconds(), TimeUnit.SECONDS);
+                .get();
     }
 
     protected void cleanFutureTasks(List<Future<?>> futures) {
