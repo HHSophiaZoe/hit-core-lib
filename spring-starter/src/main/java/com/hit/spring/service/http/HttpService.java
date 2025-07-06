@@ -6,16 +6,16 @@ import org.springframework.http.ResponseEntity;
 
 public interface HttpService {
 
-    String getBlocking(String url, HttpHeaders headers);
+    String get(String url, HttpHeaders headers);
 
-    <R> R getBlocking(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType);
+    <R> R get(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType);
 
-    <R> ResponseEntity<R> getEntityBlocking(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType);
+    <R> ResponseEntity<R> getEntity(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType);
 
-    <B> String postBlocking(String url, B body, HttpHeaders headers);
+    <B> String post(String url, B body, HttpHeaders headers);
 
-    <B, R> R postBlocking(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType);
+    <B, R> R post(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType);
 
-    <B, R> ResponseEntity<R> postEntityBlocking(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType);
+    <B, R> ResponseEntity<R> postEntity(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType);
 
 }

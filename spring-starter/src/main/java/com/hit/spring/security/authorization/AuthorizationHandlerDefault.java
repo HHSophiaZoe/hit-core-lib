@@ -42,7 +42,7 @@ public class AuthorizationHandlerDefault implements AuthorizationHandler {
             userPrincipal.setMethod(request.getMethod());
             userPrincipal.setUri(request.getRequestURI());
             userPrincipal.setUser(SecurityContext.getSimpleSecurityUser());
-            return httpService.postBlocking(securityProperties.getFilter().getApiCheckPermissionUrl(), userPrincipal, new HttpHeaders(), responseType);
+            return httpService.post(securityProperties.getFilter().getApiCheckPermissionUrl(), userPrincipal, new HttpHeaders(), responseType);
         });
         GeneralResponse<Boolean> isPermissionRes = httpResponse.getResponse();
         log.debug("Authorization is permission response: {}", DataUtils.parserLog(isPermissionRes));

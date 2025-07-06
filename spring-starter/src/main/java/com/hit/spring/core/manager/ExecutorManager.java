@@ -107,6 +107,10 @@ public class ExecutorManager extends ExecutorManagerBase {
         return zipTasksReturn(executor, t1, t2, zipper);
     }
 
+    public <T1, T2, R> R zipTasksReturnV2(Callable<T1> t1, Callable<T2> t2, BiFunction<T1, T2, R> zipper) {
+        return zipTasksReturn(executor, t1, t2, zipper);
+    }
+
     @SuppressWarnings({"unchecked"})
     public <T1, T2, R> R zipTasksReturn(AsyncTaskExecutor executor, Callable<T1> t1, Callable<T2> t2, BiFunction<T1, T2, R> zipper) {
         return zipInternal(

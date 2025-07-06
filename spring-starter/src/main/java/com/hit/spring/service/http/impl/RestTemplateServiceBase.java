@@ -9,6 +9,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
@@ -20,42 +21,33 @@ public abstract class RestTemplateServiceBase {
 
     private final RestTemplate template;
 
-//
-// =============================================== Non-Blocking ===================================================
-//
-
-
-//
-// =============================================== Blocking ===================================================
-//
-
-    public String getBlocking(String url, HttpHeaders headers) {
+    public String get(String url, HttpHeaders headers) {
         ParameterizedTypeReference<String> responseType = new ParameterizedTypeReference<>() {
         };
         return this.executeRequest(url, GET, headers, responseType).getBody();
     }
 
-    public <R> R getBlocking(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
+    public <R> R get(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
         return this.executeRequest(url, GET, headers, responseType).getBody();
     }
 
-    public <R> ResponseEntity<R> getEntityBlocking(String url, HttpHeaders headers,
-                                                   ParameterizedTypeReference<R> responseType) {
+    public <R> ResponseEntity<R> getEntity(String url, HttpHeaders headers,
+                                           ParameterizedTypeReference<R> responseType) {
         return this.executeRequest(url, GET, headers, responseType);
     }
 
-    public <B> String postBlocking(String url, B body, HttpHeaders headers) {
+    public <B> String post(String url, B body, HttpHeaders headers) {
         ParameterizedTypeReference<String> responseType = new ParameterizedTypeReference<>() {
         };
         return this.executeRequest(url, POST, body, headers, responseType).getBody();
     }
 
-    public <B, R> R postBlocking(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
+    public <B, R> R post(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
         return this.executeRequest(url, POST, body, headers, responseType).getBody();
     }
 
-    public <B, R> ResponseEntity<R> postEntityBlocking(String url, B body, HttpHeaders headers,
-                                                       ParameterizedTypeReference<R> responseType) {
+    public <B, R> ResponseEntity<R> postEntity(String url, B body, HttpHeaders headers,
+                                               ParameterizedTypeReference<R> responseType) {
         return this.executeRequest(url, POST, body, headers, responseType);
     }
 
@@ -69,15 +61,21 @@ public abstract class RestTemplateServiceBase {
         HttpEntity<?> httpEntity;
         if (POST.equals(method) || PUT.equals(method) || PATCH.equals(method) || DELETE.equals(method)) {
             httpEntity = new HttpEntity<>(body, headers);
+            log.info("Call api [{}]-[{}] \n\tBody: {} \n\tHeaders: {}", method, url, DataUtils.parserLog(body), headers.toString());
         } else {
             httpEntity = new HttpEntity<>(headers);
+            log.info("Call api [{}]-[{}] \n\tHeaders: {}", method, url, headers.toString());
         }
         try {
-            log.debug("Call api [{}]-[{}] \n\tBody: {} \n\tHeaders: {}", method, url, DataUtils.parserLog(body), headers.toString());
-            return template.exchange(url, method, httpEntity, responseType);
+            ResponseEntity<R> response = template.exchange(url, method, httpEntity, responseType);
+            log.info("Call api [{}]-[{}] \n\tResponse: {}", method, url, response.getBody());
+            return response;
         } catch (ResourceAccessException e) {
             log.error("Call api timeout [{}]-[{}]", method, url);
             throw new HttpClientTimeout(e.getMessage(), e);
+        } catch (HttpStatusCodeException e) {
+            log.error("Call api error [{}]-[{}]-[{}]: {}", method, url, e.getStatusCode(), e.getResponseBodyAsString());
+            throw e;
         } catch (Exception e) {
             log.error("Call api error [{}]-[{}]: {}", method, url, e.getMessage());
             throw e;

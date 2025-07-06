@@ -19,4 +19,6 @@ public interface BaseInternalCacheStore {
 
     void deleteKey(String cacheName, String key);
 
+    void deleteAll();
+
 }
