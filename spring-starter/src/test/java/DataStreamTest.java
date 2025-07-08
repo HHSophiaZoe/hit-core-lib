@@ -1,4 +1,5 @@
 import com.hit.spring.SpringStarterConfig;
+import com.hit.spring.core.exception.StreamingException;
 import com.hit.spring.core.reactive.DataStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
@@ -44,7 +45,7 @@ public class DataStreamTest {
                     nextData.add(data);
                     emitter.onNext(nextData);
                 } catch (Exception e) {
-                    emitter.onError(e);
+                    emitter.onError(new StreamingException(e.getMessage(), e));
                 }
             }
             emitter.onComplete();

@@ -1,5 +1,7 @@
 package com.hit.spring.core.reactive;
 
+import com.hit.spring.core.exception.StreamingException;
+
 import java.util.function.Consumer;
 
 public class DataStream<T> {
@@ -22,7 +24,7 @@ public class DataStream<T> {
             }
 
             @Override
-            public void onError(Throwable error) {
+            public void onError(StreamingException error) {
                 onError.accept(error);
             }
 

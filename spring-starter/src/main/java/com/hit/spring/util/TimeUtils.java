@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -45,6 +46,19 @@ public class TimeUtils {
             return LocalDate.parse(dateStr, formatter);
         } catch (Exception e) {
             log.error("parseToLocalDate ERROR", e);
+            return null;
+        }
+    }
+
+    public static LocalTime parseToLocalTime(String timeStr, String pattern) {
+        if (StringUtils.isEmptyOrBlank(timeStr)) {
+            return null;
+        }
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+            return LocalTime.parse(timeStr, formatter);
+        } catch (Exception e) {
+            log.error("parseToLocalTime ERROR", e);
             return null;
         }
     }
