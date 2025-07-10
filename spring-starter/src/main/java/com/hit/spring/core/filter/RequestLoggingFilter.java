@@ -74,7 +74,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
             requestStr.append(" \n");
             log.info(requestStr.toString());
 
-            filterChain.doFilter(request, responseWrapper);
+            filterChain.doFilter(requestWrapper, responseWrapper);
 
             ResponseLogData responseLogData = new ResponseLogData(
                     url,
