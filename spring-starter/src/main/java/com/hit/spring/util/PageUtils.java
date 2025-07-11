@@ -1,6 +1,7 @@
 package com.hit.spring.util;
 
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,14 +9,10 @@ import java.util.List;
 @UtilityClass
 public class PageUtils {
 
-    public int calTotalPage(Integer totalRecords, Integer pageSize, Integer defaultPage) {
-        if (totalRecords == null || totalRecords <= pageSize) {
-            return defaultPage;
-        }
-        return calTotalPage(totalRecords, pageSize);
-    }
-
     public int calTotalPage(Integer totalRecords, Integer pageSize) {
+        if (totalRecords == null || totalRecords <= pageSize) {
+            return NumberUtils.INTEGER_ONE;
+        }
         return (int) Math.ceil((double) totalRecords / pageSize);
     }
 
