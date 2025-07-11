@@ -217,8 +217,16 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     @Override
     public void delete(Collection<ID> ids) {
         ChunkUtils.toChunks(ids, DEFAULT_BATCH_DELETE).forEach(chunk -> {
-            this.jpaRepository.deleteAllByIdInBatch(chunk.getItems());
+            this.jpaRepository.deleteAllById(chunk.getItems());
             log.debug("Delete {} entities size:{}, from:{}, to:{}", chunk.getItems().size(), chunk.getSize(), chunk.getFrom(), chunk.getTo());
+        });
+    }
+
+    @Override
+    public void deleteBatch(Collection<ID> ids) {
+        ChunkUtils.toChunks(ids, DEFAULT_BATCH_DELETE).forEach(chunk -> {
+            this.jpaRepository.deleteAllByIdInBatch(chunk.getItems());
+            log.debug("Delete batch {} entities size:{}, from:{}, to:{}", chunk.getItems().size(), chunk.getSize(), chunk.getFrom(), chunk.getTo());
         });
     }
 }

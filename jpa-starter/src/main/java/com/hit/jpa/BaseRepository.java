@@ -3,7 +3,6 @@ package com.hit.jpa;
 import com.hit.coremodel.pagination.PageableReqModel;
 import com.hit.coremodel.pagination.PageResModel;
 import com.hit.coremodel.pagination.PageableSearchReqModel;
-import com.querydsl.core.types.Predicate;
 
 import java.util.Collection;
 import java.util.List;
@@ -42,5 +41,7 @@ public interface BaseRepository<T, ID> {
     void delete(ID id);
 
     void delete(Collection<ID> ids);
+
+    void deleteBatch(Collection<ID> ids);
 
 }
