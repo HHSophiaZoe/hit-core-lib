@@ -1,4 +1,4 @@
-package com.hit.coremodel.model;
+package com.hit.coremodel;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

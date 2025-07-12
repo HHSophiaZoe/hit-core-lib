@@ -1,24 +1,26 @@
-package com.hit.spring.core.manager;
+package com.hit.spring.core.data.wrapper;
 
 import com.hit.spring.context.TrackingContext;
 import com.hit.spring.core.exception.ExecutorException;
 import com.hit.spring.core.extension.Procedure;
 import org.apache.logging.log4j.ThreadContext;
 
-public class WrappedRunnable implements Runnable {
+import java.util.concurrent.Callable;
 
-    private final Runnable task;
+public class CallableWrapper<T> implements Callable<T> {
+
+    private final Callable<T> task;
     private final String correlationId;
 
     private Procedure acceptContext;
     private Procedure clearContext;
 
-    protected WrappedRunnable(Runnable task) {
+    public CallableWrapper(Callable<T> task) {
         this.task = task;
         this.correlationId = TrackingContext.getCorrelationId();
     }
 
-    protected WrappedRunnable(Runnable task, Procedure acceptContext, Procedure clearContext) {
+    public CallableWrapper(Callable<T> task, Procedure acceptContext, Procedure clearContext) {
         this.task = task;
         this.correlationId = TrackingContext.getCorrelationId();
         this.acceptContext = acceptContext;
@@ -26,14 +28,14 @@ public class WrappedRunnable implements Runnable {
     }
 
     @Override
-    public void run() {
+    public T call() {
         try {
             TrackingContext.setCorrelationId(correlationId);
             TrackingContext.setThreadId();
             if (acceptContext != null) {
                 acceptContext.process();
             }
-            task.run();
+            return task.call();
         } catch (Exception e) {
             throw new ExecutorException(e.getMessage(), e);
         } finally {

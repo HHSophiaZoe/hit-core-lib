@@ -31,6 +31,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.querydsl.EntityPathResolver;
 import org.springframework.data.querydsl.SimpleEntityPathResolver;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -188,8 +189,16 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     }
 
     @Override
-    public List<T> saveAll(Collection<T> entity) {
-        return this.jpaRepository.saveAll(entity);
+    @Transactional
+    public void saveAll(Collection<T> entities) {
+        for(T entity : entities) {
+            this.save(entity);
+        }
+    }
+
+    @Override
+    public List<T> saveAllReturning(Collection<T> entities) {
+        return this.jpaRepository.saveAll(entities);
     }
 
     @Override
@@ -198,8 +207,18 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     }
 
     @Override
-    public List<T> saveAllAndFlush(Collection<T> entity) {
-        List<T> temp = this.jpaRepository.saveAll(entity);
+    @Transactional
+    public void saveAllAndFlush(Collection<T> entities) {
+        for(T entity : entities) {
+            this.save(entity);
+        }
+        this.jpaRepository.flush();
+    }
+
+    @Override
+    @Transactional
+    public List<T> saveAllReturningAndFlush(Collection<T> entities) {
+        List<T> temp = this.jpaRepository.saveAll(entities);
         this.jpaRepository.flush();
         return temp;
     }

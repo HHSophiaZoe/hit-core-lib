@@ -1,5 +1,6 @@
 package com.hit.spring.core.manager;
 
+import com.hit.spring.core.data.wrapper.RunnableWrapper;
 import com.hit.spring.core.exception.ExecutorException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -47,10 +48,10 @@ public class ExecutorManager extends ExecutorManagerBase {
 
         for (Runnable runnable : runnables) {
             Future<?> future;
-            if (runnable instanceof WrappedRunnable) {
+            if (runnable instanceof RunnableWrapper) {
                 future = executor.submit(runnable);
             } else {
-                future = executor.submit(new WrappedRunnable(runnable) {
+                future = executor.submit(new RunnableWrapper(runnable) {
                     @Override
                     public void run() {
                         try {

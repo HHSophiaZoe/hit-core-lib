@@ -1,6 +1,8 @@
 package com.hit.spring.core.manager;
 
 import com.hit.spring.config.properties.TaskExecutorProperties;
+import com.hit.spring.core.data.wrapper.CallableWrapper;
+import com.hit.spring.core.data.wrapper.RunnableWrapper;
 import com.hit.spring.core.extension.Procedure;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,47 +24,47 @@ public abstract class ExecutorManagerBase {
 
     //Runnable
     public void runTask(Runnable runnable) {
-        executor.execute(new WrappedRunnable(runnable));
+        executor.execute(new RunnableWrapper(runnable));
     }
 
     public void runTask(Runnable runnable, Procedure acceptContext, Procedure clearContext) {
-        executor.execute(new WrappedRunnable(runnable, acceptContext, clearContext));
+        executor.execute(new RunnableWrapper(runnable, acceptContext, clearContext));
     }
 
     public void runTask(Runnable runnable, AsyncTaskExecutor executor) {
-        executor.execute(new WrappedRunnable(runnable));
+        executor.execute(new RunnableWrapper(runnable));
     }
 
     public void runTask(Runnable runnable, Procedure acceptContext, Procedure clearContext, AsyncTaskExecutor executor) {
-        executor.execute(new WrappedRunnable(runnable, acceptContext, clearContext));
+        executor.execute(new RunnableWrapper(runnable, acceptContext, clearContext));
     }
 
     //Callable
     public <T> Future<T> runCallable(Callable<T> callable) {
-        return executor.submit(new WrappedCallable<>(callable));
+        return executor.submit(new CallableWrapper<>(callable));
     }
 
     public <T> Future<T> runCallable(Callable<T> callable, Procedure acceptContext, Procedure clearContext) {
-        return executor.submit(new WrappedCallable<>(callable, acceptContext, clearContext));
+        return executor.submit(new CallableWrapper<>(callable, acceptContext, clearContext));
     }
 
     public <T> Future<T> runCallable(Callable<T> callable, AsyncTaskExecutor executor) {
-        return executor.submit(new WrappedCallable<>(callable));
+        return executor.submit(new CallableWrapper<>(callable));
     }
 
     public <T> Future<T> runCallable(Callable<T> callable, Procedure acceptContext, Procedure clearContext, AsyncTaskExecutor executor) {
-        return executor.submit(new WrappedCallable<>(callable, acceptContext, clearContext));
+        return executor.submit(new CallableWrapper<>(callable, acceptContext, clearContext));
     }
 
     // internal method
     protected <T> CompletableFuture<T> runCompletable(Callable<T> callable, AsyncTaskExecutor executor) {
         Objects.requireNonNull(executor, "Executor cannot be null");
         return CompletableFuture.supplyAsync(() -> {
-            if (callable instanceof WrappedCallable) {
-                return ((WrappedCallable<T>) callable).call();
+            if (callable instanceof CallableWrapper) {
+                return ((CallableWrapper<T>) callable).call();
             } else {
-                WrappedCallable<T> wrappedCallable = new WrappedCallable<>(callable);
-                return wrappedCallable.call();
+                CallableWrapper<T> callableWrapper = new CallableWrapper<>(callable);
+                return callableWrapper.call();
             }
         }, executor);
     }

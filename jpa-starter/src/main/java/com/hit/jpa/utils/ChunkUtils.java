@@ -1,6 +1,6 @@
 package com.hit.jpa.utils;
 
-import com.hit.coremodel.model.Chunk;
+import com.hit.coremodel.Chunk;
 import lombok.experimental.UtilityClass;
 import org.springframework.util.CollectionUtils;
 

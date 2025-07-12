@@ -4,10 +4,7 @@ import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -27,9 +24,10 @@ public class TimeUtils {
     public static final String ISO_DATE_TIME_UTC_2_PATTERN = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     public static final String ISO_OFFSET_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ssXXX";
     public static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    public static final String DATE_TIME_PATTERN_VN = "dd/MM/yyyy HH:mm:ss";
     public static final String TIME_DATE_PATTERN = "HH:mm:ss yyyy-MM-dd";
     public static final String DATE_PATTERN = "yyyy-MM-dd";
-    public static final String DATE_PATTERN_2 = "dd-MM-yyyy";
+    public static final String DATE_PATTERN_VN = "dd/MM/yyyy";
     public static final String TIME_PATTERN = "HH:mm:ss";
     public static final String DATE_TIME_ID_PATTERN = "yyyyMMddHHmmss";
 
@@ -202,6 +200,14 @@ public class TimeUtils {
         }
     }
 
+    public static LocalTime convertTimestampToLocalTime(Long timestamp) {
+        try {
+            return LocalTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneId.systemDefault());
+        } catch (Exception e) {
+            log.error("convertTimestampToLocalTime ERROR", e);
+            return null;
+        }
+    }
 
     /*
      *

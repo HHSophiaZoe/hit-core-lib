@@ -71,13 +71,13 @@ public abstract class RestTemplateServiceBase {
             log.info("Call api [{}]-[{}] \n\tResponse: {}", method, url, response.getBody());
             return response;
         } catch (ResourceAccessException e) {
-            log.error("Call api timeout [{}]-[{}]", method, url);
+            log.error("Call api timeout [{}]-[{}]", method, url, e);
             throw new HttpClientTimeout(e.getMessage(), e);
         } catch (HttpStatusCodeException e) {
-            log.error("Call api error [{}]-[{}]-[{}]: {}", method, url, e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Call api error [{}]-[{}]-[{}]: {}", method, url, e.getStatusCode(), e.getResponseBodyAsString(), e);
             throw e;
         } catch (Exception e) {
-            log.error("Call api error [{}]-[{}]: {}", method, url, e.getMessage());
+            log.error("Call api error [{}]-[{}]: {}", method, url, e.getMessage(), e);
             throw e;
         }
     }

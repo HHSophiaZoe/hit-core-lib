@@ -30,11 +30,15 @@ public interface BaseRepository<T, ID> {
 
     T save(T entity);
 
-    List<T> saveAll(Collection<T> entity);
+    void saveAll(Collection<T> entity);
+
+    List<T> saveAllReturning(Collection<T> entity);
 
     T saveAndFlush(T entity);
 
-    List<T> saveAllAndFlush(Collection<T> entity);
+    void saveAllAndFlush(Collection<T> entity);
+
+    List<T> saveAllReturningAndFlush(Collection<T> entity);
 
     T update(T entity);
 
