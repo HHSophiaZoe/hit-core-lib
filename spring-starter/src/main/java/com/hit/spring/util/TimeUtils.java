@@ -217,4 +217,14 @@ public class TimeUtils {
     public static Integer getDaysBetween(LocalDateTime start, LocalDateTime end) {
         return Math.toIntExact(Math.round(ChronoUnit.HOURS.between(start, end) / 24d));
     }
+
+    /*
+     *
+     * Methods check date
+     *
+     * */
+    public static boolean isWeekend(LocalDate date) {
+        DayOfWeek dayOfWeek = date.getDayOfWeek();
+        return dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY;
+    }
 }
