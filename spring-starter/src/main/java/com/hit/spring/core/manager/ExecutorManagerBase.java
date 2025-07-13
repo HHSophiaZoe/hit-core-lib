@@ -12,7 +12,6 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 public abstract class ExecutorManagerBase {
 
@@ -40,24 +39,23 @@ public abstract class ExecutorManagerBase {
     }
 
     //Callable
-    public <T> Future<T> runCallable(Callable<T> callable) {
-        return executor.submit(new CallableWrapper<>(callable));
+    public <T> CompletableFuture<T> runCallable(Callable<T> callable) {
+        return executor.submitCompletable(new CallableWrapper<>(callable));
     }
 
-    public <T> Future<T> runCallable(Callable<T> callable, Procedure acceptContext, Procedure clearContext) {
-        return executor.submit(new CallableWrapper<>(callable, acceptContext, clearContext));
+    public <T> CompletableFuture<T> runCallable(Callable<T> callable, Procedure acceptContext, Procedure clearContext) {
+        return executor.submitCompletable(new CallableWrapper<>(callable, acceptContext, clearContext));
     }
 
-    public <T> Future<T> runCallable(Callable<T> callable, AsyncTaskExecutor executor) {
-        return executor.submit(new CallableWrapper<>(callable));
+    public <T> CompletableFuture<T> runCallable(Callable<T> callable, AsyncTaskExecutor executor) {
+        return executor.submitCompletable(new CallableWrapper<>(callable));
     }
 
-    public <T> Future<T> runCallable(Callable<T> callable, Procedure acceptContext, Procedure clearContext, AsyncTaskExecutor executor) {
-        return executor.submit(new CallableWrapper<>(callable, acceptContext, clearContext));
+    public <T> CompletableFuture<T> runCallable(Callable<T> callable, Procedure acceptContext, Procedure clearContext, AsyncTaskExecutor executor) {
+        return executor.submitCompletable(new CallableWrapper<>(callable, acceptContext, clearContext));
     }
 
-    // internal method
-    protected <T> CompletableFuture<T> runCompletable(Callable<T> callable, AsyncTaskExecutor executor) {
+    protected <T> CompletableFuture<T> runCallableInternal(Callable<T> callable, AsyncTaskExecutor executor) {
         Objects.requireNonNull(executor, "Executor cannot be null");
         return CompletableFuture.supplyAsync(() -> {
             if (callable instanceof CallableWrapper) {

@@ -108,16 +108,12 @@ public class ExecutorManager extends ExecutorManagerBase {
         return zipTasksReturn(executor, t1, t2, zipper);
     }
 
-    public <T1, T2, R> R zipTasksReturnV2(Callable<T1> t1, Callable<T2> t2, BiFunction<T1, T2, R> zipper) {
-        return zipTasksReturn(executor, t1, t2, zipper);
-    }
-
     @SuppressWarnings({"unchecked"})
     public <T1, T2, R> R zipTasksReturn(AsyncTaskExecutor executor, Callable<T1> t1, Callable<T2> t2, BiFunction<T1, T2, R> zipper) {
         return zipInternal(
                 objects -> zipper.apply((T1) objects[0], (T2) objects[1]),
-                runCompletable(t1, executor),
-                runCompletable(t2, executor)
+                runCallableInternal(t1, executor),
+                runCallableInternal(t2, executor)
         );
     }
 
@@ -129,9 +125,9 @@ public class ExecutorManager extends ExecutorManagerBase {
     public <T1, T2, T3, R> R zipTasksReturn(AsyncTaskExecutor executor, Callable<T1> t1, Callable<T2> t2, Callable<T3> t3, Function3<T1, T2, T3, R> zipper) {
         return zipInternal(
                 objects -> zipper.apply((T1) objects[0], (T2) objects[1], (T3) objects[2]),
-                runCompletable(t1, executor),
-                runCompletable(t2, executor),
-                runCompletable(t3, executor)
+                runCallableInternal(t1, executor),
+                runCallableInternal(t2, executor),
+                runCallableInternal(t3, executor)
         );
     }
 
@@ -145,10 +141,10 @@ public class ExecutorManager extends ExecutorManagerBase {
                                                 Callable<T4> t4, Function4<T1, T2, T3, T4, R> zipper) {
         return zipInternal(
                 objects -> zipper.apply((T1) objects[0], (T2) objects[1], (T3) objects[2], (T4) objects[3]),
-                runCompletable(t1, executor),
-                runCompletable(t2, executor),
-                runCompletable(t3, executor),
-                runCompletable(t4, executor)
+                runCallableInternal(t1, executor),
+                runCallableInternal(t2, executor),
+                runCallableInternal(t3, executor),
+                runCallableInternal(t4, executor)
         );
     }
 
@@ -162,11 +158,11 @@ public class ExecutorManager extends ExecutorManagerBase {
                                                     Callable<T4> t4, Callable<T5> t5, Function5<T1, T2, T3, T4, T5, R> zipper) {
         return zipInternal(
                 objects -> zipper.apply((T1) objects[0], (T2) objects[1], (T3) objects[2], (T4) objects[3], (T5) objects[4]),
-                runCompletable(t1, executor),
-                runCompletable(t2, executor),
-                runCompletable(t3, executor),
-                runCompletable(t4, executor),
-                runCompletable(t5, executor)
+                runCallableInternal(t1, executor),
+                runCallableInternal(t2, executor),
+                runCallableInternal(t3, executor),
+                runCallableInternal(t4, executor),
+                runCallableInternal(t5, executor)
         );
     }
 
@@ -180,12 +176,12 @@ public class ExecutorManager extends ExecutorManagerBase {
                                                         Callable<T5> t5, Callable<T6> t6, Function6<T1, T2, T3, T4, T5, T6, R> zipper) {
         return zipInternal(
                 objects -> zipper.apply((T1) objects[0], (T2) objects[1], (T3) objects[2], (T4) objects[3], (T5) objects[4], (T6) objects[5]),
-                runCompletable(t1, executor),
-                runCompletable(t2, executor),
-                runCompletable(t3, executor),
-                runCompletable(t4, executor),
-                runCompletable(t5, executor),
-                runCompletable(t6, executor)
+                runCallableInternal(t1, executor),
+                runCallableInternal(t2, executor),
+                runCallableInternal(t3, executor),
+                runCallableInternal(t4, executor),
+                runCallableInternal(t5, executor),
+                runCallableInternal(t6, executor)
         );
     }
 
