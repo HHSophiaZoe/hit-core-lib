@@ -16,8 +16,8 @@
     <dependencies>
         <dependency>
             <groupId>com.hit</groupId>
-            <artifactId>core-model-starter</artifactId>
-            <version>${core-model-starter.version}</version>
+            <artifactId>core-common-starter</artifactId>
+            <version>${core-common-starter.version}</version>
         </dependency>
 
         <dependency>

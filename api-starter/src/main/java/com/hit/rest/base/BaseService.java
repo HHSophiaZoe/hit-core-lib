@@ -1,8 +1,8 @@
 package com.hit.rest.base;
 
-import com.hit.coremodel.pagination.PageResModel;
-import com.hit.coremodel.pagination.PageableReqModel;
-import com.hit.coremodel.pagination.PageableSearchReqModel;
+import com.hit.common.pagination.PageResModel;
+import com.hit.common.pagination.PageableReqModel;
+import com.hit.common.pagination.PageableSearchReqModel;
 import com.hit.jpa.BaseRepository;
 import com.hit.spring.core.data.mapper.DomainMapper;
 import com.hit.spring.core.exception.BaseResponseException;

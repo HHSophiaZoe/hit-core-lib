@@ -1,8 +1,8 @@
 package com.hit.jpa;
 
-import com.hit.coremodel.pagination.PageResModel;
-import com.hit.coremodel.pagination.PageableReqModel;
-import com.hit.coremodel.pagination.PageableSearchReqModel;
+import com.hit.common.pagination.PageResModel;
+import com.hit.common.pagination.PageableReqModel;
+import com.hit.common.pagination.PageableSearchReqModel;
 import com.hit.jpa.utils.ChunkUtils;
 import com.hit.jpa.utils.SqlUtils;
 import com.querydsl.core.BooleanBuilder;
@@ -19,7 +19,6 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.Metamodel;
 import jakarta.persistence.metamodel.SingularAttribute;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;

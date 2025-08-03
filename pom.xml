@@ -36,8 +36,8 @@
 
         <!--    Core Lib    -->
         <spring-starter.version>1.0</spring-starter.version>
+        <core-common-starter.version>1.0</core-common-starter.version>
         <api-starter.version>1.0</api-starter.version>
-        <core-model-starter.version>1.0</core-model-starter.version>
         <cache-starter.version>1.0</cache-starter.version>
         <kafka-starter.version>1.0</kafka-starter.version>
         <jpa-starter.version>1.0</jpa-starter.version>
@@ -63,7 +63,8 @@
         <module>kafka-starter</module>
         <module>storage-starter</module>
         <module>api-starter</module>
-        <module>core-model-starter</module>
+        <module>core-common-starter</module>
+        <module>test-core-lib</module>
     </modules>
 
     <dependencies>
@@ -83,11 +84,25 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring-boot.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit-jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
 
