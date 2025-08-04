@@ -15,19 +15,21 @@ public class DefaultHttpClientProperties {
 
     private ClientType type = ClientType.APACHE_HTTP_CLIENT;
 
-    private Connection connection;
+    private Connection connection = new Connection();
 
-    private ConnectionPool connectionPool;
+    private ConnectionPool connectionPool = new ConnectionPool();
 
     @Setter
     @Getter
     public static class Connection {
 
-        private int connectTimeout = 30;
+        private int connectRequestTimeout = 30; // Thời gian chờ lấy connection từ pool
 
-        private int responseTimeout = 30;
+        private int connectTimeout = 30; // Thời gian chờ bắt tay TCP (socket)
 
-        private int keepAlive = 20;
+        private int responseTimeout = 30; // Thời gian chờ dữ liệu response sau khi kết nối
+
+        private int keepAlive = 10;
 
     }
 
@@ -35,9 +37,9 @@ public class DefaultHttpClientProperties {
     @Getter
     public static class ConnectionPool {
 
-        private int maxTotal = 100; // Only applies to APACHE_HTTP_CLIENT
+        private int maxTotal = 1000; // Only applies to APACHE_HTTP_CLIENT
 
-        private int defaultMaxPerRoute = 10; // Only applies to APACHE_HTTP_CLIENT
+        private int defaultMaxPerRoute = 100; // Only applies to APACHE_HTTP_CLIENT
 
         private int maxIdle = 20; // Only applies to OkHttp
 

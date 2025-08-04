@@ -2,6 +2,7 @@ package com.hit.test.controller;
 
 import com.hit.spring.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
+@Profile("test")
 @RestController
 @RequestMapping("/api/benchmark")
 public class BenchmarkController {

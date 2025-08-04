@@ -20,7 +20,7 @@ public class DataSourceDefaultProperties extends HikariConfig {
 
     private Boolean enable;
 
-    private Hibernate hibernate;
+    private Hibernate hibernate = new Hibernate();
 
     private Map<String, Object> properties;
 

@@ -65,10 +65,10 @@ public class DefaultRestTemplateConfig {
                 .setConnectionManager(this.defaultHttpPoolingConnectionManager())
                 .setConnectionManagerShared(true)
                 .setDefaultRequestConfig(RequestConfig.custom()
+                        .setConnectionRequestTimeout(connection.getConnectTimeout(), TimeUnit.SECONDS)
                         .setConnectTimeout(connection.getConnectTimeout(), TimeUnit.SECONDS)
                         .setResponseTimeout(connection.getResponseTimeout(), TimeUnit.SECONDS)
                         .setDefaultKeepAlive(connection.getKeepAlive(), TimeUnit.SECONDS)
-                        .setConnectionRequestTimeout(10, TimeUnit.SECONDS)
                         .setCookieSpec(StandardCookieSpec.STRICT)
                         .build())
                 .build();

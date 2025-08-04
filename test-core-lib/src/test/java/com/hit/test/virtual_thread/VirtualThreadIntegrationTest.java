@@ -1,28 +1,38 @@
 package com.hit.test.virtual_thread;
 
+import com.hit.jpa.properties.DataSourceDefaultProperties;
 import com.hit.spring.SpringStarterConfig;
 import com.hit.spring.config.embedded.EmbeddedTomcatConfig;
+import com.hit.spring.config.http.DefaultRestTemplateConfig;
+import com.hit.spring.config.properties.DefaultHttpClientProperties;
 import com.hit.spring.core.filter.RequestLoggingFilter;
+import com.hit.spring.service.http.HttpService;
 import com.hit.spring.util.ThreadUtils;
 import com.hit.spring.util.TraceUtils;
 import com.hit.test.TestStarterConfig;
+import com.hit.test.entity.TestEntity;
+import com.hit.test.repository.TestRepository;
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.HikariPoolMXBean;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.threads.VirtualThreadExecutor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 @Slf4j
 @SpringBootTest(
@@ -30,13 +40,21 @@ import java.util.concurrent.*;
                 TestStarterConfig.class,
                 SpringStarterConfig.class,
                 EmbeddedTomcatConfig.class,
-                RequestLoggingFilter.class
+                RequestLoggingFilter.class,
+                DefaultHttpClientProperties.class,
+                DefaultRestTemplateConfig.class,
+                HttpService.class,
+                DataSourceDefaultProperties.class
         },
         properties = {
                 "spring.threads.virtual.enabled=true",
                 "app.enable-log-request-http=true",
+                "http-client.default.enable=true",
+//                "http-client.default.connection-pool.default-max-per-route=10000",
+//                "http-client.default.connection-pool.max-total=10000",
                 "logging.level.com=INFO",
-                "logging.level.org=INFO"
+                "logging.level.org=INFO",
+                "logging.level.com.zaxxer.hikari=DEBUG"
         },
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
@@ -47,7 +65,13 @@ public class VirtualThreadIntegrationTest {
     private int port;
 
     @Autowired
-    private TestRestTemplate restTemplate;
+    private HttpService httpService;
+
+    @Autowired
+    private TestRepository testRepository;
+
+    @Autowired
+    private HikariDataSource dataSource;
 
     @Test
     void testApplicationStartup() {
@@ -58,11 +82,11 @@ public class VirtualThreadIntegrationTest {
     @Test
     public void testVirtualThreadYielding() {
         // Test với platform threads (baseline)
-        System.out.println("=== PLATFORM THREADS ===");
+        log.info("=== PLATFORM THREADS ===");
         testWithExecutor(Executors.newFixedThreadPool(1000), "Platform");
 
         // Test với virtual threads
-        System.out.println("\n=== VIRTUAL THREADS ===");
+        log.info("\n=== VIRTUAL THREADS ===");
         testWithExecutor(new VirtualThreadExecutor("unit-test-"), "Virtual");
     }
 
@@ -103,46 +127,97 @@ public class VirtualThreadIntegrationTest {
     @Test
     void giveApiWhenCallApiThenUsingVirtualThread() {
         String url = "http://localhost:" + port + "/api/benchmark/thread-info?order=" + TraceUtils.generateTraceId();
-        ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
-        log.info("Integration test response: {}", response.getBody());
+        Map<String, Object> response = httpService.get(url, new HttpHeaders(), new ParameterizedTypeReference<>() {
+        });
+        log.info("Integration test response: {}", response);
 
-        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
-        Assertions.assertNotNull(response.getBody());
-        Assertions.assertEquals(Boolean.TRUE, response.getBody().get("isVirtual"));
-        Assertions.assertTrue(response.getBody().get("threadGroup").toString().contains("VirtualThread"));
+        Assertions.assertEquals(Boolean.TRUE, response.get("isVirtual"));
+        Assertions.assertTrue(response.get("threadGroup").toString().contains("VirtualThread"));
     }
 
     @Test
     void giveApiWhenCallApiThenUsingVirtualThreadV2() {
-        Callable<Void> task = () -> {
-            String url = "http://localhost:" + port + "/api/benchmark/thread-info?order=" + TraceUtils.generateTraceId();
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
-            log.info("Response: {}", response.getBody());
+        ThreadUtils.sleep(Duration.ofSeconds(5));
+        log.info("Actual HikariCP pool size: {}", dataSource.getMaximumPoolSize());
+        log.info("Pool name: {}", dataSource.getPoolName());
+        log.info("JDBC URL: {}", dataSource.getJdbcUrl());
 
-            Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
-            Assertions.assertNotNull(response.getBody());
-            Assertions.assertEquals(Boolean.TRUE, response.getBody().get("isVirtual"));
-            Assertions.assertTrue(response.getBody().get("threadGroup").toString().contains("VirtualThread"));
+        int threadCount = 1000; // Số thread cố định cho cả hai pool
+        int numTasks = 20000;
 
-            return null;
-        };
+        // Test với platform threads (baseline)
+//        log.info("=== PLATFORM THREADS IO ===");
+//        long startTimePlatform = System.currentTimeMillis();
+//        Integer totalSuccessPlatform = testIOWithExecutor(Executors.newFixedThreadPool(threadCount), numTasks);
+//        long totalTimePlatform = System.currentTimeMillis() - startTimePlatform;
+//        log.info("Platform total execution time: {} ms - success: {}/{}", totalTimePlatform, totalSuccessPlatform, numTasks);
 
-        int threadCount = 100;
-        Executor executor = Executors.newVirtualThreadPerTaskExecutor();
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
-        for (int i = 0; i < threadCount; i++) {
-            CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
+        // Test với virtual threads
+        log.info("\n=== VIRTUAL THREADS IO ===");
+        long startTimeVirtual = System.currentTimeMillis();
+        Integer totalSuccessVirtual = testIOWithExecutor(Executors.newFixedThreadPool(threadCount, Thread.ofVirtual().factory()), numTasks);
+        long totalTimeVirtual = System.currentTimeMillis() - startTimeVirtual;
+        log.info("Virtual total execution time: {} ms - success: {}/{}", totalTimeVirtual, totalSuccessVirtual, numTasks);
+    }
+
+    private Integer testIOWithExecutor(ExecutorService executor, int numTasks) {
+        CountDownLatch latch = new CountDownLatch(numTasks);
+        AtomicInteger counter = new AtomicInteger(0);
+        for (int i = 0; i < numTasks; i++) {
+            executor.submit(() -> {
                 try {
-                    return task.call();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
+//                    testIOApi();
+                    testIODb();
+                    counter.incrementAndGet();
+                } finally {
+                    latch.countDown(); // Giảm latch khi task hoàn thành
                 }
-            }, executor);
-            futures.add(future);
+            });
         }
 
-        // Đợi tất cả gọi xong
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        try {
+            latch.await(); // Chờ tất cả task hoàn thành
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return counter.get();
+    }
+
+    private void testIOApi() {
+        String url = "http://localhost:" + port + "/api/benchmark/thread-info?order=" + TraceUtils.generateTraceId();
+        Map<String, Object> response = httpService.get(url, new HttpHeaders(), new ParameterizedTypeReference<>() {
+        });
+        log.info("testIOApi response: {}", response);
+    }
+
+    private final Semaphore dbSemaphore = new Semaphore(10);
+
+    public <T> T executeWithLimit(Supplier<T> operation) {
+        try {
+            try {
+                dbSemaphore.acquire();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return operation.get();
+        } finally {
+            dbSemaphore.release();
+        }
+    }
+
+    private void testIODb() {
+        executeWithLimit(() -> {
+            HikariPoolMXBean pool = dataSource.getHikariPoolMXBean();
+            log.warn("DB call - Waiting threads: {}, Active: {}, Total: {}",
+                    pool.getThreadsAwaitingConnection(),
+                    pool.getActiveConnections(),
+                    pool.getTotalConnections());
+
+            return testRepository.save(TestEntity.builder()
+                    .code(TraceUtils.generateTraceId())
+                    .name(TraceUtils.generateTraceId())
+                    .build());
+        });
     }
 
 }
