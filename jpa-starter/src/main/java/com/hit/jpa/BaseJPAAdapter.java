@@ -247,4 +247,9 @@ public abstract class BaseJPAAdapter<E, ID, R extends BaseJPARepository<E, ID>> 
             log.debug("Delete batch {} entities size:{}, from:{}, to:{}", chunk.getItems().size(), chunk.getSize(), chunk.getFrom(), chunk.getTo());
         });
     }
+
+    @Override
+    public void deleteAllInBatch() {
+        this.jpaRepository.deleteAllInBatch();
+    }
 }

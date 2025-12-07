@@ -48,4 +48,6 @@ public interface BaseRepository<E, ID> {
 
     void deleteBatch(Collection<ID> ids);
 
+    void deleteAllInBatch();
+
 }
