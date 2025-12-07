@@ -1,7 +1,7 @@
 package com.hit.spring.service.jwt;
 
 import com.hit.spring.config.properties.SecurityProperties;
-import com.hit.spring.core.data.model.SimpleSecurityUser;
+import com.hit.common.model.SimpleSecurityUser;
 import com.hit.spring.core.json.JsonMapper;
 import com.hit.spring.util.StringUtils;
 import io.jsonwebtoken.*;

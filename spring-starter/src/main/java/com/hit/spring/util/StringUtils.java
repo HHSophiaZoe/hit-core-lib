@@ -1,9 +1,12 @@
 package com.hit.spring.util;
 
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.text.Normalizer;
 import java.util.regex.Pattern;
+
+import static com.hit.spring.core.constant.CommonConstant.EMPTY_STRING;
 
 @UtilityClass
 public class StringUtils {
@@ -38,6 +41,13 @@ public class StringUtils {
 
     public static boolean isNotBlank(CharSequence cs) {
         return !isBlank(cs);
+    }
+
+    public static String safeToString(Object obj) {
+        if (ObjectUtils.isEmpty(obj)) {
+            return EMPTY_STRING;
+        }
+        return String.valueOf(obj);
     }
 
     public static String camelToSnake(String str) {

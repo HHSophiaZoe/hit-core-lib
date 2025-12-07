@@ -1,8 +1,8 @@
 package com.hit.spring.core.manager;
 
 import com.hit.spring.config.properties.TaskExecutorProperties;
-import com.hit.spring.core.data.wrapper.CallableWrapper;
-import com.hit.spring.core.data.wrapper.RunnableWrapper;
+import com.hit.spring.core.wrapper.CallableWrapper;
+import com.hit.spring.core.wrapper.RunnableWrapper;
 import com.hit.spring.core.extension.Procedure;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;

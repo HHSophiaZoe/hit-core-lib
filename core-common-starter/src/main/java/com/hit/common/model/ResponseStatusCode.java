@@ -1,4 +1,4 @@
-package com.hit.spring.core.data.model;
+package com.hit.common.model;
 
 import lombok.Builder;
 import org.springframework.http.HttpStatus;

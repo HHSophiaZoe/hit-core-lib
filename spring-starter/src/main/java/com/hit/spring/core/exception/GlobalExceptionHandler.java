@@ -2,7 +2,7 @@ package com.hit.spring.core.exception;
 
 import com.hit.spring.core.factory.GeneralResponse;
 import com.hit.spring.core.factory.ResponseFactory;
-import com.hit.spring.core.data.model.ResponseStatus;
+import com.hit.common.model.ResponseStatus;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

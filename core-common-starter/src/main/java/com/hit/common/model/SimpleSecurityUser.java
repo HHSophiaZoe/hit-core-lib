@@ -1,4 +1,4 @@
-package com.hit.spring.core.data.model;
+package com.hit.common.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

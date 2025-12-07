@@ -1,6 +1,6 @@
 package com.hit.test.data.event;
 
-import com.hit.spring.core.data.event.BaseAppEvent;
+import com.hit.spring.core.event.BaseAppEvent;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

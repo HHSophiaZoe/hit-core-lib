@@ -1,4 +1,4 @@
-package com.hit.spring.core.data.mapper;
+package com.hit.spring.core.mapper;
 
 import org.mapstruct.IterableMapping;
 import org.mapstruct.Named;

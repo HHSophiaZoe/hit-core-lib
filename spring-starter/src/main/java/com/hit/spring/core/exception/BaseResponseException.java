@@ -1,7 +1,7 @@
 package com.hit.spring.core.exception;
 
-import com.hit.spring.core.data.model.ResponseStatus;
-import com.hit.spring.core.data.model.ResponseStatusCode;
+import com.hit.common.model.ResponseStatus;
+import com.hit.common.model.ResponseStatusCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

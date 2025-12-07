@@ -8,8 +8,8 @@ import com.hit.spring.office.annotation.ExcelConfigurable;
 import com.hit.spring.office.excel.CellStyleCreator;
 import com.hit.spring.office.excel.CellStyleCreatorFactory;
 import com.hit.spring.office.excel.IExcelService;
-import com.hit.spring.util.DataUtils;
 import com.hit.spring.util.ReflectUtils;
+import com.hit.spring.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -255,7 +255,7 @@ public class ExcelServiceDefaultImpl implements IExcelService {
                 Cell cell = row.getCell(excelCell.index());
                 if (cell != null) {
                     Object cellValue = cell.getStringCellValue();
-                    listHeader.add(DataUtils.safeToString(cellValue));
+                    listHeader.add(StringUtils.safeToString(cellValue));
                 }
             }
         } catch (Exception e) {

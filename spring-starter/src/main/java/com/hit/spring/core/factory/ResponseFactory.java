@@ -1,9 +1,10 @@
 package com.hit.spring.core.factory;
 
-import com.hit.spring.core.data.model.ResponseStatus;
+import com.hit.common.model.ResponseStatus;
+import com.hit.spring.config.locale.Translator;
 import com.hit.spring.core.exception.ResponseStatusCodeEnum;
 import com.hit.spring.core.json.JsonMapper;
-import com.hit.spring.core.data.model.ResponseStatusCode;
+import com.hit.common.model.ResponseStatusCode;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -70,6 +71,6 @@ public class ResponseFactory {
     }
 
     private static ResponseStatus parseResponseStatus(String code, String[] params) {
-        return new ResponseStatus(code, params, true);
+        return new ResponseStatus(code, Translator.toLocale(code, params));
     }
 }

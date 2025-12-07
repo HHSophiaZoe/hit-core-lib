@@ -2,7 +2,7 @@ package com.hit.spring.security.authorization;
 
 import com.hit.spring.config.properties.SecurityProperties;
 import com.hit.spring.context.SecurityContext;
-import com.hit.spring.core.data.model.UserPrincipal;
+import com.hit.common.model.UserPrincipal;
 import com.hit.spring.core.exception.ResponseStatusCodeEnum;
 import com.hit.spring.core.factory.GeneralResponse;
 import com.hit.spring.core.factory.InternalResponse;

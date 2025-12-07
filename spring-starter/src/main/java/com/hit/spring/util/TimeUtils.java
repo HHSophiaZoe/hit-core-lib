@@ -182,31 +182,29 @@ public class TimeUtils {
      * Methods convert date time
      *
      * */
-    public static LocalDate convertDateToLocalDate(Date date) {
-        try {
-            return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        } catch (Exception e) {
-            log.error("convertDateToLocalDate ERROR", e);
-            return null;
-        }
+    public static LocalDate toLocalDate(Date date) {
+        if (date == null) return null;
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
-    public static LocalDateTime convertDateToLocalDateTime(Date date) {
-        try {
-            return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-        } catch (Exception e) {
-            log.error("convertDateToLocalDateTime ERROR", e);
-            return null;
-        }
+    public static LocalDateTime toLocalDateTime(Date date) {
+        if (date == null) return null;
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 
-    public static LocalTime convertTimestampToLocalTime(Long timestamp) {
-        try {
-            return LocalTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneId.systemDefault());
-        } catch (Exception e) {
-            log.error("convertTimestampToLocalTime ERROR", e);
-            return null;
-        }
+    public static LocalTime toLocalTime(Long epochSecond) {
+        if (epochSecond == null) return null;
+        return LocalTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneId.systemDefault());
+    }
+
+    public static Long toEpochSecond(LocalDateTime datetime) {
+        if (datetime == null) return null;
+        return datetime.atZone(ZoneId.systemDefault()).toEpochSecond();
+    }
+
+    public static Long toEpochSecond(LocalDate date) {
+        if (date == null) return null;
+        return date.atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond();
     }
 
     /*
@@ -215,7 +213,11 @@ public class TimeUtils {
      *
      * */
     public static Integer getDaysBetween(LocalDateTime start, LocalDateTime end) {
-        return Math.toIntExact(Math.round(ChronoUnit.HOURS.between(start, end) / 24d));
+        return Math.toIntExact(ChronoUnit.DAYS.between(start, end));
+    }
+
+    public static Integer getDaysBetween(LocalDate start, LocalDate end) {
+        return Math.toIntExact(ChronoUnit.DAYS.between(start, end));
     }
 
     /*

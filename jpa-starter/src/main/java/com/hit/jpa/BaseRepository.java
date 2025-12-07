@@ -8,39 +8,39 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public interface BaseRepository<T, ID> {
+public interface BaseRepository<E, ID> {
 
-    PageResModel<T> search(PageableReqModel request);
+    PageResModel<E> search(PageableReqModel request);
 
-    PageResModel<T> search(PageableSearchReqModel request);
+    PageResModel<E> search(PageableSearchReqModel request);
 
     List<ID> getAllId();
 
     List<ID> getAllId(Collection<ID> ids);
 
-    List<T> getAll();
+    List<E> getAll();
 
-    List<T> getAllByIdIn(Collection<ID> ids);
+    List<E> getAllByIdIn(Collection<ID> ids);
 
-    Map<ID, T> getMapId(Collection<ID> ids);
+    Map<ID, E> getMapId(Collection<ID> ids);
 
-    T getOne(ID id);
+    E getOne(ID id);
 
     boolean exists(ID id);
 
-    T save(T entity);
+    E save(E entity);
 
-    void saveAll(Collection<T> entity);
+    void saveAll(Collection<E> entity);
 
-    List<T> saveAllReturning(Collection<T> entity);
+    List<E> saveAllReturning(Collection<E> entity);
 
-    T saveAndFlush(T entity);
+    E saveAndFlush(E entity);
 
-    void saveAllAndFlush(Collection<T> entity);
+    void saveAllAndFlush(Collection<E> entity);
 
-    List<T> saveAllReturningAndFlush(Collection<T> entity);
+    List<E> saveAllReturningAndFlush(Collection<E> entity);
 
-    T update(T entity);
+    E update(E entity);
 
     void delete(ID id);
 

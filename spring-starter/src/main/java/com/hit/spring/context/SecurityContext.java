@@ -1,6 +1,6 @@
 package com.hit.spring.context;
 
-import com.hit.spring.core.data.model.SimpleSecurityUser;
+import com.hit.common.model.SimpleSecurityUser;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

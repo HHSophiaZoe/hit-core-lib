@@ -1,7 +1,7 @@
 package com.hit.spring.core.filter;
 
 import com.hit.spring.config.properties.SecurityProperties;
-import com.hit.spring.core.data.wrapper.CachedBodyRequestWrapper;
+import com.hit.spring.core.wrapper.CachedBodyRequestWrapper;
 import com.hit.spring.util.IPAddressUtils;
 import com.hit.spring.util.LoggingUtils;
 import jakarta.servlet.FilterChain;

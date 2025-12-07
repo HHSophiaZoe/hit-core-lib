@@ -1,6 +1,5 @@
 package com.hit.spring.core.event;
 
-import com.hit.spring.core.data.event.BaseAppEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;

@@ -1,7 +1,7 @@
 package com.hit.spring.security.annotation.resolver;
 
 import com.hit.spring.context.SecurityContext;
-import com.hit.spring.core.data.model.SimpleSecurityUser;
+import com.hit.common.model.SimpleSecurityUser;
 import com.hit.spring.core.exception.BaseResponseException;
 import com.hit.spring.core.exception.ResponseStatusCodeEnum;
 import com.hit.spring.security.annotation.RolesAllowed;

@@ -1,4 +1,4 @@
-package com.hit.spring.core.data.wrapper;
+package com.hit.spring.core.wrapper;
 
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;

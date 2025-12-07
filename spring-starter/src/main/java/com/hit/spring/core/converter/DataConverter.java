@@ -1,6 +1,6 @@
 package com.hit.spring.core.converter;
 
-import com.hit.spring.util.DataUtils;
+import com.hit.spring.util.NumberUtils;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
@@ -42,38 +42,38 @@ public class DataConverter {
     private Function<Object, ?> createConverter(Class<?> targetType) {
         // Implement specific conversion logic
         if (Integer.class.equals(targetType)) {
-            return val -> DataUtils.safeParseInteger(val.toString());
+            return val -> NumberUtils.safeParseInteger(val.toString());
         }
         if (int.class.equals(targetType)) {
-            return val -> DataUtils.safeParseInteger(val.toString(), 0);
+            return val -> NumberUtils.safeParseInteger(val.toString(), 0);
         }
 
         if (Long.class.equals(targetType)) {
-            return val -> DataUtils.safeParseLong(val.toString());
+            return val -> NumberUtils.safeParseLong(val.toString());
         }
         if (long.class.equals(targetType)) {
-            return val -> DataUtils.safeParseLong(val.toString(), 0L);
+            return val -> NumberUtils.safeParseLong(val.toString(), 0L);
         }
 
         if (Float.class.equals(targetType)) {
-            return val -> DataUtils.safeParseFloat(val.toString());
+            return val -> NumberUtils.safeParseFloat(val.toString());
         }
         if (float.class.equals(targetType)) {
-            return val -> DataUtils.safeParseFloat(val.toString(), 0f);
+            return val -> NumberUtils.safeParseFloat(val.toString(), 0f);
         }
 
         if (Double.class.equals(targetType)) {
-            return val -> DataUtils.safeParseDouble(val.toString());
+            return val -> NumberUtils.safeParseDouble(val.toString());
         }
         if (double.class.equals(targetType)) {
-            return val -> DataUtils.safeParseDouble(val.toString(), 0d);
+            return val -> NumberUtils.safeParseDouble(val.toString(), 0d);
         }
 
         if (Short.class.equals(targetType)) {
-            return val -> DataUtils.safeParseShort(val.toString());
+            return val -> NumberUtils.safeParseShort(val.toString());
         }
         if (short.class.equals(targetType)) {
-            return val -> DataUtils.safeParseShort(val.toString(), 0);
+            return val -> NumberUtils.safeParseShort(val.toString(), 0);
         }
 
         if (Boolean.class.equals(targetType) || boolean.class.equals(targetType)) {

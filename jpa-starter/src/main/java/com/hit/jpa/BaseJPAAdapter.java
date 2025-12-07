@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @NoArgsConstructor
-public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> implements BaseRepository<T, ID> {
+public abstract class BaseJPAAdapter<E, ID, R extends BaseJPARepository<E, ID>> implements BaseRepository<E, ID> {
 
     @PersistenceContext(unitName = "defaultEntityManager")
     private EntityManager entityManager;
@@ -52,7 +52,7 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
 
     protected Set<String> allColumnEntity;
 
-    protected EntityPath<T> entityPath;
+    protected EntityPath<E> entityPath;
 
     protected JPAQueryFactory queryFactory;
 
@@ -62,8 +62,8 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     @PostConstruct
     private void init() {
         Metamodel metamodel = getEntityManager().getMetamodel();
-        EntityType<T> entityType = metamodel.entity(this.getEntityClass());
-        SingularAttribute<? super T, ?> idAttribute = entityType.getId(Object.class);
+        EntityType<E> entityType = metamodel.entity(this.getEntityClass());
+        SingularAttribute<? super E, ?> idAttribute = entityType.getId(Object.class);
         if (idAttribute.getJavaMember() instanceof Field idField) {
             this.columnID = idField;
         } else {
@@ -93,7 +93,7 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
         return this.entityManager;
     }
 
-    protected abstract Class<T> getEntityClass();
+    protected abstract Class<E> getEntityClass();
 
     @SneakyThrows
     protected Set<String> getPageableColumnAccess() {
@@ -101,18 +101,18 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     }
 
     @Override
-    public PageResModel<T> search(PageableReqModel request) {
+    public PageResModel<E> search(PageableReqModel request) {
         Pageable pageable = SqlUtils.createPageable(request);
-        Specification<T> specification = SqlUtils.createSpecificationPagination(request, this.getEntityClass(), this.getPageableColumnAccess());
-        Page<T> page = this.jpaRepository.findAll(specification, pageable);
+        Specification<E> specification = SqlUtils.createSpecificationPagination(request, this.getEntityClass(), this.getPageableColumnAccess());
+        Page<E> page = this.jpaRepository.findAll(specification, pageable);
         return new PageResModel<>(SqlUtils.buildPagingMeta(request, page), page.getContent());
     }
 
     @Override
-    public PageResModel<T> search(PageableSearchReqModel request) {
+    public PageResModel<E> search(PageableSearchReqModel request) {
         Pageable pageable = SqlUtils.createPageable(request);
-        Specification<T> specification = SqlUtils.createSpecificationPaginationSearch(request, this.getEntityClass(), this.getPageableColumnAccess());
-        Page<T> page = this.jpaRepository.findAll(specification, pageable);
+        Specification<E> specification = SqlUtils.createSpecificationPaginationSearch(request, this.getEntityClass(), this.getPageableColumnAccess());
+        Page<E> page = this.jpaRepository.findAll(specification, pageable);
         return new PageResModel<>(SqlUtils.buildPagingMeta(request, page), page.getContent());
     }
 
@@ -124,7 +124,7 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     @Override
     @SuppressWarnings("unchecked")
     public List<ID> getAllId(Collection<ID> ids) {
-        PathBuilder<T> pathBuilder = new PathBuilder<>(entityPath.getType(), entityPath.getMetadata().getName());
+        PathBuilder<E> pathBuilder = new PathBuilder<>(entityPath.getType(), entityPath.getMetadata().getName());
         SimplePath<ID> idPath = Expressions.path((Class<ID>) columnID.getType(), pathBuilder, columnID.getName());
         return this.queryFactory.query()
                 .select(idPath)
@@ -135,7 +135,7 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
 
     @SuppressWarnings("unchecked")
     protected List<ID> getAllId(Predicate condition) {
-        PathBuilder<T> pathBuilder = new PathBuilder<>(entityPath.getType(), entityPath.getMetadata().getName());
+        PathBuilder<E> pathBuilder = new PathBuilder<>(entityPath.getType(), entityPath.getMetadata().getName());
         return this.queryFactory.query()
                 .select(Expressions.path((Class<ID>) columnID.getType(), pathBuilder, columnID.getName()))
                 .from(entityPath)
@@ -144,24 +144,24 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     }
 
     @Override
-    public List<T> getAll() {
+    public List<E> getAll() {
         return this.jpaRepository.findAll();
     }
 
-    protected List<T> getAll(Predicate condition) {
+    protected List<E> getAll(Predicate condition) {
         return queryFactory.selectFrom(entityPath)
                 .where(condition)
                 .fetch();
     }
 
     @Override
-    public List<T> getAllByIdIn(Collection<ID> ids) {
+    public List<E> getAllByIdIn(Collection<ID> ids) {
         return this.jpaRepository.findAllById(ids);
     }
 
     @Override
-    public Map<ID, T> getMapId(Collection<ID> ids) {
-        List<T> entities = this.jpaRepository.findAllById(ids);
+    public Map<ID, E> getMapId(Collection<ID> ids) {
+        List<E> entities = this.jpaRepository.findAllById(ids);
         return entities.stream().collect(Collectors.toMap(
                 item -> SqlUtils.getEntityId(this.getEntityManager(), item),
                 Function.identity()
@@ -169,11 +169,11 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     }
 
     @Override
-    public T getOne(ID id) {
+    public E getOne(ID id) {
         return this.jpaRepository.findById(id).orElse(null);
     }
 
-    protected T getOne(Predicate condition) {
+    protected E getOne(Predicate condition) {
         return this.jpaRepository.findOne(condition).orElse(null);
     }
 
@@ -183,32 +183,32 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
     }
 
     @Override
-    public T save(T entity) {
+    public E save(E entity) {
         return this.jpaRepository.save(entity);
     }
 
     @Override
     @Transactional
-    public void saveAll(Collection<T> entities) {
-        for(T entity : entities) {
+    public void saveAll(Collection<E> entities) {
+        for (E entity : entities) {
             this.save(entity);
         }
     }
 
     @Override
-    public List<T> saveAllReturning(Collection<T> entities) {
+    public List<E> saveAllReturning(Collection<E> entities) {
         return this.jpaRepository.saveAll(entities);
     }
 
     @Override
-    public T saveAndFlush(T entity) {
+    public E saveAndFlush(E entity) {
         return this.jpaRepository.saveAndFlush(entity);
     }
 
     @Override
     @Transactional
-    public void saveAllAndFlush(Collection<T> entities) {
-        for(T entity : entities) {
+    public void saveAllAndFlush(Collection<E> entities) {
+        for (E entity : entities) {
             this.save(entity);
         }
         this.jpaRepository.flush();
@@ -216,14 +216,14 @@ public abstract class BaseJPAAdapter<T, ID, R extends BaseJPARepository<T, ID>> 
 
     @Override
     @Transactional
-    public List<T> saveAllReturningAndFlush(Collection<T> entities) {
-        List<T> temp = this.jpaRepository.saveAll(entities);
+    public List<E> saveAllReturningAndFlush(Collection<E> entities) {
+        List<E> temp = this.jpaRepository.saveAll(entities);
         this.jpaRepository.flush();
         return temp;
     }
 
     @Override
-    public T update(T entity) {
+    public E update(E entity) {
         return this.jpaRepository.save(entity);
     }
 

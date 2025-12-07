@@ -4,7 +4,7 @@ import com.hit.common.pagination.PageResModel;
 import com.hit.common.pagination.PageableReqModel;
 import com.hit.common.pagination.PageableSearchReqModel;
 import com.hit.spring.annotation.PaginationParameter;
-import com.hit.spring.core.data.mapper.ResponseMapper;
+import com.hit.spring.core.mapper.ResponseMapper;
 import com.hit.spring.core.factory.GeneralResponse;
 import com.hit.spring.core.factory.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;

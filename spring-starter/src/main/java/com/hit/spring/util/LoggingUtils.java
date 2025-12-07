@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.hit.spring.context.AppContext;
 import com.hit.spring.core.constant.CommonConstant;
-import com.hit.spring.core.data.wrapper.CachedBodyRequestWrapper;
+import com.hit.spring.core.wrapper.CachedBodyRequestWrapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.experimental.UtilityClass;

@@ -2,7 +2,7 @@ package com.hit.spring.core.factory;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hit.spring.core.data.model.ResponseStatus;
+import com.hit.common.model.ResponseStatus;
 import lombok.*;
 
 @Getter

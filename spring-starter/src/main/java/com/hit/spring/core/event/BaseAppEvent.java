@@ -1,4 +1,4 @@
-package com.hit.spring.core.data.event;
+package com.hit.spring.core.event;
 
 import com.hit.spring.context.TrackingContext;
 import lombok.Getter;

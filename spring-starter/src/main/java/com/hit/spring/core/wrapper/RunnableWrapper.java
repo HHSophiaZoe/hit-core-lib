@@ -1,4 +1,4 @@
-package com.hit.spring.core.data.wrapper;
+package com.hit.spring.core.wrapper;
 
 import com.hit.spring.context.TrackingContext;
 import com.hit.spring.core.exception.ExecutorException;

@@ -1,6 +1,6 @@
 package com.hit.spring.core.exception;
 
-import com.hit.spring.core.data.model.ResponseStatusCode;
+import com.hit.common.model.ResponseStatusCode;
 import org.springframework.http.HttpStatus;
 
 public interface ResponseStatusCodeEnum {

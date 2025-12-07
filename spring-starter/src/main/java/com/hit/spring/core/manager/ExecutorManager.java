@@ -1,6 +1,6 @@
 package com.hit.spring.core.manager;
 
-import com.hit.spring.core.data.wrapper.RunnableWrapper;
+import com.hit.spring.core.wrapper.RunnableWrapper;
 import com.hit.spring.core.exception.ExecutorException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
