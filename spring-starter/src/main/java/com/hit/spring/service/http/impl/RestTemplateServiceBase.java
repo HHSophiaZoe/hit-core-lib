@@ -1,9 +1,14 @@
 package com.hit.spring.service.http.impl;
 
-import com.hit.spring.core.exception.HttpClientTimeout;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hit.spring.core.exception.HttpClientTimeoutException;
+import com.hit.spring.core.exception.HttpResponseInvalidException;
 import com.hit.spring.util.DataUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.json.JsonParseException;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -20,6 +25,8 @@ import static org.springframework.http.HttpMethod.*;
 public abstract class RestTemplateServiceBase {
 
     private final RestTemplate template;
+
+    private final ObjectMapper objectMapper;
 
     public String get(String url, HttpHeaders headers) {
         ParameterizedTypeReference<String> responseType = new ParameterizedTypeReference<>() {
@@ -40,6 +47,10 @@ public abstract class RestTemplateServiceBase {
         ParameterizedTypeReference<String> responseType = new ParameterizedTypeReference<>() {
         };
         return this.executeRequest(url, POST, body, headers, responseType).getBody();
+    }
+
+    public <R> R post(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
+        return this.executeRequest(url, POST, headers, responseType).getBody();
     }
 
     public <B, R> R post(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
@@ -67,15 +78,19 @@ public abstract class RestTemplateServiceBase {
             log.info("Call api [{}]-[{}] \n\tHeaders: {}", method, url, headers.toString());
         }
         try {
-            ResponseEntity<R> response = template.exchange(url, method, httpEntity, responseType);
+            ResponseEntity<String> response = template.exchange(url, method, httpEntity, String.class);
             log.info("Call api [{}]-[{}] \n\tResponse: {}", method, url, response.getBody());
-            return response;
+            JavaType javaType = objectMapper.getTypeFactory().constructType(responseType.getType());
+            return objectMapper.readValue(response.getBody(), javaType);
         } catch (ResourceAccessException e) {
             log.error("Call api timeout [{}]-[{}]", method, url, e);
-            throw new HttpClientTimeout(e.getMessage(), e);
+            throw new HttpClientTimeoutException(e.getMessage(), e);
         } catch (HttpStatusCodeException e) {
             log.error("Call api error [{}]-[{}]-[{}]: {}", method, url, e.getStatusCode(), e.getResponseBodyAsString(), e);
             throw e;
+        } catch (JsonProcessingException e) {
+            log.error("Call api response error [{}]-[{}]", method, url, e);
+            throw new HttpResponseInvalidException(e.getMessage());
         } catch (Exception e) {
             log.error("Call api error [{}]-[{}]: {}", method, url, e.getMessage(), e);
             throw e;

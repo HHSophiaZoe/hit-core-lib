@@ -14,6 +14,8 @@ public interface HttpService {
 
     <B> String post(String url, B body, HttpHeaders headers);
 
+    <R> R post(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType);
+
     <B, R> R post(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType);
 
     <B, R> ResponseEntity<R> postEntity(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType);

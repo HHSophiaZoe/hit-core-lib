@@ -1,5 +1,6 @@
 package com.hit.spring.service.http.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hit.spring.service.http.HttpService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,8 +18,9 @@ import org.springframework.web.client.RestTemplate;
 )
 public class DefaultRestTemplateServiceImpl extends RestTemplateServiceBase implements HttpService {
 
-    public DefaultRestTemplateServiceImpl(@Qualifier("defaultRestTemplate") RestTemplate template) {
-        super(template);
+    public DefaultRestTemplateServiceImpl(@Qualifier("defaultRestTemplate") RestTemplate template,
+                                          ObjectMapper objectMapper) {
+        super(template, objectMapper);
     }
 
 }
