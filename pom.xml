@@ -39,6 +39,7 @@
         <core-common-starter.version>1.0</core-common-starter.version>
         <api-starter.version>1.0</api-starter.version>
         <cache-starter.version>1.0</cache-starter.version>
+        <chatbot-starter.version>1.0</chatbot-starter.version>
         <kafka-starter.version>1.0</kafka-starter.version>
         <jpa-starter.version>1.0</jpa-starter.version>
         <storage-starter.version>1.0</storage-starter.version>
@@ -60,6 +61,7 @@
         <module>spring-starter</module>
         <module>jpa-starter</module>
         <module>cache-starter</module>
+        <module>chatbot-starter</module>
         <module>kafka-starter</module>
         <module>storage-starter</module>
         <module>api-starter</module>
