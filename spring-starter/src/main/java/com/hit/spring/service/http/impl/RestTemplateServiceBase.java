@@ -67,6 +67,7 @@ public abstract class RestTemplateServiceBase {
         return this.executeRequest(url, method, null, headers, responseType);
     }
 
+    @SuppressWarnings({"unchecked"})
     private <B, R> ResponseEntity<R> executeRequest(String url, HttpMethod method, B body,
                                                     HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
         HttpEntity<?> httpEntity;
@@ -80,8 +81,14 @@ public abstract class RestTemplateServiceBase {
         try {
             ResponseEntity<String> response = template.exchange(url, method, httpEntity, String.class);
             log.info("Call api [{}]-[{}] \n\tResponse: {}", method, url, response.getBody());
+
+            if (responseType.getType().equals(String.class)) {
+                return (ResponseEntity<R>) response;
+            }
+
             JavaType javaType = objectMapper.getTypeFactory().constructType(responseType.getType());
-            return objectMapper.readValue(response.getBody(), javaType);
+            R data = objectMapper.readValue(response.getBody(), javaType);
+            return new ResponseEntity<>(data, response.getStatusCode());
         } catch (ResourceAccessException e) {
             log.error("Call api timeout [{}]-[{}]", method, url, e);
             throw new HttpClientTimeoutException(e.getMessage(), e);
