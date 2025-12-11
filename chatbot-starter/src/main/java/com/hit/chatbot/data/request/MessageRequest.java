@@ -14,7 +14,7 @@ public class MessageRequest {
     private String channelId;
     private String title;
     private String content;
-    private MessageType messageType;
+    private MessageType type;
 
     public enum MessageType {
         INFO, WARN, ERROR

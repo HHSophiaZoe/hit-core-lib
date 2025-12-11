@@ -41,7 +41,7 @@ public class DiscordChatBotServiceImpl implements ChatBotService {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle(request.getTitle())
                 .setDescription(request.getContent())
-                .setColor(this.colorOf(request.getMessageType()));
+                .setColor(this.colorOf(request.getType()));
 
         if (request instanceof DiscordMessageRequest discordMessageRequest) {
             if (ObjectUtils.isNotEmpty(discordMessageRequest.getFields())) {
