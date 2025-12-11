@@ -1,40 +1,40 @@
 //package com.hit.chatbot;
 //
 //import com.hit.chatbot.annotation.ChatBotMessageListener;
+//import com.hit.chatbot.data.response.MessageResponse;
 //import lombok.extern.slf4j.Slf4j;
 //import org.springframework.stereotype.Component;
-//import org.telegram.telegrambots.meta.api.objects.Message;
 //
 //@Slf4j
 //@Component
 //public class TelegramMessageHandler {
 //
 //    @ChatBotMessageListener(
-//        platforms = ChatBotMessageListener.Platform.TELEGRAM,
-//        command = "/start"
+//            platforms = ChatBotMessageListener.Platform.TELEGRAM,
+//            command = "/start"
 //    )
-//    public void handleStartCommand(Message message) {
-//        log.info("User {} started the bot", message.getFrom().getId());
+//    public void handleStartCommand(MessageResponse message) {
+//        log.info("User {} started the bot", message.getChatId());
 //    }
 //
 //    @ChatBotMessageListener(
-//        platforms = ChatBotMessageListener.Platform.TELEGRAM,
-//        command = "/help"
+//            platforms = ChatBotMessageListener.Platform.TELEGRAM,
+//            command = "/help"
 //    )
-//    public void handleHelpCommand(Message message) {
-//        log.info("User {} requested help", message.getFrom().getId());
+//    public void handleHelpCommand(MessageResponse message) {
+//        log.info("User {} requested help", message.getChatId());
 //    }
 //
 //    @ChatBotMessageListener(
-//        platforms = ChatBotMessageListener.Platform.TELEGRAM,
-//        ids = {"123456789", "987654321"}
+//            platforms = ChatBotMessageListener.Platform.TELEGRAM,
+//            ids = {"123456789", "987654321"}
 //    )
-//    public void handleSpecificChatMessage(Message message) {
-//        log.info("Message from specific chat: {}", message.getText());
+//    public void handleSpecificChatMessage(MessageResponse message) {
+//        log.info("Message from specific chat: {}", message.getContent());
 //    }
 //
 //    @ChatBotMessageListener(platforms = ChatBotMessageListener.Platform.TELEGRAM)
-//    public void handleAllTelegramMessages(Message message) {
-//        log.info("Received Telegram message: {}", message.getText());
+//    public void handleAllTelegramMessages(MessageResponse message) {
+//        log.info("Received Telegram message: {}", message.getContent());
 //    }
 //}

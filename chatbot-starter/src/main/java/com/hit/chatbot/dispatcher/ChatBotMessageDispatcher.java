@@ -1,6 +1,7 @@
 package com.hit.chatbot.dispatcher;
 
 import com.hit.chatbot.annotation.ChatBotMessageListener;
+import com.hit.chatbot.data.response.MessageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -43,12 +44,15 @@ public class ChatBotMessageDispatcher {
         String chatId = String.valueOf(message.getChatId());
         String text = message.getText() != null ? message.getText() : "";
 
-        log.info("Handling Telegram message from chat: {}, text: {}", chatId, text);
-
+        log.debug("Handling Telegram message from chat: {}, text: {}", chatId, text);
         for (List<ListenerMethod> listeners : listenerMap.values()) {
             for (ListenerMethod listener : listeners) {
-                if (listener.isPlatformSupported(ChatBotMessageListener.Platform.TELEGRAM) && matchesTelegram(chatId, text, listener)) {
-                    invokeTelegramListener(listener, message);
+                if (listener.isPlatformSupported(ChatBotMessageListener.Platform.TELEGRAM) && matchesMessage(chatId, text, listener)) {
+                    MessageResponse messageResponse = MessageResponse.builder()
+                            .chatId(chatId)
+                            .content(text)
+                            .build();
+                    this.invokeListener(listener, messageResponse);
                 }
             }
         }
@@ -58,20 +62,24 @@ public class ChatBotMessageDispatcher {
         String channelId = event.getChannel().getId();
         String text = event.getMessage().getContentRaw();
 
-        log.info("Handling Discord message from channel: {}, text: {}", channelId, text);
+        log.debug("Handling Discord message from channel: {}, text: {}", channelId, text);
         for (List<ListenerMethod> listeners : listenerMap.values()) {
             for (ListenerMethod listener : listeners) {
-                if (listener.isPlatformSupported(ChatBotMessageListener.Platform.DISCORD) && matchesDiscord(channelId, text, listener)) {
-                    invokeDiscordListener(listener, event);
+                if (listener.isPlatformSupported(ChatBotMessageListener.Platform.DISCORD) && matchesMessage(channelId, text, listener)) {
+                    MessageResponse messageResponse = MessageResponse.builder()
+                            .chatId(channelId)
+                            .content(text)
+                            .build();
+                    this.invokeListener(listener, messageResponse);
                 }
             }
         }
     }
 
-    private boolean matchesTelegram(String chatId, String text, ListenerMethod listener) {
+    private boolean matchesMessage(String id, String text, ListenerMethod listener) {
         // Check chatId
         if (listener.annotation.ids().length > 0) {
-            boolean chatIdMatches = Arrays.asList(listener.annotation.ids()).contains(chatId);
+            boolean chatIdMatches = Arrays.asList(listener.annotation.ids()).contains(id);
             if (!chatIdMatches) return false;
         }
 
@@ -83,36 +91,12 @@ public class ChatBotMessageDispatcher {
         return true;
     }
 
-    private boolean matchesDiscord(String channelId, String text, ListenerMethod listener) {
-        // Check channelId
-        if (listener.annotation.ids().length > 0) {
-            boolean channelIdMatches = Arrays.asList(listener.annotation.ids()).contains(channelId);
-            if (!channelIdMatches) return false;
-        }
-
-        // Check command
-        if (!listener.annotation.command().isEmpty()) {
-            return text.startsWith(listener.annotation.command());
-        }
-
-        return true;
-    }
-
-    private void invokeTelegramListener(ListenerMethod listener, Message message) {
+    private void invokeListener(ListenerMethod listener, MessageResponse message) {
         try {
-            log.info("Invoking Telegram listener: {}", listener.method.getName());
+            log.debug("Invoking listener: {}", listener.method.getName());
             listener.method.invoke(listener.bean, message);
         } catch (Exception e) {
-            log.error("Error invoking Telegram listener: {}", listener.method.getName(), e);
-        }
-    }
-
-    private void invokeDiscordListener(ListenerMethod listener, Object message) {
-        try {
-            log.info("Invoking Discord listener: {}", listener.method.getName());
-            listener.method.invoke(listener.bean, message);
-        } catch (Exception e) {
-            log.error("Error invoking Discord listener: {}", listener.method.getName(), e);
+            log.error("Error invoking listener: {}", listener.method.getName(), e);
         }
     }
 

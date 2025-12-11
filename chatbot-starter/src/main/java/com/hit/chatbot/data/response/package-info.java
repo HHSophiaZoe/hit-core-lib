@@ -1,1 +1,0 @@
-package com.hit.chatbot.data.response;
