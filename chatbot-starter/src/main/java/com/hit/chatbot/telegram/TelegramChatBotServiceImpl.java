@@ -5,7 +5,7 @@ import com.hit.chatbot.data.request.MessageRequest;
 import com.hit.chatbot.data.request.TelegramMessageRequest;
 import com.hit.chatbot.dispatcher.ChatBotMessageDispatcher;
 import com.hit.chatbot.annotation.ConditionalOnTelegramEnable;
-import com.hit.chatbot.properties.TelegramProperties;
+import com.hit.chatbot.telegram.properties.TelegramProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,12 +25,12 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
 
     @Override
     public String getBotUsername() {
-        return telegramProperties.getBotUsername();
+        return telegramProperties.getUsername();
     }
 
     @Override
     public String getBotToken() {
-        return telegramProperties.getBotToken();
+        return telegramProperties.getToken();
     }
 
     @Override

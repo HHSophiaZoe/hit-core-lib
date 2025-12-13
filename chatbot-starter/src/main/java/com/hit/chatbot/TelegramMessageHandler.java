@@ -27,7 +27,7 @@
 //
 //    @ChatBotMessageListener(
 //            platforms = ChatBotMessageListener.Platform.TELEGRAM,
-//            ids = {"123456789", "987654321"}
+//            ids = {"-1003647054933_2"}
 //    )
 //    public void handleSpecificChatMessage(MessageResponse message) {
 //        log.info("Message from specific chat: {}", message.getContent());

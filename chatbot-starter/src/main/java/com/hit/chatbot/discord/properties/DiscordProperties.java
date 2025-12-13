@@ -1,4 +1,4 @@
-package com.hit.chatbot.properties;
+package com.hit.chatbot.discord.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

@@ -9,6 +9,7 @@ import lombok.*;
 public class MessageResponse {
 
     private String chatId;
+    private String command;
     private String content;
 
 }

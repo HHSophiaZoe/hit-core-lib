@@ -1,8 +1,8 @@
-package com.hit.chatbot.discord;
+package com.hit.chatbot.discord.config;
 
 import com.hit.chatbot.annotation.ConditionalOnDiscordEnable;
 import com.hit.chatbot.dispatcher.ChatBotMessageDispatcher;
-import com.hit.chatbot.properties.DiscordProperties;
+import com.hit.chatbot.discord.properties.DiscordProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;

@@ -19,14 +19,9 @@ public @interface ChatBotMessageListener {
     String[] ids() default {};
     
     /**
-     * Message type: TEXT, PHOTO, DOCUMENT, EMBED, etc.
-     */
-    String messageType() default "TEXT";
-    
-    /**
      * Filter command: /start, /help, !ping, etc.
      */
-    String command() default "";
+    String[] commands() default {};
     
     enum Platform {
         TELEGRAM, DISCORD

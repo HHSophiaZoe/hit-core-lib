@@ -1,4 +1,4 @@
-package com.hit.chatbot.properties;
+package com.hit.chatbot.telegram.properties;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -8,11 +8,11 @@ import org.springframework.stereotype.Component;
 @Setter
 @Getter
 @Component
-@ConfigurationProperties(prefix = "telegram")
+@ConfigurationProperties(prefix = "bot.telegram")
 public class TelegramProperties {
 
     private boolean enable;
-    private String botToken;
-    private String botUsername;
+    private String token;
+    private String username;
 
 }
