@@ -1,5 +1,6 @@
 package com.hit.cache.config;
 
+import com.hit.cache.annotation.ConditionalOnExternalCacheEnable;
 import com.hit.cache.config.properties.CacheConfigProperties;
 import com.hit.cache.config.serializer.RedisSerializer;
 import com.hit.cache.config.serializer.RedisSerializerImpl;
@@ -30,7 +31,7 @@ import java.util.Map;
 @Slf4j
 @EnableCaching
 @Configuration
-@ConditionalOnProperty(value = {"cache.external.enable"}, havingValue = "true")
+@ConditionalOnExternalCacheEnable
 public class RedisCacheConfig {
 
     @Bean

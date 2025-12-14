@@ -11,7 +11,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class MessageRequest {
 
-    private String channelId;
+    private String chatId;
     private String title;
     private String content;
     private MessageType type;

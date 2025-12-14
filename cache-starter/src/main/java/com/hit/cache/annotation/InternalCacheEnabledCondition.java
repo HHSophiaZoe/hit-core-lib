@@ -1,4 +1,4 @@
-package com.hit.chatbot.annotation;
+package com.hit.cache.annotation;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionOutcome;
@@ -8,15 +8,15 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
 @Order(-2147483608)
-public class DiscordEnabledCondition extends SpringBootCondition {
+public class InternalCacheEnabledCondition extends SpringBootCondition {
 
     @Override
     public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        String enable = context.getEnvironment().getProperty("bot.discord.enable");
-        if (BooleanUtils.toBoolean(enable)) {
-            return ConditionOutcome.match("Discord chat is enabled");
+        String telegramEnable = context.getEnvironment().getProperty("cache.internal.enable");
+        if (BooleanUtils.toBoolean(telegramEnable)) {
+            return ConditionOutcome.match("Internal cache is enabled");
         }
-        return ConditionOutcome.noMatch("Discord chat is not enabled");
+        return ConditionOutcome.noMatch("Internal cache is not enabled");
     }
 
 }

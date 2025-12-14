@@ -1,6 +1,7 @@
 package com.hit.cache.lock.processor;
 
 import com.github.f4b6a3.ulid.UlidCreator;
+import com.hit.cache.annotation.ConditionalOnExternalCacheEnable;
 import com.hit.cache.helper.DistributedAtomic;
 import com.hit.cache.lock.DistributedLock;
 import com.hit.cache.exception.DistributedLockException;
@@ -18,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
 @Aspect
 @Configuration
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = {"cache.external.enable"}, havingValue = "true")
+@ConditionalOnExternalCacheEnable
 public class DistributedLockSimpleLockProcessor extends DistributedLockAbstractProcessor {
 
     private final DistributedAtomic distributedAtomic;

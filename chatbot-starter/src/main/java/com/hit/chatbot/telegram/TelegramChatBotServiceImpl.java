@@ -1,18 +1,19 @@
 package com.hit.chatbot.telegram;
 
+import com.hit.chatbot.ChatBotMessageDispatcher;
 import com.hit.chatbot.ChatBotService;
+import com.hit.chatbot.annotation.ConditionalOnTelegramEnable;
 import com.hit.chatbot.data.request.MessageRequest;
 import com.hit.chatbot.data.request.TelegramMessageRequest;
-import com.hit.chatbot.ChatBotMessageDispatcher;
-import com.hit.chatbot.annotation.ConditionalOnTelegramEnable;
 import com.hit.chatbot.telegram.properties.TelegramProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Slf4j
 @Service
@@ -43,11 +44,13 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
         try {
             log.debug("Sending message to Telegram chatId: {}, message: {}", chatId, content);
             SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(chatId);
+            Pair<String, Integer> chatIdAndSubChatId = this.getChatIdAndSubChatId(chatId);
+            sendMessage.setChatId(chatIdAndSubChatId.getLeft());
+            sendMessage.setMessageThreadId(chatIdAndSubChatId.getRight());
             sendMessage.setText(content);
             execute(sendMessage);
-        } catch (TelegramApiException e) {
-            log.error("Failed to send message to Telegram chatId: {}", chatId, e);
+        } catch (Exception e) {
+            log.warn("Failed to send message to Telegram chatId: {}", chatId, e);
         }
     }
 
@@ -56,45 +59,60 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
         try {
             log.info("Sending message to Telegram: {}", request);
             SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(request.getChannelId());
-            
-            // Format message với title nếu có
-            String messageText = request.getTitle() != null ? 
-                String.format("<b>%s</b>\n%s", request.getTitle(), request.getContent()) :
-                request.getContent();
-            
+            Pair<String, Integer> chatIdAndSubChatId = this.getChatIdAndSubChatId(request.getChatId());
+            sendMessage.setChatId(chatIdAndSubChatId.getLeft());
+            sendMessage.setMessageThreadId(chatIdAndSubChatId.getRight());
+
+            // Format message with title
+            String messageText = request.getTitle() != null ?
+                    String.format("<b>%s</b>\n%s", request.getTitle(), request.getContent()) :
+                    request.getContent();
+
             sendMessage.setText(messageText);
-            
+
             if (request instanceof TelegramMessageRequest telegramRequest) {
-                if (telegramRequest.getParseMode() != null) {
-                    sendMessage.setParseMode(telegramRequest.getParseMode());
-                } else {
-                    sendMessage.setParseMode("HTML"); // Default
-                }
+                this.applyParseMode(sendMessage, telegramRequest.getParseMode());
                 sendMessage.setDisableNotification(telegramRequest.isDisableNotification());
                 sendMessage.setProtectContent(telegramRequest.isProtectContent());
-            } else {
-                sendMessage.setParseMode("HTML");
             }
-            
+
             execute(sendMessage);
-            log.info("Message sent successfully to Telegram");
-        } catch (TelegramApiException e) {
-            log.error("Failed to send message to Telegram", e);
+            log.debug("Message sent successfully to Telegram: {}", request);
+        } catch (Exception e) {
+            log.warn("Failed to send message to Telegram", e);
         }
     }
 
     @Override
     public void sendPrivateMessage(String userId, String content) {
-        try {
-            log.info("Sending private message to Telegram user: {}", userId);
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(userId);
-            sendMessage.setText(content);
-            execute(sendMessage);
-            log.info("Private message sent successfully to user: {}", userId);
-        } catch (TelegramApiException e) {
-            log.error("Failed to send private message to Telegram user: {}", userId, e);
+        throw new UnsupportedOperationException();
+    }
+
+    private Pair<String, Integer> getChatIdAndSubChatId(String chatId) {
+        if (StringUtils.isBlank(chatId)) {
+            return Pair.of(chatId, null);
+        }
+
+        String trimmed = chatId.trim();
+        int firstShiftDash = trimmed.indexOf('_');
+        if (firstShiftDash == -1) { // only chat id
+            return Pair.of(trimmed.substring(1), null);
+        }
+
+        String finalChatId = trimmed.substring(0, firstShiftDash);
+        String subChatId = trimmed.substring(firstShiftDash + 1).trim();
+
+        return Pair.of(finalChatId, Integer.parseInt(subChatId));
+    }
+
+    private void applyParseMode(SendMessage sendMessage, TelegramMessageRequest.ParseMode parseMode) {
+        if (parseMode == null) {
+            return;
+        }
+        switch (parseMode) {
+            case HTML -> sendMessage.enableHtml(true);
+            case MARKDOWN -> sendMessage.enableMarkdown(true);
+            case MARKDOWN_V2 -> sendMessage.enableMarkdownV2(true);
         }
     }
 }

@@ -1,8 +1,8 @@
 package com.hit.cache.helper;
 
+import com.hit.cache.annotation.ConditionalOnExternalCacheEnable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +11,7 @@ import java.util.Collections;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = {"cache.external.enable"}, havingValue = "true")
+@ConditionalOnExternalCacheEnable
 public class RedisDistribution implements DistributedAtomic {
 
     private final StringRedisTemplate redisTemplate;

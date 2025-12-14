@@ -13,8 +13,12 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class TelegramMessageRequest extends MessageRequest {
     
-    private String parseMode; // HTML, Markdown, MarkdownV2
+    private ParseMode parseMode;
     private boolean disableNotification;
     private boolean protectContent;
+
+    public enum ParseMode {
+        HTML, MARKDOWN, MARKDOWN_V2
+    }
 
 }

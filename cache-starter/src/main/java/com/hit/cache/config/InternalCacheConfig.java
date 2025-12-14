@@ -1,12 +1,12 @@
 package com.hit.cache.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.hit.cache.annotation.ConditionalOnInternalCacheEnable;
 import com.hit.cache.config.properties.CacheConfigProperties;
 import com.hit.cache.config.properties.CacheConfigProperties.InternalCacheConfigProperties;
 import com.hit.cache.config.properties.CacheConfigProperties.InternalCacheConfigProperties.CacheType;
 import lombok.RequiredArgsConstructor;
 import org.ehcache.jsr107.EhcacheCachingProvider;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
@@ -21,7 +21,7 @@ import java.io.IOException;
 @EnableCaching
 @Configuration
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = {"cache.internal.enable"}, havingValue = "true")
+@ConditionalOnInternalCacheEnable
 public class InternalCacheConfig {
 
     private final CacheConfigProperties properties;

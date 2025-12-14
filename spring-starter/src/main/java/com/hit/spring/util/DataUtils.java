@@ -5,17 +5,20 @@ import com.hit.spring.core.json.JsonMapper;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.SecureRandom;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 import java.util.Locale;
 
 @Slf4j
 @UtilityClass
 public class DataUtils {
 
-    private final SecureRandom random = new SecureRandom();
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    private static final ThreadLocal<NumberFormat> VND_FORMAT =
+            ThreadLocal.withInitial(() -> NumberFormat.getInstance(Locale.of("vi", "VN")));
 
     public static String parserLog(Object data) {
         try {
@@ -28,17 +31,22 @@ public class DataUtils {
     public String generateOTP(Integer length) {
         StringBuilder otp = new StringBuilder();
         for (int i = 0; i < length; i++) {
-            otp.append(random.nextInt(10)); // 0-9
+            otp.append(SECURE_RANDOM.nextInt(10)); // 0-9
         }
         return otp.toString();
     }
 
-    public static String formatCurrencyVND(BigInteger amount) {
-        Locale locale = Locale.forLanguageTag("vi-VN");
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(locale);
-        symbols.setDecimalSeparator('.');
-        DecimalFormat currencyFormatter = new DecimalFormat("###,###,###", symbols);
-        return currencyFormatter.format(amount);
+    public static String formatCurrencyVND(BigDecimal amount) {
+        if (amount == null) return "0";
+        BigDecimal value = amount.setScale(0, RoundingMode.HALF_UP);
+        return VND_FORMAT.get().format(value);
+    }
+
+    public static String formatCurrencyVND(Number amount) {
+        if (amount == null) return "0";
+        BigDecimal value = new BigDecimal(amount.toString())
+                .setScale(0, RoundingMode.HALF_UP);
+        return VND_FORMAT.get().format(value);
     }
 
 }

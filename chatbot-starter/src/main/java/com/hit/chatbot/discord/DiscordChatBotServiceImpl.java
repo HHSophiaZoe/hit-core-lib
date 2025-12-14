@@ -37,7 +37,7 @@ public class DiscordChatBotServiceImpl implements ChatBotService {
 
     @Override
     public void sendMessage(MessageRequest request) {
-        TextChannel channel = this.getTextChannel(request.getChannelId());
+        TextChannel channel = this.getTextChannel(request.getChatId());
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle(request.getTitle())
                 .setDescription(request.getContent())
@@ -56,8 +56,8 @@ public class DiscordChatBotServiceImpl implements ChatBotService {
             }
         }
         messageCreateAction.queue(
-                success -> log.info("Send embed message success to: {}", request.getChannelId()),
-                error -> log.error("Send embed message to {} failed: {}", request.getChannelId(), error.getMessage())
+                success -> log.info("Send embed message success to: {}", request.getChatId()),
+                error -> log.error("Send embed message to {} failed: {}", request.getChatId(), error.getMessage())
         );
     }
 

@@ -14,7 +14,9 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -100,10 +102,10 @@ public class ChatBotMessageDispatcher {
         int firstSpace = trimmed.indexOf(StringUtils.SPACE);
 
         if (firstSpace == -1) { // only command
-            return Pair.of(trimmed.substring(1), StringUtils.EMPTY);
+            return Pair.of(trimmed, StringUtils.EMPTY);
         }
 
-        String command = trimmed.substring(1, firstSpace);
+        String command = trimmed.substring(0, firstSpace);
         String content = trimmed.substring(firstSpace + 1).trim();
 
         return Pair.of(command, content);
