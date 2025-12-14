@@ -96,7 +96,7 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
         String trimmed = chatId.trim();
         int firstShiftDash = trimmed.indexOf('_');
         if (firstShiftDash == -1) { // only chat id
-            return Pair.of(trimmed.substring(1), null);
+            return Pair.of(trimmed.substring(0), null);
         }
 
         String finalChatId = trimmed.substring(0, firstShiftDash);
