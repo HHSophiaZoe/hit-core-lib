@@ -1,6 +1,6 @@
 package com.hit.test.controller;
 
-import com.hit.spring.util.ThreadUtils;
+import com.hit.common.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;

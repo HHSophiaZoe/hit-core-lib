@@ -1,4 +1,4 @@
-package com.hit.common.query;
+package com.hit.common.model.query;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

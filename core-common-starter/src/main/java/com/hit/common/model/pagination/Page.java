@@ -1,4 +1,4 @@
-package com.hit.common.pagination;
+package com.hit.common.model.pagination;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -3,7 +3,7 @@ package com.hit.chatbot.telegram;
 import com.hit.chatbot.ChatBotService;
 import com.hit.chatbot.data.request.MessageRequest;
 import com.hit.chatbot.data.request.TelegramMessageRequest;
-import com.hit.chatbot.dispatcher.ChatBotMessageDispatcher;
+import com.hit.chatbot.ChatBotMessageDispatcher;
 import com.hit.chatbot.annotation.ConditionalOnTelegramEnable;
 import com.hit.chatbot.telegram.properties.TelegramProperties;
 import lombok.RequiredArgsConstructor;
@@ -39,23 +39,22 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
     }
 
     @Override
-    public void sendMessage(String channelId, String content) {
+    public void sendMessage(String chatId, String content) {
         try {
-            log.info("Sending message to Telegram channel: {}", channelId);
+            log.debug("Sending message to Telegram chatId: {}, message: {}", chatId, content);
             SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(channelId);
+            sendMessage.setChatId(chatId);
             sendMessage.setText(content);
             execute(sendMessage);
-            log.info("Message sent successfully to channel: {}", channelId);
         } catch (TelegramApiException e) {
-            log.error("Failed to send message to Telegram channel: {}", channelId, e);
+            log.error("Failed to send message to Telegram chatId: {}", chatId, e);
         }
     }
 
     @Override
     public void sendMessage(MessageRequest request) {
         try {
-            log.info("Sending message to Telegram: {}", request.getChannelId());
+            log.info("Sending message to Telegram: {}", request);
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(request.getChannelId());
             

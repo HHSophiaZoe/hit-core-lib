@@ -3,7 +3,7 @@ package com.hit.test.core;
 import com.hit.spring.SpringStarterConfig;
 import com.hit.spring.context.TrackingContext;
 import com.hit.spring.core.manager.ExecutorManager;
-import com.hit.spring.util.ThreadUtils;
+import com.hit.common.util.ThreadUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;

@@ -1,4 +1,4 @@
-package com.hit.common.query;
+package com.hit.common.model.query;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;

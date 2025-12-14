@@ -1,8 +1,8 @@
 package com.hit.spring.tracker;
 
-import com.hit.spring.util.CollectionUtils;
-import com.hit.spring.util.StringUtils;
-import com.hit.spring.util.TimeUtils;
+import com.hit.common.util.CollectionUtils;
+import com.hit.common.util.StringUtils;
+import com.hit.common.util.TimeUtils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

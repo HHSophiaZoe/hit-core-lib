@@ -1,6 +1,6 @@
 package com.hit.spring.context;
 
-import com.hit.spring.util.TraceUtils;
+import com.hit.common.util.TraceUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.logging.log4j.ThreadContext;

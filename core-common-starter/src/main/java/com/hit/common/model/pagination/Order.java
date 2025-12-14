@@ -1,4 +1,4 @@
-package com.hit.common.pagination;
+package com.hit.common.model.pagination;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;

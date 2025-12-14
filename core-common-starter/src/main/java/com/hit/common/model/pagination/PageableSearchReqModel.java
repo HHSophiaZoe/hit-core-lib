@@ -1,6 +1,6 @@
-package com.hit.common.pagination;
+package com.hit.common.model.pagination;
 
-import com.hit.common.query.Search;
+import com.hit.common.model.query.Search;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import lombok.Data;

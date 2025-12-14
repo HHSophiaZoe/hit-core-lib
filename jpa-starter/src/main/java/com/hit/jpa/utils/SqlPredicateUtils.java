@@ -1,9 +1,9 @@
 package com.hit.jpa.utils;
 
-import com.hit.common.query.Filter;
-import com.hit.common.query.Operator;
-import com.hit.common.query.Search;
-import com.hit.common.query.SearchOption;
+import com.hit.common.model.query.Filter;
+import com.hit.common.model.query.Operator;
+import com.hit.common.model.query.Search;
+import com.hit.common.model.query.SearchOption;
 import com.hit.jpa.exception.QueryException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;

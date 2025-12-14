@@ -1,7 +1,7 @@
 package com.hit.chatbot.discord.config;
 
 import com.hit.chatbot.annotation.ConditionalOnDiscordEnable;
-import com.hit.chatbot.dispatcher.ChatBotMessageDispatcher;
+import com.hit.chatbot.ChatBotMessageDispatcher;
 import com.hit.chatbot.discord.properties.DiscordProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ public class DiscordConfig {
     @Bean
     public JDA discord() throws InterruptedException {
         JDA jda = JDABuilder.createDefault(discordProperties.getToken())
-                .setActivity(Activity.playing("Trading Application"))
+                .setActivity(Activity.playing("Discord Chatbot"))
                 .addEventListeners((EventListener) event -> {
                     if (event instanceof ReadyEvent) {
                         this.onReady((ReadyEvent) event);

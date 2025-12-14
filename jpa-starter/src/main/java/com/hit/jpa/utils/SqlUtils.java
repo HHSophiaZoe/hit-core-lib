@@ -1,8 +1,8 @@
 package com.hit.jpa.utils;
 
-import com.hit.common.pagination.PageResModel;
-import com.hit.common.pagination.PageableReqModel;
-import com.hit.common.pagination.PageableSearchReqModel;
+import com.hit.common.model.pagination.PageResModel;
+import com.hit.common.model.pagination.PageableReqModel;
+import com.hit.common.model.pagination.PageableSearchReqModel;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.Predicate;
 import lombok.experimental.UtilityClass;

@@ -1,18 +1,15 @@
 package com.hit.spring.util;
 
+import com.hit.spring.core.constant.CommonConstant;
 import com.hit.spring.core.json.JsonMapper;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
-
-import static com.hit.spring.core.constant.CommonConstant.EMPTY_STRING;
 
 @Slf4j
 @UtilityClass
@@ -24,7 +21,7 @@ public class DataUtils {
         try {
             return JsonMapper.encode(data);
         } catch (Exception e) {
-            return EMPTY_STRING;
+            return CommonConstant.EMPTY_STRING;
         }
     }
 

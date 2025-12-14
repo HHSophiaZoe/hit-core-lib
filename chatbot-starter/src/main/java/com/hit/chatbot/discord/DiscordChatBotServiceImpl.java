@@ -27,11 +27,11 @@ public class DiscordChatBotServiceImpl implements ChatBotService {
     private final JDA jda;
 
     @Override
-    public void sendMessage(String channelId, String content) {
-        TextChannel channel = this.getTextChannel(channelId);
+    public void sendMessage(String chatId, String content) {
+        TextChannel channel = this.getTextChannel(chatId);
         channel.sendMessage(content).queue(
-                success -> log.info("Send message success to: {}", channelId),
-                error -> log.error("Send message to {} failed: {}", channelId, error.getMessage())
+                success -> log.info("Send message success to: {}", chatId),
+                error -> log.error("Send message to {} failed: {}", chatId, error.getMessage())
         );
     }
 

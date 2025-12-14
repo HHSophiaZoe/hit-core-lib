@@ -20,6 +20,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.hit</groupId>
+            <artifactId>core-common-starter</artifactId>
+            <version>${core-common-starter.version}</version>
+        </dependency>
+
         <!-- FTP/SFTP -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

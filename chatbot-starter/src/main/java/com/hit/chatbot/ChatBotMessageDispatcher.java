@@ -1,4 +1,4 @@
-package com.hit.chatbot.dispatcher;
+package com.hit.chatbot;
 
 import com.hit.chatbot.annotation.ChatBotMessageListener;
 import com.hit.chatbot.annotation.ChatBotMessageListener.Platform;
@@ -22,6 +22,7 @@ import java.util.*;
 public class ChatBotMessageDispatcher {
 
     private final AsyncTaskExecutor taskExecutor;
+
     private final List<ListenerMethod> listeners = new ArrayList<>();
 
     public void addListener(String beanName, Object bean) {
@@ -32,7 +33,7 @@ public class ChatBotMessageDispatcher {
                 method.setAccessible(true);
                 ChatBotMessageDispatcher.ListenerMethod listenerMethod = new ChatBotMessageDispatcher.ListenerMethod(bean, method, annotation);
                 listeners.add(listenerMethod);
-                log.info("Registered listener: {} from bean {} for platforms: {} with command: {}",
+                log.debug("Registered listener: {} from bean {} for platforms: {} with command: {}",
                         method.getName(), beanName, Arrays.toString(annotation.platforms()), annotation.commands());
             }
         }
@@ -111,10 +112,10 @@ public class ChatBotMessageDispatcher {
     private void invokeListener(ListenerMethod listener, MessageResponse message) {
         taskExecutor.execute(() -> {
             try {
-                log.debug("Invoking listener {}: {}", listener.method.getClass(), listener.method.getName());
+                log.trace("Invoking listener {}: {}", listener.method.getClass(), listener.method.getName());
                 listener.method.invoke(listener.bean, message);
             } catch (Exception e) {
-                log.error("Error invoking listener: {}", listener.method.getName(), e);
+                log.trace("Error invoking listener: {}", listener.method.getName(), e);
             }
         });
     }

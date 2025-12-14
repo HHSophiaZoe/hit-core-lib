@@ -8,7 +8,6 @@ import com.hit.spring.core.exception.HttpResponseInvalidException;
 import com.hit.spring.util.DataUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.json.JsonParseException;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;

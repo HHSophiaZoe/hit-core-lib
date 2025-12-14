@@ -3,7 +3,7 @@ package com.hit.spring.service.jwt;
 import com.hit.spring.config.properties.SecurityProperties;
 import com.hit.common.model.SimpleSecurityUser;
 import com.hit.spring.core.json.JsonMapper;
-import com.hit.spring.util.StringUtils;
+import com.hit.common.util.StringUtils;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.hit.spring.util;
+package com.hit.common.util;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -15,22 +15,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @UtilityClass
 public class ReflectUtils {
-//
-//    @SuppressWarnings("unchecked")
-//    public <T> T createModelInstance() {
-//        try {
-//            Class<?> clazz = Class.forName(T/);
-//            Constructor<T> constructor = (Constructor<T>) clazz.getClass().getDeclaredConstructor();
-//            constructor.setAccessible(true);
-//            return constructor.newInstance();
-//        } catch (NoSuchMethodException e) {
-//            log.error("No default constructor found for {}", modelClass.getName(), e);
-//            throw new RuntimeException("No default constructor available", e);
-//        } catch (Exception e) {
-//            log.error("Error creating instance of {}", modelClass.getName(), e);
-//            throw new RuntimeException("Failed to create instance", e);
-//        }
-//    }
 
     public static Object getValueByFieldName(Object obj, String fieldName) {
         try {

@@ -1,4 +1,4 @@
-package com.hit.chatbot.dispatcher;
+package com.hit.chatbot;
 
 import com.hit.chatbot.annotation.ChatBotMessageListener;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @RequiredArgsConstructor
-public class ChatBotDispatcheScanner implements BeanPostProcessor {
+public class ChatBotAnnotationScanner implements BeanPostProcessor {
 
     private final ChatBotMessageDispatcher dispatcher;
 

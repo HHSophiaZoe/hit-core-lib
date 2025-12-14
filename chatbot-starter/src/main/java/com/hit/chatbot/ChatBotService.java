@@ -4,7 +4,7 @@ import com.hit.chatbot.data.request.MessageRequest;
 
 public interface ChatBotService {
 
-    void sendMessage(String channelId, String content);
+    void sendMessage(String chatId, String content);
 
     void sendMessage(MessageRequest request);
 

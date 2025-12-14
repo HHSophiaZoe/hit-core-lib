@@ -1,7 +1,7 @@
 package com.hit.storage.impl;
 
 import com.google.common.io.ByteStreams;
-import com.hit.storage.util.FileUtils;
+import com.hit.common.util.FileUtils;
 import io.minio.*;
 import io.minio.http.Method;
 import io.minio.messages.Item;

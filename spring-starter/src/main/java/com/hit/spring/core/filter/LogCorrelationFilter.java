@@ -2,7 +2,7 @@ package com.hit.spring.core.filter;
 
 import com.hit.spring.config.properties.ApplicationProperties;
 import com.hit.spring.context.TrackingContext;
-import com.hit.spring.util.StringUtils;
+import com.hit.common.util.StringUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

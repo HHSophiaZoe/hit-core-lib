@@ -1,6 +1,6 @@
 package com.hit.storage.impl;
 
-import com.hit.storage.util.FileUtils;
+import com.hit.common.util.FileUtils;
 import io.micrometer.common.util.StringUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

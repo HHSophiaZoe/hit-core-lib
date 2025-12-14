@@ -1,12 +1,10 @@
-package com.hit.spring.util;
+package com.hit.common.util;
 
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.text.Normalizer;
 import java.util.regex.Pattern;
-
-import static com.hit.spring.core.constant.CommonConstant.EMPTY_STRING;
 
 @UtilityClass
 public class StringUtils {
@@ -45,7 +43,7 @@ public class StringUtils {
 
     public static String safeToString(Object obj) {
         if (ObjectUtils.isEmpty(obj)) {
-            return EMPTY_STRING;
+            return org.apache.commons.lang3.StringUtils.EMPTY;
         }
         return String.valueOf(obj);
     }
