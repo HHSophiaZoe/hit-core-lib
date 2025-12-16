@@ -23,6 +23,7 @@ public class TimeUtils {
     public static final String ISO_DATE_TIME_UTC_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     public static final String ISO_DATE_TIME_UTC_2_PATTERN = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     public static final String ISO_OFFSET_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ssXXX";
+    public static final String ISO_OFFSET_DATE_TIME_2_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
     public static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
     public static final String DATE_TIME_PATTERN_VN = "dd/MM/yyyy HH:mm:ss";
     public static final String TIME_DATE_PATTERN = "HH:mm:ss yyyy-MM-dd";
@@ -66,8 +67,6 @@ public class TimeUtils {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
         if (StringUtils.isEmptyOrBlank(datetimeStr)) {
             return null;
-        } else if (datetimeStr.contains(".")) {
-            datetimeStr = datetimeStr.substring(0, datetimeStr.indexOf('.'));
         }
         try {
             return LocalDateTime.parse(datetimeStr, formatter);
@@ -125,10 +124,11 @@ public class TimeUtils {
         return Stream.of(
                         ofPattern(VIETNAM_DATE_TIME_PATTERN),
                         ofPattern(VIETNAM_DATE_TIME_2_PATTERN),
+                        ofPattern(DATE_TIME_PATTERN),
                         ofPattern(ISO_DATE_TIME_UTC_PATTERN),
                         ofPattern(ISO_DATE_TIME_UTC_2_PATTERN),
                         ofPattern(ISO_OFFSET_DATE_TIME_PATTERN),
-                        ofPattern(DATE_TIME_PATTERN),
+                        ofPattern(ISO_OFFSET_DATE_TIME_2_PATTERN),
                         ofPattern(TIME_DATE_PATTERN))
                 .map(dateTimeFormatter -> {
                     try {

@@ -17,7 +17,7 @@ public class DataUtils {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    private static final ThreadLocal<NumberFormat> VND_FORMAT =
+    private static final ThreadLocal<NumberFormat> MONEY_VND_FORMAT =
             ThreadLocal.withInitial(() -> NumberFormat.getInstance(Locale.of("vi", "VN")));
 
     public static String parserLog(Object data) {
@@ -36,17 +36,17 @@ public class DataUtils {
         return otp.toString();
     }
 
-    public static String formatCurrencyVND(BigDecimal amount) {
+    public static String formatMoneyVND(BigDecimal amount) {
         if (amount == null) return "0";
         BigDecimal value = amount.setScale(0, RoundingMode.HALF_UP);
-        return VND_FORMAT.get().format(value);
+        return MONEY_VND_FORMAT.get().format(value);
     }
 
-    public static String formatCurrencyVND(Number amount) {
+    public static String formatMoneyVND(Number amount) {
         if (amount == null) return "0";
         BigDecimal value = new BigDecimal(amount.toString())
                 .setScale(0, RoundingMode.HALF_UP);
-        return VND_FORMAT.get().format(value);
+        return MONEY_VND_FORMAT.get().format(value);
     }
 
 }
