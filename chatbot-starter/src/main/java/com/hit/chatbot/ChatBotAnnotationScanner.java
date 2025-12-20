@@ -4,6 +4,7 @@ import com.hit.chatbot.annotation.ChatBotMessageListener;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class ChatBotAnnotationScanner implements BeanPostProcessor {
 
+    @Lazy
     private final ChatBotMessageDispatcher dispatcher;
 
     private final List<Class<? extends Annotation>> annotations = List.of(ChatBotMessageListener.class);

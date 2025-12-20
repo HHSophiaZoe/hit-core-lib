@@ -2,6 +2,7 @@ package com.hit.spring.config.task;
 
 import com.hit.spring.config.condition.annotation.ConditionalOnAppExecutorEnable;
 import com.hit.spring.config.properties.TaskExecutorProperties;
+import com.hit.spring.core.wrapper.RunnableWrapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnThreading;
 import org.springframework.boot.autoconfigure.thread.Threading;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +25,7 @@ public class ExecutorConfig {
     @ConditionalOnThreading(Threading.PLATFORM)
     public ThreadPoolTaskExecutor appTaskExecutor(TaskExecutorProperties properties) {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setTaskDecorator(RunnableWrapper::new);
         executor.setThreadNamePrefix(properties.getThreadNamePrefix());
         executor.setCorePoolSize(properties.getPool().getCoreSize());
         executor.setMaxPoolSize(properties.getPool().getMaxSize());
@@ -40,6 +42,7 @@ public class ExecutorConfig {
     public SimpleAsyncTaskExecutor appTaskExecutorVirtualThreads(TaskExecutorProperties properties) {
         SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor();
         executor.setVirtualThreads(true);
+        executor.setTaskDecorator(RunnableWrapper::new);
         executor.setThreadNamePrefix(properties.getThreadNamePrefix());
         if (Objects.nonNull(properties.getSimple().getConcurrencyLimit())) {
             executor.setConcurrencyLimit(properties.getSimple().getConcurrencyLimit());

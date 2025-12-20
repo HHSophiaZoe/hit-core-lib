@@ -62,13 +62,7 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
             Pair<String, Integer> chatIdAndSubChatId = this.getChatIdAndSubChatId(request.getChatId());
             sendMessage.setChatId(chatIdAndSubChatId.getLeft());
             sendMessage.setMessageThreadId(chatIdAndSubChatId.getRight());
-
-            // Format message with title
-            String messageText = request.getTitle() != null ?
-                    String.format("<b>%s</b>\n%s", request.getTitle(), request.getContent()) :
-                    request.getContent();
-
-            sendMessage.setText(messageText);
+            sendMessage.setText(this.formatContent(request));
 
             if (request instanceof TelegramMessageRequest telegramRequest) {
                 this.applyParseMode(sendMessage, telegramRequest.getParseMode());
@@ -96,7 +90,7 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
         String trimmed = chatId.trim();
         int firstShiftDash = trimmed.indexOf('_');
         if (firstShiftDash == -1) { // only chat id
-            return Pair.of(trimmed.substring(0), null);
+            return Pair.of(trimmed, null);
         }
 
         String finalChatId = trimmed.substring(0, firstShiftDash);
@@ -114,5 +108,92 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
             case MARKDOWN -> sendMessage.enableMarkdown(true);
             case MARKDOWN_V2 -> sendMessage.enableMarkdownV2(true);
         }
+    }
+
+    private String formatContent(MessageRequest request) {
+        String title = request.getTitle();
+        String content = request.getContent();
+
+        if (!(request instanceof TelegramMessageRequest telegramRequest)) {
+            return merge(title, content);
+        }
+
+        TitleStyle titleStyle = TitleStyle.BOLD_DIVIDER; // ⭐ default đẹp nhất
+
+        String renderedTitle = title != null
+                ? renderTitle(title, titleStyle, telegramRequest.getParseMode())
+                : null;
+
+        String renderedContent = switch (telegramRequest.getParseMode()) {
+            case HTML -> escapeHtml(content);
+            case MARKDOWN, MARKDOWN_V2 -> escapeMarkdown(content);
+            default -> content;
+        };
+
+        return merge(renderedTitle, renderedContent);
+    }
+
+    private String merge(String title, String content) {
+        if (title == null || title.isBlank()) {
+            return content;
+        }
+        return title + "\n" + content;
+    }
+
+    private String escapeMarkdown(String text) {
+        return text.replaceAll("([_*\\[\\]()~`>#+\\-=|{}.!])", "\\\\$1");
+    }
+
+    private String escapeHtml(String text) {
+        return text
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
+
+    private String renderTitle(String title, TitleStyle style, TelegramMessageRequest.ParseMode parseMode) {
+        return switch (style) {
+
+            case BOLD_DIVIDER -> switch (parseMode) {
+                case HTML -> """
+                    <b>%s</b>
+                    ────────────────────
+                    """.formatted(escapeHtml(title));
+
+                case MARKDOWN, MARKDOWN_V2 -> """
+                    *%s*
+                    ────────────────────
+                    """.formatted(escapeMarkdown(title));
+
+                default -> """
+                    %s
+                    ────────────────────
+                    """.formatted(title);
+            };
+
+            case EMOJI -> switch (parseMode) {
+                case HTML -> "<b>🚀 %s</b>".formatted(escapeHtml(title));
+                case MARKDOWN, MARKDOWN_V2 -> "*🚀 %s*".formatted(escapeMarkdown(title));
+                default -> "🚀 " + title;
+            };
+
+            case BOX -> """
+                ╔══════════════════════╗
+                ║ %s ║
+                ╚══════════════════════╝
+                """.formatted(title);
+
+            case HASH -> """
+                # %s
+                ────────────────────
+                """.formatted(title);
+        };
+    }
+
+    enum TitleStyle {
+        BOLD_DIVIDER,
+        EMOJI,
+        BOX,
+        HASH
     }
 }

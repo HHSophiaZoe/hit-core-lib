@@ -8,11 +8,13 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +30,8 @@ public class ChatBotMessageDispatcher {
     private final List<ListenerMethod> listeners = new ArrayList<>();
 
     public void addListener(String beanName, Object bean) {
-        Method[] methods = bean.getClass().getDeclaredMethods();
+        Class<?> targetClass = AopProxyUtils.ultimateTargetClass(bean);
+        Method[] methods = targetClass.getDeclaredMethods();
         for (Method method : methods) {
             ChatBotMessageListener annotation = method.getAnnotation(ChatBotMessageListener.class);
             if (annotation != null) {
