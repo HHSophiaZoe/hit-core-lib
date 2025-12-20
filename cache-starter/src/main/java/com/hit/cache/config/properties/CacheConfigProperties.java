@@ -20,6 +20,8 @@ public class CacheConfigProperties {
 
     private String delimiter = "::";
 
+    private Boolean allowNullValues = false;
+
     private InternalCacheConfigProperties internal;
 
     private ExternalCacheConfigProperties external;

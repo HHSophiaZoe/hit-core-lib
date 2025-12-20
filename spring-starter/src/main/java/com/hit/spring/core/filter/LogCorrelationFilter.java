@@ -29,7 +29,7 @@ public class LogCorrelationFilter extends OncePerRequestFilter {
         response.setHeader(TrackingContext.CORRELATION_ID, correlationId);
         filterChain.doFilter(request, response);
         log.info("{}: {} ms ", request.getRequestURI(), System.currentTimeMillis() - time);
-        TrackingContext.clearTrackingContext();
+        TrackingContext.clearContext();
     }
 
 

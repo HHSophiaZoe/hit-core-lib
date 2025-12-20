@@ -32,7 +32,7 @@ public class ExecutorManagerTest {
 
     @AfterEach
     public void cleanup() {
-        TrackingContext.clearTrackingContext();
+        TrackingContext.clearContext();
         log.info("[com.hit.test.core.ExecutorManagerTest] cleanup");
     }
 

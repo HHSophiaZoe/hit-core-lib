@@ -6,6 +6,7 @@ import lombok.Getter;
 import org.apache.logging.log4j.ThreadContext;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.hit.spring.core.constant.CommonConstant.CommonSymbol.SHIFT_DASH;
 
@@ -27,6 +28,13 @@ public class TrackingContext {
         return (appName + SHIFT_DASH + TraceUtils.generateTraceId()).trim();
     }
 
+    public static void setCorrelationId() {
+        String correlationId = Optional.ofNullable(AppContext.getAppProperties())
+                .map(prop-> genCorrelationId(prop.getName()))
+                .orElseGet(TraceUtils::generateTraceId);
+        ThreadContext.put(TrackingContext.CORRELATION_ID, correlationId);
+    }
+
     public static void setCorrelationId(String correlationId) {
         ThreadContext.put(TrackingContext.CORRELATION_ID, Objects.requireNonNullElseGet(correlationId, TraceUtils::generateTraceId));
     }
@@ -39,7 +47,7 @@ public class TrackingContext {
         ThreadContext.put(THREAD_ID, TraceUtils.generateTraceId());
     }
 
-    public static void clearTrackingContext() {
+    public static void clearContext() {
         ThreadContext.clearAll();
     }
 }

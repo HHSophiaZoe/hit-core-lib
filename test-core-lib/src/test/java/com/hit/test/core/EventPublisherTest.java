@@ -45,7 +45,7 @@ public class EventPublisherTest {
 
     @AfterEach
     public void cleanup() {
-        TrackingContext.clearTrackingContext();
+        TrackingContext.clearContext();
         log.info("[EventPublisherTest] cleanup");
     }
 

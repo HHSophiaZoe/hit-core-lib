@@ -1,74 +1,83 @@
 package com.hit.cache.config.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import lombok.SneakyThrows;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.serializer.SerializationException;
 
 import java.nio.charset.StandardCharsets;
 
-import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static com.fasterxml.jackson.databind.PropertyNamingStrategies.LOWER_CAMEL_CASE;
-
+@RequiredArgsConstructor
 public class RedisSerializerImpl implements RedisSerializer {
 
-    private static ObjectMapper objectMapper;
-
-    private static ObjectMapper getObjectMapper() {
-        if (objectMapper == null) return jsonConfig();
-        return objectMapper;
-    }
-
-    private static ObjectMapper jsonConfig() {
-        objectMapper = new ObjectMapper();
-        objectMapper
-                .registerModule(new JavaTimeModule())
-                .setPropertyNamingStrategy(LOWER_CAMEL_CASE)
-                .configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return objectMapper;
-    }
+    private final ObjectMapper objectMapper;
 
     @Override
-    public <R> String serializer(R value) {
-        return this.toJsonString(value);
-    }
-
-    @Override
-    public <R> byte[] serializerRaw(R key) {
-        return this.toJsonBytes(key);
-    }
-
-    @Override
-    @SneakyThrows
-    public <R> R deserializer(String value, Class<R> type) {
-        if (value == null || value.isEmpty()) {
-            return null;
-        } else {
-            return getObjectMapper().readValue(value, type);
-        }
-    }
-
-    @Override
-    @SneakyThrows
-    public <R> R deserializerRaw(byte[] key, Class<R> type) {
-        return getObjectMapper().readValue(key, type);
-    }
-
-    @SneakyThrows
-    private <R> byte[] toJsonBytes(R data) {
-        if (data instanceof String string) {
-            return string.getBytes(StandardCharsets.UTF_8);
-        } else {
-            return getObjectMapper().writeValueAsBytes(data);
-        }
-    }
-
-    @SneakyThrows
-    private <R> String toJsonString(R data) {
-        if (data instanceof String string) {
+    public <R> String serializeToJson(R value) {
+        if (value instanceof String string) {
             return string;
         } else {
-            return getObjectMapper().writeValueAsString(data);
+            try {
+                return objectMapper.writeValueAsString(value);
+            } catch (Exception ex) {
+                throw new SerializationException("Could not write JSON: %s".formatted(ex.getMessage()), ex);
+            }
         }
     }
 
+    @Override
+    public <R> byte[] serializeToRawJson(R value) {
+        if (value instanceof String string) {
+            return string.getBytes(StandardCharsets.UTF_8);
+        } else {
+            try {
+                return objectMapper.writeValueAsBytes(value);
+            } catch (Exception ex) {
+                throw new SerializationException("Could not write JSON: %s".formatted(ex.getMessage()), ex);
+            }
+        }
+    }
+
+    @Override
+    public <R> R deserialize(String value, Class<R> type) {
+        if (value == null) {
+            return null;
+        }
+
+        if (String.class.equals(type)) {
+            return type.cast(value);
+        }
+
+        try {
+            return objectMapper.readValue(value, type);
+        } catch (Exception ex) {
+            throw new SerializationException("Could not read JSON:%s ".formatted(ex.getMessage()), ex);
+        }
+    }
+
+    @Override
+    public <R> R deserializeRaw(byte[] value, Class<R> type) {
+        if (value == null) {
+            return null;
+        }
+
+        if (String.class.equals(type)) {
+            return type.cast(new String(value, StandardCharsets.UTF_8));
+        }
+
+        try {
+            return objectMapper.readValue(value, type);
+        } catch (Exception ex) {
+            throw new SerializationException("Could not read JSON:%s ".formatted(ex.getMessage()), ex);
+        }
+    }
+
+    @Override
+    public byte[] serialize(Object value) throws SerializationException {
+        return this.serializeToRawJson(value);
+    }
+
+    @Override
+    public Object deserialize(byte[] value) throws SerializationException {
+        return this.deserializeRaw(value, Object.class);
+    }
 }

@@ -1,16 +1,17 @@
 package com.hit.cache.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hit.cache.annotation.ConditionalOnExternalCacheEnable;
 import com.hit.cache.config.properties.CacheConfigProperties;
 import com.hit.cache.config.serializer.RedisSerializer;
 import com.hit.cache.config.serializer.RedisSerializerImpl;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.RedissonRxClient;
 import org.redisson.spring.data.connection.RedissonConnectionFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -21,7 +22,6 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
 import java.time.Duration;
@@ -31,8 +31,11 @@ import java.util.Map;
 @Slf4j
 @EnableCaching
 @Configuration
+@RequiredArgsConstructor
 @ConditionalOnExternalCacheEnable
 public class RedisCacheConfig {
+
+    private final ObjectMapper objectMapper;
 
     @Bean
     @Primary
@@ -42,7 +45,7 @@ public class RedisCacheConfig {
 
     @Bean
     public RedisSerializer myRedisSerializer() {
-        return new RedisSerializerImpl();
+        return new RedisSerializerImpl(objectMapper);
     }
 
     @Primary
@@ -61,8 +64,8 @@ public class RedisCacheConfig {
     }
 
     public RedisCacheConfiguration createDefaultCacheConfiguration(CacheConfigProperties properties, long ttl) {
-        return RedisCacheConfiguration.defaultCacheConfig()
-                .serializeValuesWith(this.getJdkSerialization())
+        RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(this.myRedisSerializer()))
                 .computePrefixWith(cacheName -> {
                     String prefix = properties.getAppCache() + properties.getDelimiter();
                     if (!cacheName.isEmpty()) {
@@ -71,12 +74,10 @@ public class RedisCacheConfig {
                     return prefix;
                 })
                 .entryTtl(Duration.ofSeconds(ttl));
-    }
-
-    public RedisSerializationContext.SerializationPair<Object> getJdkSerialization() {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        JdkSerializationRedisSerializer jdkSerializer = new JdkSerializationRedisSerializer(loader);
-        return RedisSerializationContext.SerializationPair.fromSerializer(jdkSerializer);
+        if (Boolean.FALSE.equals(properties.getAllowNullValues())) {
+            redisCacheConfiguration = redisCacheConfiguration.disableCachingNullValues();
+        }
+        return redisCacheConfiguration;
     }
 
     @Bean

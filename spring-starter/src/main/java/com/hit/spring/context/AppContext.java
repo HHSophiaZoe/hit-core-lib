@@ -1,6 +1,7 @@
 package com.hit.spring.context;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hit.spring.config.properties.ApplicationProperties;
 import com.hit.spring.config.properties.SecurityProperties;
 import com.hit.spring.core.converter.DataConverter;
 import lombok.Getter;
@@ -22,13 +23,18 @@ public class AppContext {
 
     @Setter
     @Getter
+    private static ApplicationProperties appProperties;
+
+    @Setter
+    @Getter
     private static SecurityProperties securityProperties;
 
     @Autowired
     AppContext(ObjectMapper objectMapper, @Qualifier("dataConverter") DataConverter dataConverter,
-               SecurityProperties securityProperties) {
+               ApplicationProperties appProperties, SecurityProperties securityProperties) {
         setObjectMapper(objectMapper);
         setDataConverter(dataConverter);
+        setAppProperties(appProperties);
         setSecurityProperties(securityProperties);
     }
 

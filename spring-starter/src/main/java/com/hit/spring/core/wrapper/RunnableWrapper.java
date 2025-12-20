@@ -3,7 +3,6 @@ package com.hit.spring.core.wrapper;
 import com.hit.spring.context.TrackingContext;
 import com.hit.spring.core.exception.ExecutorException;
 import com.hit.spring.core.extension.Procedure;
-import org.apache.logging.log4j.ThreadContext;
 
 public class RunnableWrapper implements Runnable {
 
@@ -37,7 +36,7 @@ public class RunnableWrapper implements Runnable {
         } catch (Exception e) {
             throw new ExecutorException(e.getMessage(), e);
         } finally {
-            ThreadContext.clearAll();
+            TrackingContext.clearContext();
             if (clearContext != null) {
                 clearContext.process();
             }

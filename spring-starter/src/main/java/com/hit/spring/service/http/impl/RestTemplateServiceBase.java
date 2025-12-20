@@ -30,11 +30,11 @@ public abstract class RestTemplateServiceBase {
     public String get(String url, HttpHeaders headers) {
         ParameterizedTypeReference<String> responseType = new ParameterizedTypeReference<>() {
         };
-        return this.executeRequest(url, GET, headers, responseType).getBody();
+        return this.getEntity(url, headers, responseType).getBody();
     }
 
     public <R> R get(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
-        return this.executeRequest(url, GET, headers, responseType).getBody();
+        return this.getEntity(url, headers, responseType).getBody();
     }
 
     public <R> ResponseEntity<R> getEntity(String url, HttpHeaders headers,
@@ -45,15 +45,15 @@ public abstract class RestTemplateServiceBase {
     public <B> String post(String url, B body, HttpHeaders headers) {
         ParameterizedTypeReference<String> responseType = new ParameterizedTypeReference<>() {
         };
-        return this.executeRequest(url, POST, body, headers, responseType).getBody();
+        return this.postEntity(url, body, headers, responseType).getBody();
     }
 
     public <R> R post(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
-        return this.executeRequest(url, POST, headers, responseType).getBody();
+        return this.postEntity(url, null, headers, responseType).getBody();
     }
 
     public <B, R> R post(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
-        return this.executeRequest(url, POST, body, headers, responseType).getBody();
+        return this.postEntity(url, body, headers, responseType).getBody();
     }
 
     public <B, R> ResponseEntity<R> postEntity(String url, B body, HttpHeaders headers,
@@ -61,13 +61,37 @@ public abstract class RestTemplateServiceBase {
         return this.executeRequest(url, POST, body, headers, responseType);
     }
 
-    private <R> ResponseEntity<R> executeRequest(String url, HttpMethod method, HttpHeaders headers,
+    public <B, R> R put(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
+        return this.putEntity(url, body, headers, responseType).getBody();
+    }
+
+    public <B, R> ResponseEntity<R> putEntity(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
+        return this.executeRequest(url, PUT, body, headers, responseType);
+    }
+
+    public<B, R> R patch(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
+        return this.patchEntity(url, body, headers, responseType).getBody();
+    }
+
+    public <B, R> ResponseEntity<R> patchEntity(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType)  {
+        return this.executeRequest(url, PATCH, body, headers, responseType);
+    }
+
+    public <R> R delete(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType){
+        return this.deleteEntity(url, headers, responseType).getBody();
+    }
+
+    public <R> ResponseEntity<R> deleteEntity(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
+        return this.executeRequest(url, DELETE, headers, responseType);
+    }
+
+    protected <R> ResponseEntity<R> executeRequest(String url, HttpMethod method, HttpHeaders headers,
                                                  ParameterizedTypeReference<R> responseType) {
         return this.executeRequest(url, method, null, headers, responseType);
     }
 
     @SuppressWarnings({"unchecked"})
-    private <B, R> ResponseEntity<R> executeRequest(String url, HttpMethod method, B body,
+    protected <B, R> ResponseEntity<R> executeRequest(String url, HttpMethod method, B body,
                                                     HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
         HttpEntity<?> httpEntity;
         if (POST.equals(method) || PUT.equals(method) || PATCH.equals(method) || DELETE.equals(method)) {

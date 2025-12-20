@@ -1,13 +1,13 @@
 package com.hit.cache.config.serializer;
 
-public interface RedisSerializer {
+public interface RedisSerializer extends org.springframework.data.redis.serializer.RedisSerializer<Object> {
 
-    <R> String serializer(R value);
+    <R> String serializeToJson(R value);
 
-    <R> byte[] serializerRaw(R value);
+    <R> byte[] serializeToRawJson(R value);
 
-    <R> R deserializer(String value, Class<R> type);
+    <R> R deserialize(String value, Class<R> type);
 
-    <R> R deserializerRaw(byte[] raw, Class<R> type);
+    <R> R deserializeRaw(byte[] raw, Class<R> type);
 
 }

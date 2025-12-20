@@ -31,6 +31,7 @@ public class InternalCacheConfig {
         InternalCacheConfigProperties internalProps = properties.getInternal();
         if (CacheType.CAFFEINE.equals(internalProps.getCacheType())) {
             CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
+            caffeineCacheManager.setAllowNullValues(properties.getAllowNullValues());
             caffeineCacheManager.setCaffeine(Caffeine.from(internalProps.getCaffeine().getSpec()));
             return caffeineCacheManager;
         } else if (CacheType.EHCACHE.equals(internalProps.getCacheType())) {
@@ -41,6 +42,7 @@ public class InternalCacheConfig {
             );
             JCacheCacheManager jCacheCacheManager = new JCacheCacheManager();
             jCacheCacheManager.setCacheManager(manager);
+            jCacheCacheManager.setAllowNullValues(properties.getAllowNullValues());
             return jCacheCacheManager;
         } else {
             return new NoOpCacheManager();

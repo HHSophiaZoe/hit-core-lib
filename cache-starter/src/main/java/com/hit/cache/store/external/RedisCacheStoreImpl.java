@@ -44,7 +44,7 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache put: key = {}, value = {}, expire = {}", keyGen, value, expire);
         ValueOperations<String, String> ops = this.redisTemplate.opsForValue();
-        ops.set(keyGen, redisSerializer.serializer(value));
+        ops.set(keyGen, redisSerializer.serializeToJson(value));
         this.redisTemplate.expire(keyGen, Duration.ofSeconds(expire));
     }
 
@@ -53,7 +53,7 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
         try {
             return OK.equals(redisTemplate.execute(
                     CacheContext.getSetIfAbsentScript(), Collections.singletonList(this.keyGen(key)),
-                    redisSerializer.serializer(value), String.valueOf(expireSeconds)
+                    redisSerializer.serializeToJson(value), String.valueOf(expireSeconds)
             ));
         } catch (Exception ex) {
             log.error("error when call redis", ex);
@@ -66,7 +66,7 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache get: key = {}", keyGen);
         String valueStr = this.redisTemplate.opsForValue().get(keyGen);
-        return redisSerializer.deserializer(valueStr, objectClass);
+        return redisSerializer.deserialize(valueStr, objectClass);
     }
 
     @Override
@@ -78,11 +78,11 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
     public <K, V> void putAsHash(String key, Map<K, V> value, long expire) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache put: key = {}, value = {}", keyGen, value);
-        byte[] rawKey = redisSerializer.serializerRaw(keyGen);
+        byte[] rawKey = redisSerializer.serializeToRawJson(keyGen);
         Map<byte[], byte[]> entries = HashMap.newHashMap(value.size());
         for (Map.Entry<K, V> entry : value.entrySet()) {
-            byte[] hashKeyRaw = redisSerializer.serializerRaw(entry.getKey());
-            byte[] hashValueRaw = redisSerializer.serializerRaw(entry.getValue());
+            byte[] hashKeyRaw = redisSerializer.serializeToRawJson(entry.getKey());
+            byte[] hashValueRaw = redisSerializer.serializeToRawJson(entry.getValue());
             entries.put(hashKeyRaw, hashValueRaw);
         }
         this.redisTemplate.execute((RedisCallback<Object>) connection -> {
@@ -99,7 +99,7 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache put: key = {}, hashKey = {}, hashValue = {}", keyGen, hashKey, hashValue);
         this.redisTemplate.opsForHash()
-                .put(keyGen, redisSerializer.serializer(hashKey), redisSerializer.serializer(hashValue));
+                .put(keyGen, redisSerializer.serializeToJson(hashKey), redisSerializer.serializeToJson(hashValue));
     }
 
     @Override
@@ -109,7 +109,7 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
         log.debug("RedisCacheTemplate get: key = {}", keyGen);
         Map<byte[], byte[]> entries =
                 this.redisTemplate.execute((RedisCallback<Map<byte[], byte[]>>) connection -> {
-                    return connection.hGetAll(redisSerializer.serializerRaw(keyGen));
+                    return connection.hGetAll(redisSerializer.serializeToRawJson(keyGen));
                 });
         if (entries == null || entries.isEmpty()) {
             log.debug("Key {} does not exist", keyGen);
@@ -117,8 +117,8 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
         }
         Map<K, V> hashes = HashMap.newHashMap(entries.size());
         for (Map.Entry<byte[], byte[]> entry : entries.entrySet()) {
-            K deserializeHashKey = redisSerializer.deserializerRaw(entry.getKey(), objectClassKey);
-            V deserializeHashValue = redisSerializer.deserializerRaw(entry.getValue(), objectClassValue);
+            K deserializeHashKey = redisSerializer.deserializeRaw(entry.getKey(), objectClassKey);
+            V deserializeHashValue = redisSerializer.deserializeRaw(entry.getValue(), objectClassValue);
             hashes.put(deserializeHashKey, deserializeHashValue);
         }
         return hashes;
@@ -129,8 +129,8 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache get: key = {}, hashKey = {}", keyGen, hashKey);
         String hashValueStr = (String) this.redisTemplate.opsForHash()
-                .get(keyGen, redisSerializer.serializer(hashKey));
-        return redisSerializer.deserializer(hashValueStr, objectClassValue);
+                .get(keyGen, redisSerializer.serializeToJson(hashKey));
+        return redisSerializer.deserialize(hashValueStr, objectClassValue);
     }
 
     @Override
@@ -138,7 +138,7 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
     public final <K> void delHashValue(String key, K... hashKeys) {
         String keyGen = this.keyGen(key);
         log.debug("RedisCache del: key = {}, hashKeys = {}", keyGen, hashKeys);
-        Object[] hashKeysStr = Arrays.stream(hashKeys).map(redisSerializer::serializer).toArray(Object[]::new);
+        Object[] hashKeysStr = Arrays.stream(hashKeys).map(redisSerializer::serializeToJson).toArray(Object[]::new);
         this.redisTemplate.opsForHash().delete(keyGen, hashKeysStr);
     }
 
