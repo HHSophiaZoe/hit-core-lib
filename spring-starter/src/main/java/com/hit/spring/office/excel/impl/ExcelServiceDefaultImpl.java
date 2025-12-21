@@ -275,15 +275,22 @@ public class ExcelServiceDefaultImpl implements IExcelService {
 
     private <T> void insertDataToRow(CellStyleCreator cellStyleCreator, Row currentRow, T data, Map<String, ExcelCell> excelCells) {
         excelCells.forEach((fieldName, excelCell) -> {
-            Object fieldValue = ReflectUtils.getValueByFieldName(data, fieldName);
-            if (excelCell.required() && fieldValue == null) {
+            Object fieldValue;
+            try {
+                fieldValue = ReflectUtils.getValueByFieldName(data, fieldName);
+            } catch (Exception e) {
+                fieldValue = null;
+            }
+
+            if (excelCell.required() && ObjectUtils.isEmpty(fieldValue)) {
                 throw new BusinessException(fieldName + " must not be null !!!");
             }
+
             String cellValue;
             if (fieldValue == null) {
                 cellValue = excelCell.defaultValue();
             } else {
-                cellValue = String.valueOf(fieldValue);
+                cellValue = fieldValue.toString();
             }
 
             CellStyle cellStyle = cellStyleCreator.create(excelCell.cellStyle());

@@ -9,10 +9,7 @@ import com.hit.spring.util.DataUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
@@ -69,15 +66,15 @@ public abstract class RestTemplateServiceBase {
         return this.executeRequest(url, PUT, body, headers, responseType);
     }
 
-    public<B, R> R patch(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
+    public <B, R> R patch(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
         return this.patchEntity(url, body, headers, responseType).getBody();
     }
 
-    public <B, R> ResponseEntity<R> patchEntity(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType)  {
+    public <B, R> ResponseEntity<R> patchEntity(String url, B body, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
         return this.executeRequest(url, PATCH, body, headers, responseType);
     }
 
-    public <R> R delete(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType){
+    public <R> R delete(String url, HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
         return this.deleteEntity(url, headers, responseType).getBody();
     }
 
@@ -86,13 +83,13 @@ public abstract class RestTemplateServiceBase {
     }
 
     protected <R> ResponseEntity<R> executeRequest(String url, HttpMethod method, HttpHeaders headers,
-                                                 ParameterizedTypeReference<R> responseType) {
+                                                   ParameterizedTypeReference<R> responseType) {
         return this.executeRequest(url, method, null, headers, responseType);
     }
 
     @SuppressWarnings({"unchecked"})
     protected <B, R> ResponseEntity<R> executeRequest(String url, HttpMethod method, B body,
-                                                    HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
+                                                      HttpHeaders headers, ParameterizedTypeReference<R> responseType) {
         HttpEntity<?> httpEntity;
         if (POST.equals(method) || PUT.equals(method) || PATCH.equals(method) || DELETE.equals(method)) {
             httpEntity = new HttpEntity<>(body, headers);
@@ -117,6 +114,9 @@ public abstract class RestTemplateServiceBase {
             throw new HttpClientTimeoutException(e.getMessage(), e);
         } catch (HttpStatusCodeException e) {
             log.error("Call api error [{}]-[{}]-[{}]: {}", method, url, e.getStatusCode(), e.getResponseBodyAsString(), e);
+            if (HttpStatus.GATEWAY_TIMEOUT.equals(e.getStatusCode())) {
+                throw new HttpClientTimeoutException(e.getMessage(), e);
+            }
             throw e;
         } catch (JsonProcessingException e) {
             log.error("Call api response error [{}]-[{}]", method, url, e);

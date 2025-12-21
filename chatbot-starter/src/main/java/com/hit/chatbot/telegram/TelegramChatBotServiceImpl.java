@@ -124,31 +124,14 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
                 ? renderTitle(title, titleStyle, telegramRequest.getParseMode())
                 : null;
 
-        String renderedContent = switch (telegramRequest.getParseMode()) {
-            case HTML -> escapeHtml(content);
-            case MARKDOWN, MARKDOWN_V2 -> escapeMarkdown(content);
-            default -> content;
-        };
-
-        return merge(renderedTitle, renderedContent);
+        return merge(renderedTitle, content);
     }
 
     private String merge(String title, String content) {
         if (title == null || title.isBlank()) {
             return content;
         }
-        return title + "\n" + content;
-    }
-
-    private String escapeMarkdown(String text) {
-        return text.replaceAll("([_*\\[\\]()~`>#+\\-=|{}.!])", "\\\\$1");
-    }
-
-    private String escapeHtml(String text) {
-        return text
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;");
+        return title + content;
     }
 
     private String renderTitle(String title, TitleStyle style, TelegramMessageRequest.ParseMode parseMode) {
@@ -158,12 +141,12 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
                 case HTML -> """
                     <b>%s</b>
                     ────────────────────
-                    """.formatted(escapeHtml(title));
+                    """.formatted(title);
 
                 case MARKDOWN, MARKDOWN_V2 -> """
                     *%s*
                     ────────────────────
-                    """.formatted(escapeMarkdown(title));
+                    """.formatted(title);
 
                 default -> """
                     %s
@@ -172,8 +155,8 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
             };
 
             case EMOJI -> switch (parseMode) {
-                case HTML -> "<b>🚀 %s</b>".formatted(escapeHtml(title));
-                case MARKDOWN, MARKDOWN_V2 -> "*🚀 %s*".formatted(escapeMarkdown(title));
+                case HTML -> "<b>🚀 %s</b>".formatted(title);
+                case MARKDOWN, MARKDOWN_V2 -> "*🚀 %s*".formatted(title);
                 default -> "🚀 " + title;
             };
 
