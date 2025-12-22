@@ -65,6 +65,10 @@ public class TimeUtils {
 
     public static LocalDateTime parseToLocalDateTime(String datetimeStr, String pattern) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+        return parseToLocalDateTime(datetimeStr, formatter);
+    }
+
+    public static LocalDateTime parseToLocalDateTime(String datetimeStr, DateTimeFormatter formatter) {
         if (StringUtils.isEmptyOrBlank(datetimeStr)) {
             return null;
         }
@@ -129,6 +133,7 @@ public class TimeUtils {
                         ofPattern(ISO_DATE_TIME_UTC_2_PATTERN),
                         ofPattern(ISO_OFFSET_DATE_TIME_PATTERN),
                         ofPattern(ISO_OFFSET_DATE_TIME_2_PATTERN),
+                        DateTimeFormatter.ISO_DATE_TIME,
                         ofPattern(TIME_DATE_PATTERN))
                 .map(dateTimeFormatter -> {
                     try {

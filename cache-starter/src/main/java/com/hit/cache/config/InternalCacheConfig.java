@@ -37,7 +37,7 @@ public class InternalCacheConfig {
         } else if (CacheType.EHCACHE.equals(internalProps.getCacheType())) {
             EhcacheCachingProvider ehcacheCachingProvider = (EhcacheCachingProvider) Caching.getCachingProvider(EhcacheCachingProvider.class.getName());
             javax.cache.CacheManager manager = ehcacheCachingProvider.getCacheManager(
-                    internalProps.getEhCache().getConfig().getURI(),
+                    internalProps.getEhcache().getConfig().getURI(),
                     getClass().getClassLoader()
             );
             JCacheCacheManager jCacheCacheManager = new JCacheCacheManager();

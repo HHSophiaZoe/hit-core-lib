@@ -101,7 +101,7 @@ public class CacheConfigProperties {
 
         private CaffeineCacheConfig caffeine;
 
-        private EhCacheConfig ehCache;
+        private EhcacheConfig ehcache;
 
         public enum CacheType {
             EHCACHE,
@@ -118,7 +118,7 @@ public class CacheConfigProperties {
 
         @Setter
         @Getter
-        public static class EhCacheConfig {
+        public static class EhcacheConfig {
             private Resource config;
         }
     }
