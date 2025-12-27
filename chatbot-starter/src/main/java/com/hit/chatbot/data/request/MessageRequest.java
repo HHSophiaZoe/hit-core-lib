@@ -14,7 +14,7 @@ public class MessageRequest {
     private String chatId;
     private String title;
     private String content;
-    private MessageType type;
+    private MessageType type = MessageType.INFO;
 
     public enum MessageType {
         INFO, WARN, ERROR

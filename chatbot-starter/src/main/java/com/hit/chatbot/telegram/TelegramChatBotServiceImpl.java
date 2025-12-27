@@ -22,6 +22,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implements ChatBotService {
 
     private final TelegramProperties telegramProperties;
+
     private final ChatBotMessageDispatcher dispatcher;
 
     @Override
