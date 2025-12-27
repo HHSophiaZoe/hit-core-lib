@@ -32,6 +32,9 @@ public class TimeUtils {
     public static final String TIME_PATTERN = "HH:mm:ss";
     public static final String DATE_TIME_ID_PATTERN = "yyyyMMddHHmmss";
 
+    public static final String TIME_ZONE_VN_ID = "Asia/Ho_Chi_Minh";
+    public static final ZoneId TIME_ZONE_VN = ZoneId.of(TIME_ZONE_VN_ID);
+
     /*
      *
      * Methods parse date time

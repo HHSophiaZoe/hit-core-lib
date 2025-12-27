@@ -11,6 +11,14 @@ import java.math.RoundingMode;
 @UtilityClass
 public class NumberUtils {
 
+    public static Integer nullToZero(Integer val){
+        return val == null ? 0 : val;
+    }
+
+    public static Double nullToZero(Double val){
+        return val == null ? 0d : val;
+    }
+
     public static Integer safeParseInteger(String value) {
         return safeParseInteger(value, null);
     }
