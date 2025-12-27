@@ -44,9 +44,7 @@ public class ExecutorConfig {
         executor.setVirtualThreads(true);
         executor.setTaskDecorator(RunnableWrapper::new);
         executor.setThreadNamePrefix(properties.getThreadNamePrefix());
-        if (Objects.nonNull(properties.getSimple().getConcurrencyLimit())) {
-            executor.setConcurrencyLimit(properties.getSimple().getConcurrencyLimit());
-        }
+        executor.setConcurrencyLimit(properties.getSimple().getConcurrencyLimit());
         return executor;
     }
 

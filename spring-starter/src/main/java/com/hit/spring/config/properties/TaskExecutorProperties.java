@@ -22,7 +22,7 @@ public class TaskExecutorProperties {
     public static class Pool {
         private int coreSize = 10;
         private int maxSize = 30;
-        private int queueCapacity = 1000;
+        private int queueCapacity = 100;
         private boolean allowCoreThreadTimeout = true;
         private int keepAliveSeconds = 60;
     }
@@ -30,7 +30,7 @@ public class TaskExecutorProperties {
     @Setter
     @Getter
     public static class Simple {
-        private Integer concurrencyLimit;
+        private Integer concurrencyLimit = 1000;
     }
 
 }

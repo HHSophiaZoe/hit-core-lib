@@ -1,5 +1,6 @@
 package com.hit.spring.config.embedded;
 
+import com.hit.spring.config.properties.TomcatExecutorProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnThreading;
 import org.springframework.boot.autoconfigure.thread.Threading;
 import org.springframework.boot.autoconfigure.web.embedded.TomcatVirtualThreadsWebServerFactoryCustomizer;
@@ -14,14 +15,15 @@ public class EmbeddedTomcatConfig {
 
     @Bean
     @ConditionalOnThreading(Threading.VIRTUAL)
-    public TomcatVirtualThreadsWebServerFactoryCustomizer tomcatVirtualThreadsWebServerFactoryCustomizer() {
+    public TomcatVirtualThreadsWebServerFactoryCustomizer tomcatVirtualThreadsWebServerFactoryCustomizer(TomcatExecutorProperties properties) {
         return new TomcatVirtualThreadsWebServerFactoryCustomizer() {
             @Override
             public void customize(ConfigurableTomcatWebServerFactory factory) {
                 factory.addProtocolHandlerCustomizers(protocolHandler -> {
                     SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor();
                     executor.setVirtualThreads(true);
-                    executor.setThreadNamePrefix("tomcat-virtual-handler-");
+                    executor.setThreadNamePrefix(properties.getThreadNamePrefix());
+                    executor.setConcurrencyLimit(properties.getConcurrencyLimit());
                     protocolHandler.setExecutor(executor);
                 });
             }
