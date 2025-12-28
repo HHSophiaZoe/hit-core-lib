@@ -64,6 +64,13 @@
 			<version>${spring-boot.version}</version>
 		</dependency>
 
+		<!-- JAXB for Hibernate + Jackson (Spring Boot 3.x / Jakarta EE) -->
+		<dependency>
+			<groupId>javax.xml.bind</groupId>
+			<artifactId>jaxb-api</artifactId>
+			<version>2.3.1</version>
+		</dependency>
+
 		<!--   Security   -->
 		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt -->
 		<dependency>
