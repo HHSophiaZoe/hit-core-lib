@@ -42,7 +42,7 @@
         <dependency>
             <groupId>org.ehcache</groupId>
             <artifactId>ehcache</artifactId>
-            <classifier>jakarta</classifier>
+            <classifier>${dependency.classifier}</classifier>
             <version>${ehcache3.version}</version>
         </dependency>
 

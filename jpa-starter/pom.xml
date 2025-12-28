@@ -31,7 +31,7 @@
             <groupId>com.querydsl</groupId>
             <artifactId>querydsl-jpa</artifactId>
             <version>${querydsl.version}</version>
-            <classifier>${querydsl.classifier}</classifier>
+            <classifier>${dependency.classifier}</classifier>
         </dependency>
     </dependencies>
 

@@ -5,12 +5,15 @@ import com.hit.common.model.SimpleSecurityUser;
 import com.hit.spring.core.json.JsonMapper;
 import com.hit.common.util.StringUtils;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,33 +30,51 @@ public class JwtService {
     private static final String TYPE_REFRESH = "refresh";
     private static final String USER = "user";
 
+    /**
+     * Get SecretKey from configuration
+     */
+    private SecretKey getSecretKey() {
+        return Keys.hmacShaKeyFor(securityProperties.getJwt().getSecretKey().getBytes(StandardCharsets.UTF_8));
+    }
+
     public String generateToken(SimpleSecurityUser simpleSecurityUser, Boolean isRefreshToken) {
-        Map<String, Object> claim = new HashMap<>();
-        claim.put(CLAIM_TYPE, BooleanUtils.isTrue(isRefreshToken) ? TYPE_REFRESH : TYPE_ACCESS);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(CLAIM_TYPE, BooleanUtils.isTrue(isRefreshToken) ? TYPE_REFRESH : TYPE_ACCESS);
+
+        long currentTimeMillis = System.currentTimeMillis();
+
         if (BooleanUtils.isTrue(isRefreshToken)) {
             return Jwts.builder()
-                    .setIssuedAt(new Date(System.currentTimeMillis()))
-                    .setExpiration(new Date(System.currentTimeMillis() + (securityProperties.getJwt().getRefreshExpire() * 60 * 1000L)))
-                    .signWith(SignatureAlgorithm.HS256, securityProperties.getJwt().getSecretKey())
+                    .claims(claims)
+                    .issuedAt(new Date(currentTimeMillis))
+                    .expiration(new Date(currentTimeMillis + (securityProperties.getJwt().getRefreshExpire() * 60 * 1000L)))
+                    .signWith(this.getSecretKey())
                     .compact();
         }
-        claim.put(USER, Base64.encodeBase64String(JsonMapper.encodeAsByte(simpleSecurityUser)));
+
+        claims.put(USER, Base64.encodeBase64String(JsonMapper.encodeAsByte(simpleSecurityUser)));
+
         return Jwts.builder()
-                .setClaims(claim)
-                .setSubject(simpleSecurityUser.getId())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + (securityProperties.getJwt().getAccessExpire() * 60 * 1000L)))
-                .signWith(SignatureAlgorithm.HS256, securityProperties.getJwt().getSecretKey())
+                .claims(claims)
+                .subject(simpleSecurityUser.getId())
+                .issuedAt(new Date(currentTimeMillis))
+                .expiration(new Date(currentTimeMillis + (securityProperties.getJwt().getAccessExpire() * 60 * 1000L)))
+                .signWith(getSecretKey())
                 .compact();
     }
 
     public SimpleSecurityUser extractToken(String token) {
-        if (token == null || StringUtils.isBlank(token)) return null;
+        if (token == null || StringUtils.isBlank(token)) {
+            return null;
+        }
+
         try {
             Claims body = Jwts.parser()
-                    .setSigningKey(securityProperties.getJwt().getSecretKey())
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .verifyWith(this.getSecretKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
             String userPrincipal = (String) body.get(USER);
             return JsonMapper.decodeValue(Base64.decodeBase64(userPrincipal), SimpleSecurityUser.class);
         } catch (Exception e) {
@@ -64,21 +85,25 @@ public class JwtService {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(securityProperties.getJwt().getSecretKey()).parseClaimsJws(token);
+            Jwts.parser()
+                    .verifyWith(getSecretKey())
+                    .build()
+                    .parseSignedClaims(token);
             return true;
-        } catch (SignatureException ex) {
-            log.error("Invalid JWT signature");
+        } catch (SecurityException ex) {
+            log.error("JWT security error: {}", ex.getMessage());
         } catch (MalformedJwtException ex) {
-            log.error("Invalid JWT token");
+            log.error("Invalid JWT token: {}", ex.getMessage());
         } catch (ExpiredJwtException ex) {
-            log.error("Expired JWT token");
+            log.error("Expired JWT token: {}", ex.getMessage());
         } catch (UnsupportedJwtException ex) {
-            log.error("Unsupported JWT token");
+            log.error("Unsupported JWT token: {}", ex.getMessage());
         } catch (IllegalArgumentException ex) {
-            log.error("JWT claims string is empty");
+            log.error("JWT claims string is empty: {}", ex.getMessage());
         } catch (Exception ex) {
             log.error("JWT parse claims error", ex);
         }
         return false;
     }
+
 }
