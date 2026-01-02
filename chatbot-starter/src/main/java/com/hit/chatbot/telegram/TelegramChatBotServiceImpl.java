@@ -141,17 +141,17 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
             case BOLD_DIVIDER -> switch (parseMode) {
                 case HTML -> """
                     <b>%s</b>
-                    ────────────────────
+                    ───────────────
                     """.formatted(title);
 
                 case MARKDOWN, MARKDOWN_V2 -> """
                     *%s*
-                    ────────────────────
+                    ───────────────
                     """.formatted(title);
 
                 default -> """
                     %s
-                    ────────────────────
+                    ───────────────
                     """.formatted(title);
             };
 
@@ -169,7 +169,7 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
 
             case HASH -> """
                 # %s
-                ────────────────────
+                ───────────────
                 """.formatted(title);
         };
     }
