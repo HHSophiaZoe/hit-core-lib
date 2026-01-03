@@ -43,7 +43,7 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
     @Override
     public void sendMessage(String chatId, String content) {
         try {
-            log.debug("Sending message to Telegram chatId: {}, message: {}", chatId, content);
+            log.trace("Sending message to Telegram chatId: {}, message: {}", chatId, content);
             SendMessage sendMessage = new SendMessage();
             Pair<String, Integer> chatIdAndSubChatId = this.getChatIdAndSubChatId(chatId);
             sendMessage.setChatId(chatIdAndSubChatId.getLeft());
@@ -58,7 +58,7 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
     @Override
     public void sendMessage(MessageRequest request) {
         try {
-            log.info("Sending message to Telegram: {}", request);
+            log.trace("Sending message to Telegram: {}", request);
             SendMessage sendMessage = new SendMessage();
             Pair<String, Integer> chatIdAndSubChatId = this.getChatIdAndSubChatId(request.getChatId());
             sendMessage.setChatId(chatIdAndSubChatId.getLeft());
@@ -72,7 +72,6 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
             }
 
             execute(sendMessage);
-            log.debug("Message sent successfully to Telegram: {}", request);
         } catch (Exception e) {
             log.warn("Failed to send message to Telegram", e);
         }
