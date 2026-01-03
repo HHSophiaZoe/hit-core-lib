@@ -200,6 +200,11 @@ public class TimeUtils {
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 
+    public static LocalDateTime toLocalDateTime(Long epochSecond) {
+        if (epochSecond == null) return null;
+        return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneId.systemDefault());
+    }
+
     public static LocalTime toLocalTime(Long epochSecond) {
         if (epochSecond == null) return null;
         return LocalTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneId.systemDefault());
