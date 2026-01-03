@@ -1,7 +1,6 @@
 package com.hit.chatbot;
 
 import com.hit.chatbot.annotation.ChatBotMessageListener;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Lazy;
@@ -14,15 +13,17 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
-@RequiredArgsConstructor
 public class ChatBotAnnotationScanner implements BeanPostProcessor {
 
-    @Lazy
     private final ChatBotMessageDispatcher dispatcher;
 
     private final List<Class<? extends Annotation>> annotations = List.of(ChatBotMessageListener.class);
 
     private String originalBeanName;
+
+    public ChatBotAnnotationScanner(@Lazy ChatBotMessageDispatcher dispatcher) {
+        this.dispatcher = dispatcher;
+    }
 
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
