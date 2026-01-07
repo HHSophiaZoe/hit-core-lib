@@ -3,9 +3,9 @@ package com.hit.spring.service.http.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hit.spring.core.constant.CommonConstant;
 import com.hit.spring.core.exception.HttpClientTimeoutException;
 import com.hit.spring.core.exception.HttpResponseInvalidException;
-import com.hit.spring.util.DataUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -93,7 +93,7 @@ public abstract class RestTemplateServiceBase {
         HttpEntity<?> httpEntity;
         if (POST.equals(method) || PUT.equals(method) || PATCH.equals(method) || DELETE.equals(method)) {
             httpEntity = new HttpEntity<>(body, headers);
-            log.info("Call api [{}]-[{}] \n\tBody: {} \n\tHeaders: {}", method, url, DataUtils.parserLog(body), headers.toString());
+            log.info("Call api [{}]-[{}] \n\tBody: {} \n\tHeaders: {}", method, url, this.parseLog(body), headers.toString());
         } else {
             httpEntity = new HttpEntity<>(headers);
             log.info("Call api [{}]-[{}] \n\tHeaders: {}", method, url, headers.toString());
@@ -124,6 +124,14 @@ public abstract class RestTemplateServiceBase {
         } catch (Exception e) {
             log.error("Call api error [{}]-[{}]: {}", method, url, e.getMessage(), e);
             throw e;
+        }
+    }
+
+    private String parseLog(Object body) {
+        try {
+            return objectMapper.writeValueAsString(body);
+        } catch (Exception e) {
+            return CommonConstant.EMPTY_STRING;
         }
     }
 

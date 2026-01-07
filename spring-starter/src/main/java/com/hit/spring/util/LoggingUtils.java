@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.hit.spring.context.AppContext;
 import com.hit.spring.core.constant.CommonConstant;
+import com.hit.spring.core.json.JsonMapper;
 import com.hit.spring.core.wrapper.CachedBodyRequestWrapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -39,9 +40,9 @@ public class LoggingUtils {
     }
 
     /*
-    * Headers
-    *
-    * */
+     * Headers
+     *
+     * */
     public static String getHeaders(HttpServletRequest request) {
         Map<String, String> headerMap = new HashMap<>();
         Enumeration<String> headerNames = request.getHeaderNames();
@@ -86,10 +87,9 @@ public class LoggingUtils {
 
 
     /*
-
-    * Body
-    *
-    * */
+     * Body
+     *
+     * */
     public static String getRequestBody(CachedBodyRequestWrapper requestWrapper) {
         byte[] content = requestWrapper.getCachedBody();
         if (content.length > 0) {
@@ -135,10 +135,10 @@ public class LoggingUtils {
     }
 
     private static String formatJsonBody(String body) throws JsonProcessingException {
-        ObjectMapper objectMapper = AppContext.getObjectMapper();
+        ObjectMapper objectMapper = JsonMapper.getObjectMapper();
         JsonNode rootNode = objectMapper.readTree(body);
         maskNodeRecursively(rootNode, AppContext.getSecurityProperties().getSensitiveFieldLogRequest());
-        return objectMapper.writeValueAsString(rootNode);
+        return JsonMapper.encode(rootNode);
     }
 
     private static void maskNodeRecursively(JsonNode node, Set<String> sensitiveFields) {

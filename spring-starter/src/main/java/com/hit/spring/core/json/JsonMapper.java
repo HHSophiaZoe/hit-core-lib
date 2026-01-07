@@ -3,23 +3,27 @@ package com.hit.spring.core.json;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hit.spring.context.AppContext;
 import com.hit.spring.core.exception.BusinessException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JsonMapper {
 
-    private static ObjectMapper objectMapper;
+    private static ObjectMapper OBJECT_MAPPER;
 
     public static ObjectMapper getObjectMapper() {
-        if (objectMapper == null) {
-            objectMapper = AppContext.getObjectMapper();
-        }
-        return objectMapper;
+        return OBJECT_MAPPER;
+    }
+
+    @Autowired
+    private void init(ObjectMapper objectMapper) {
+        JsonMapper.OBJECT_MAPPER = objectMapper;
     }
 
     /**
