@@ -138,7 +138,7 @@ public class LoggingUtils {
         ObjectMapper objectMapper = JsonMapper.getObjectMapper();
         JsonNode rootNode = objectMapper.readTree(body);
         maskNodeRecursively(rootNode, AppContext.getSecurityProperties().getSensitiveFieldLogRequest());
-        return JsonMapper.encode(rootNode);
+        return objectMapper.writeValueAsString(rootNode);
     }
 
     private static void maskNodeRecursively(JsonNode node, Set<String> sensitiveFields) {

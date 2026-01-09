@@ -66,7 +66,7 @@ public class ResponseFactory {
         try (ServletServerHttpResponse serverHttpResponse = new ServletServerHttpResponse(response)) {
             serverHttpResponse.setStatusCode(responseStatusCode.httpStatus());
             serverHttpResponse.getServletResponse().setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-            serverHttpResponse.getBody().write(JsonMapper.encodeAsByte(generalResponse));
+            serverHttpResponse.getBody().write(JsonMapper.getObjectMapper().writeValueAsBytes(generalResponse));
         }
     }
 

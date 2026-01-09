@@ -4,15 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hit.spring.core.exception.BusinessException;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import com.hit.spring.core.exception.JsonDeserializeException;
+import com.hit.spring.core.exception.JsonSerializationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JsonMapper {
 
     private static ObjectMapper OBJECT_MAPPER;
@@ -33,12 +32,12 @@ public class JsonMapper {
      * @return a String containing the JSON representation of the given Object.
      * @throws BusinessException if a property cannot be encoded.
      */
-    public static String encode(Object obj) throws BusinessException {
+    public String encode(Object obj) throws BusinessException {
         try {
             return getObjectMapper().writeValueAsString(obj);
         } catch (Exception e) {
             log.error("encode {} ERROR {}", obj, e.getMessage(), e);
-            throw new BusinessException("Failed to encode as JSON: " + e.getMessage(), e);
+            throw new JsonSerializationException("Failed to encode as JSON: " + e.getMessage(), e);
         }
     }
 
@@ -49,12 +48,12 @@ public class JsonMapper {
      * @return a byte[] containing the JSON representation of the given Object.
      * @throws BusinessException if a property cannot be encoded.
      */
-    public static byte[] encodeAsByte(Object obj) {
+    public byte[] encodeAsByte(Object obj) {
         try {
             return getObjectMapper().writeValueAsBytes(obj);
         } catch (Exception e) {
             log.error("encode {} ERROR {}", obj, e.getMessage(), e);
-            throw new BusinessException("Failed to encode as byte: " + e.getMessage());
+            throw new JsonSerializationException("Failed to encode as byte: " + e.getMessage());
         }
     }
 
@@ -67,12 +66,12 @@ public class JsonMapper {
      * @return an instance of T
      * @throws BusinessException when there is a parsing or invalid mapping.
      */
-    public static <T> T decodeValue(String str, Class<T> clazz) {
+    public <T> T decodeValue(String str, Class<T> clazz) {
         try {
             return getObjectMapper().readValue(str, clazz);
         } catch (JsonProcessingException e) {
             log.error("decodeValue {} ERROR {}", str, e.getMessage(), e);
-            throw new BusinessException("Failed to decode: " + e.getMessage(), e);
+            throw new JsonDeserializeException("Failed to decode: " + e.getMessage(), e);
         }
     }
 
@@ -85,12 +84,12 @@ public class JsonMapper {
      * @return an instance of T
      * @throws BusinessException when there is a parsing or invalid mapping.
      */
-    public static <T> T decodeValue(String str, TypeReference<T> type) {
+    public <T> T decodeValue(String str, TypeReference<T> type) {
         try {
             return getObjectMapper().readValue(str, type);
         } catch (Exception e) {
             log.error("decodeValue {} ERROR {}", str, e.getMessage(), e);
-            throw new BusinessException("Failed to decode: " + e.getMessage(), e);
+            throw new JsonDeserializeException("Failed to decode: " + e.getMessage(), e);
         }
     }
 
@@ -103,12 +102,12 @@ public class JsonMapper {
      * @return an instance of T
      * @throws BusinessException when there is a parsing or invalid mapping.
      */
-    public static <T> T decodeValue(byte[] src, Class<T> type) {
+    public <T> T decodeValue(byte[] src, Class<T> type) {
         try {
             return getObjectMapper().readValue(src, type);
         } catch (Exception e) {
             log.error("decodeValue ERROR {}", e.getMessage(), e);
-            throw new BusinessException("Failed to decode: " + e.getMessage(), e);
+            throw new JsonDeserializeException("Failed to decode: " + e.getMessage(), e);
         }
     }
 
@@ -121,12 +120,12 @@ public class JsonMapper {
      * @return an instance of T
      * @throws BusinessException when there is a parsing or invalid mapping.
      */
-    public static <T> T decodeValue(byte[] src, TypeReference<T> type) {
+    public <T> T decodeValue(byte[] src, TypeReference<T> type) {
         try {
             return getObjectMapper().readValue(src, type);
         } catch (Exception e) {
             log.error("decodeValue ERROR {}", e.getMessage(), e);
-            throw new BusinessException("Failed to decode: " + e.getMessage(), e);
+            throw new JsonDeserializeException("Failed to decode: " + e.getMessage(), e);
         }
     }
 

@@ -1,13 +1,11 @@
 package com.hit.spring.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.hit.spring.core.exception.*;
 import com.hit.spring.core.extension.SupplierThrowable;
 import com.hit.spring.core.factory.GeneralResponse;
 import com.hit.spring.core.factory.InternalResponse;
-import com.hit.spring.core.exception.BaseResponseException;
-import com.hit.spring.core.exception.BusinessException;
-import com.hit.spring.core.exception.ResponseStatusCodeEnum;
-import com.hit.spring.core.exception.ServiceException;
 import com.hit.spring.core.json.JsonMapper;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +28,13 @@ public class ApiUtils {
         } catch (HttpStatusCodeException ex) {
             TypeReference<GeneralResponse<T>> responseType = new TypeReference<>() {
             };
-            return new InternalResponse<GeneralResponse<T>>()
-                    .setHttpStatus(HttpStatus.valueOf(ex.getStatusCode().value()))
-                    .setResponse(JsonMapper.decodeValue(ex.getResponseBodyAsString(), responseType));
+            try {
+                return new InternalResponse<GeneralResponse<T>>()
+                        .setHttpStatus(HttpStatus.valueOf(ex.getStatusCode().value()))
+                        .setResponse(JsonMapper.getObjectMapper().readValue(ex.getResponseBodyAsString(), responseType));
+            } catch (JsonProcessingException e) {
+                throw new HttpResponseInvalidException(e.getMessage(), e);
+            }
         } catch (Exception e) {
             log.error("handleResponseInternal error", e);
             throw new BusinessException(e);
@@ -48,8 +50,12 @@ public class ApiUtils {
         } catch (HttpStatusCodeException ex) {
             TypeReference<GeneralResponse<T>> responseType = new TypeReference<>() {
             };
-            GeneralResponse<T> generalResponse = JsonMapper.decodeValue(ex.getResponseBodyAsString(), responseType);
-            throw new ServiceException(generalResponse.getStatus().getCode(), generalResponse.getStatus().getMessage());
+            try {
+                GeneralResponse<T> generalResponse = JsonMapper.getObjectMapper().readValue(ex.getResponseBodyAsString(), responseType);
+                throw new ServiceException(generalResponse.getStatus().getCode(), generalResponse.getStatus().getMessage());
+            } catch (JsonProcessingException e) {
+                throw new HttpResponseInvalidException(e.getMessage(), e);
+            }
         } catch (Exception e) {
             log.error("handleResponseInternalReturnData error", e);
             throw new BusinessException(e);

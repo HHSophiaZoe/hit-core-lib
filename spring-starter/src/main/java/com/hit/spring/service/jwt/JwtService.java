@@ -23,6 +23,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class JwtService {
 
+    private final JsonMapper jsonMapper;
+
     private final SecurityProperties securityProperties;
 
     public static final String CLAIM_TYPE = "type";
@@ -52,7 +54,7 @@ public class JwtService {
                     .compact();
         }
 
-        claims.put(USER, Base64.encodeBase64String(JsonMapper.encodeAsByte(simpleSecurityUser)));
+        claims.put(USER, Base64.encodeBase64String(jsonMapper.encodeAsByte(simpleSecurityUser)));
 
         return Jwts.builder()
                 .claims(claims)
@@ -76,7 +78,7 @@ public class JwtService {
                     .getPayload();
 
             String userPrincipal = (String) body.get(USER);
-            return JsonMapper.decodeValue(Base64.decodeBase64(userPrincipal), SimpleSecurityUser.class);
+            return jsonMapper.decodeValue(Base64.decodeBase64(userPrincipal), SimpleSecurityUser.class);
         } catch (Exception e) {
             log.error("extractToken ERROR: {}", e.getMessage(), e);
             return null;

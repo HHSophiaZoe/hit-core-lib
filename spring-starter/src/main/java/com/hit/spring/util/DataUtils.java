@@ -22,7 +22,7 @@ public class DataUtils {
 
     public static String parserLog(Object data) {
         try {
-            return JsonMapper.encode(data);
+            return JsonMapper.getObjectMapper().writeValueAsString(data);
         } catch (Exception e) {
             return CommonConstant.EMPTY_STRING;
         }
