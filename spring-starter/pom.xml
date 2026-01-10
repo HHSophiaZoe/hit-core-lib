@@ -79,13 +79,6 @@
 			<version>${jsonwebtoken.version}</version>
 		</dependency>
 
-		<!--    Email    -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-mail</artifactId>
-			<version>${spring-boot.version}</version>
-		</dependency>
-		
 		<!--    Rest api    -->
 		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5 -->
 		<dependency>
@@ -139,13 +132,6 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>33.0.0-jre</version>
-		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/ognl/ognl -->
-		<dependency>
-			<groupId>ognl</groupId>
-			<artifactId>ognl</artifactId>
-			<version>3.3.4</version>
 		</dependency>
 	</dependencies>
 

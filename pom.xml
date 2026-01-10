@@ -28,6 +28,7 @@
         <rxjava3.version>3.1.8</rxjava3.version>
         <rxjava-stream.version>1.2.1</rxjava-stream.version>
         <caffeine.version>3.1.8</caffeine.version>
+        <redisson.version>3.35.0</redisson.version>
         <ehcache3.version>3.11.1</ehcache3.version>
         <jsonwebtoken.version>0.13.0</jsonwebtoken.version>
         <cloudinary-http44.version>1.32.2</cloudinary-http44.version>

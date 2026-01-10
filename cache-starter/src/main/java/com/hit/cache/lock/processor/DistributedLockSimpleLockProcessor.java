@@ -31,6 +31,7 @@ public class DistributedLockSimpleLockProcessor extends DistributedLockAbstractP
 
         String name = distributedLock.name();
         String value = this.getValue(pjp, distributedLock.value());
+
         boolean readLock = distributedLock.readLock();
         long transactionTtlSec = distributedLock.transactionTtlSec();
         long waitTimeMs = distributedLock.waitTimeMs();
