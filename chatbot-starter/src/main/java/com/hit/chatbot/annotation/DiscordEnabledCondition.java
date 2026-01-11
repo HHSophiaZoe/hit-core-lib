@@ -12,7 +12,7 @@ public class DiscordEnabledCondition extends SpringBootCondition {
 
     @Override
     public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        String enable = context.getEnvironment().getProperty("bot.discord.enable");
+        String enable = context.getEnvironment().getProperty("chatbot.discord.enable");
         if (BooleanUtils.toBoolean(enable)) {
             return ConditionOutcome.match("Discord chat is enabled");
         }

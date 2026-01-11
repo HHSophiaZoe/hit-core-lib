@@ -24,6 +24,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatBotMessageDispatcher {
 
+    private final ChatBotMessageListenerResolver resolver;
+
     private final TaskExecutor taskExecutor;
 
     private final List<ListenerMethod> listeners = new ArrayList<>();
@@ -35,7 +37,8 @@ public class ChatBotMessageDispatcher {
             ChatBotMessageListener annotation = method.getAnnotation(ChatBotMessageListener.class);
             if (annotation != null) {
                 method.setAccessible(true);
-                ChatBotMessageDispatcher.ListenerMethod listenerMethod = new ChatBotMessageDispatcher.ListenerMethod(bean, method, annotation);
+                ChatBotMessageDispatcher.ListenerMethod listenerMethod =
+                        new ChatBotMessageDispatcher.ListenerMethod(bean, method, annotation, resolver);
                 listeners.add(listenerMethod);
                 log.debug("Registered listener: {} from bean {} for platforms: {} with command: {}",
                         method.getName(), beanName, Arrays.toString(annotation.platforms()), annotation.commands());
@@ -46,12 +49,12 @@ public class ChatBotMessageDispatcher {
     public void dispatchTelegramUpdate(Update update) {
         if (update.hasMessage()) {
             Message message = update.getMessage();
-            handleTelegramMessage(message);
+            this.handleTelegramMessage(message);
         }
     }
 
     public void dispatchDiscordMessage(MessageReceivedEvent event) {
-        handleDiscordMessage(event);
+        this.handleDiscordMessage(event);
     }
 
     private void handleTelegramMessage(Message message) {
@@ -128,11 +131,16 @@ public class ChatBotMessageDispatcher {
         Object bean;
         Method method;
         ChatBotMessageListener annotation;
+        String[] resolvedIds;        // Giá trị ids đã được resolve
+        String[] resolvedCommands;   // Giá trị commands đã được resolve
 
-        ListenerMethod(Object bean, Method method, ChatBotMessageListener annotation) {
+        ListenerMethod(Object bean, Method method, ChatBotMessageListener annotation, ChatBotMessageListenerResolver resolver) {
             this.bean = bean;
             this.method = method;
             this.annotation = annotation;
+            // Resolve ids và commands từ annotation
+            this.resolvedIds = resolver.resolveValues(annotation.ids());
+            this.resolvedCommands = resolver.resolveValues(annotation.commands());
         }
 
         boolean isPlatformSupported(Platform platform) {
@@ -141,14 +149,16 @@ public class ChatBotMessageDispatcher {
 
         private boolean isMatchesMessage(String id, String text) {
             // Check chatId
-            if (this.annotation.ids().length > 0) {
-                boolean chatIdMatches = Arrays.asList(this.annotation.ids()).contains(id);
-                if (!chatIdMatches) return false;
+            if (this.resolvedIds != null && this.resolvedIds.length > 0) {
+                boolean chatIdMatches = Arrays.asList(this.resolvedIds).contains(id);
+                if (!chatIdMatches) {
+                    return false;
+                }
             }
 
             // Check command
-            if (this.annotation.commands().length > 0) {
-                return Arrays.stream(this.annotation.commands()).anyMatch(text::startsWith);
+            if (this.resolvedCommands != null && this.resolvedCommands.length > 0) {
+                return Arrays.stream(this.resolvedCommands).anyMatch(text::startsWith);
             }
 
             return true;

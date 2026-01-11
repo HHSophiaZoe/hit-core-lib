@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Setter
 @Getter
 @Component
-@ConfigurationProperties(prefix = "bot.telegram")
+@ConfigurationProperties(prefix = "chatbot.telegram")
 public class TelegramProperties {
 
     private boolean enable;

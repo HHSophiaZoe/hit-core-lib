@@ -15,7 +15,7 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnTelegramEnable
-public class BotInitializer {
+public class TelegramBotInitializer {
 
     private final TelegramChatBotServiceImpl telegramBot;
 

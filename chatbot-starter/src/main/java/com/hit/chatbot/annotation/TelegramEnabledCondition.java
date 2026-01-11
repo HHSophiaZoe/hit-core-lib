@@ -12,7 +12,7 @@ public class TelegramEnabledCondition extends SpringBootCondition {
 
     @Override
     public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        String telegramEnable = context.getEnvironment().getProperty("bot.telegram.enable");
+        String telegramEnable = context.getEnvironment().getProperty("chatbot.telegram.enable");
         if (BooleanUtils.toBoolean(telegramEnable)) {
             return ConditionOutcome.match("Telegram chat is enabled");
         }

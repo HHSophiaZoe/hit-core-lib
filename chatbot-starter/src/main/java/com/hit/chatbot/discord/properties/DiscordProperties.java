@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "bot.discord")
+@ConfigurationProperties(prefix = "chatbot.discord")
 public class DiscordProperties {
     private Boolean enable = true;
     private String token;
