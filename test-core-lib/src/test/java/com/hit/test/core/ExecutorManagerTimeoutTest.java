@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @TestPropertySource(properties = {
         "spring.threads.virtual.enabled=true",
         "app.task.executor.enable=true",
-        "app.task.executor.thread-name-prefix=unit-test-",
+        "app.task.executor.simple.thread-name-prefix=unit-test-",
         "app.task.executor.task-timeout-seconds=3"
 })
 public class ExecutorManagerTimeoutTest {
@@ -69,25 +69,25 @@ public class ExecutorManagerTimeoutTest {
         AtomicReference<String> CORRELATION_ID_2 = new AtomicReference<>();
         AtomicReference<String> CORRELATION_ID_3 = new AtomicReference<>();
         try {
-            TrackingContext.setCorrelationId(CORRELATION_ID_DEFAULT);
+            TrackingContext.setTraceId(CORRELATION_ID_DEFAULT);
             log.info("[testZipTasksFailureStrategyERROR_CANCEL] CORRELATION_ID: {}", CORRELATION_ID_DEFAULT);
             executorManager.zipTasks(
                     ExecutorManager.FailureStrategy.ERROR_CANCEL,
                     () -> {
                         ThreadUtils.sleep(Duration.ofSeconds(2));
                         log.info("[testZipTasksFailureStrategyERROR_CANCEL] Step one");
-                        CORRELATION_ID_1.set(TrackingContext.getCorrelationId());
+                        CORRELATION_ID_1.set(TrackingContext.getTraceId());
                     },
                     () -> {
                         ThreadUtils.sleep(Duration.ofSeconds(5));
                         log.info("[testZipTasksFailureStrategyERROR_CANCEL] Step two");
-                        CORRELATION_ID_2.set(TrackingContext.getCorrelationId());
+                        CORRELATION_ID_2.set(TrackingContext.getTraceId());
                         throw new RuntimeException("Step two exception");
                     },
                     () -> {
                         ThreadUtils.sleep(Duration.ofSeconds(5));
                         log.info("[testZipTasksFailureStrategyERROR_CANCEL] Step three");
-                        CORRELATION_ID_3.set(TrackingContext.getCorrelationId());
+                        CORRELATION_ID_3.set(TrackingContext.getTraceId());
                     }
             );
         } catch (Exception e) {

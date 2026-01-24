@@ -34,7 +34,7 @@ public class JsonMapper {
      */
     public String encode(Object obj) throws BusinessException {
         try {
-            return getObjectMapper().writeValueAsString(obj);
+            return OBJECT_MAPPER.writeValueAsString(obj);
         } catch (Exception e) {
             log.error("encode {} ERROR {}", obj, e.getMessage(), e);
             throw new JsonSerializationException("Failed to encode as JSON: " + e.getMessage(), e);
@@ -50,7 +50,7 @@ public class JsonMapper {
      */
     public byte[] encodeAsByte(Object obj) {
         try {
-            return getObjectMapper().writeValueAsBytes(obj);
+            return OBJECT_MAPPER.writeValueAsBytes(obj);
         } catch (Exception e) {
             log.error("encode {} ERROR {}", obj, e.getMessage(), e);
             throw new JsonSerializationException("Failed to encode as byte: " + e.getMessage());
@@ -68,7 +68,7 @@ public class JsonMapper {
      */
     public <T> T decodeValue(String str, Class<T> clazz) {
         try {
-            return getObjectMapper().readValue(str, clazz);
+            return OBJECT_MAPPER.readValue(str, clazz);
         } catch (JsonProcessingException e) {
             log.error("decodeValue {} ERROR {}", str, e.getMessage(), e);
             throw new JsonDeserializeException("Failed to decode: " + e.getMessage(), e);
@@ -86,7 +86,7 @@ public class JsonMapper {
      */
     public <T> T decodeValue(String str, TypeReference<T> type) {
         try {
-            return getObjectMapper().readValue(str, type);
+            return OBJECT_MAPPER.readValue(str, type);
         } catch (Exception e) {
             log.error("decodeValue {} ERROR {}", str, e.getMessage(), e);
             throw new JsonDeserializeException("Failed to decode: " + e.getMessage(), e);
@@ -104,7 +104,7 @@ public class JsonMapper {
      */
     public <T> T decodeValue(byte[] src, Class<T> type) {
         try {
-            return getObjectMapper().readValue(src, type);
+            return OBJECT_MAPPER.readValue(src, type);
         } catch (Exception e) {
             log.error("decodeValue ERROR {}", e.getMessage(), e);
             throw new JsonDeserializeException("Failed to decode: " + e.getMessage(), e);
@@ -122,7 +122,7 @@ public class JsonMapper {
      */
     public <T> T decodeValue(byte[] src, TypeReference<T> type) {
         try {
-            return getObjectMapper().readValue(src, type);
+            return OBJECT_MAPPER.readValue(src, type);
         } catch (Exception e) {
             log.error("decodeValue ERROR {}", e.getMessage(), e);
             throw new JsonDeserializeException("Failed to decode: " + e.getMessage(), e);

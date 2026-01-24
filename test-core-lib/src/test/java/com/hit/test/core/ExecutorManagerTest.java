@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @TestPropertySource(properties = {
         "spring.threads.virtual.enabled=true",
         "app.task.executor.enable=true",
-        "app.task.executor.thread-name-prefix=unit-test-",
+        "app.task.executor.simple.thread-name-prefix=unit-test-",
         "app.task.executor.task-timeout-seconds=60"
 })
 public class ExecutorManagerTest {
@@ -28,7 +28,7 @@ public class ExecutorManagerTest {
     @Autowired
     private ExecutorManager executorManager;
 
-    private static final String CORRELATION_ID_DEFAULT = "unit-test";
+    private static final String TRACE_ID_DEFAULT = "unit-test";
 
     @AfterEach
     public void cleanup() {
@@ -89,29 +89,29 @@ public class ExecutorManagerTest {
     @Test
     public void testZipTasksFailureStrategyERROR_CANCEL() {
         long startTime = System.currentTimeMillis();
-        AtomicReference<String> CORRELATION_ID_1 = new AtomicReference<>();
-        AtomicReference<String> CORRELATION_ID_2 = new AtomicReference<>();
-        AtomicReference<String> CORRELATION_ID_3 = new AtomicReference<>();
+        AtomicReference<String> TRACE_ID_1 = new AtomicReference<>();
+        AtomicReference<String> TRACE_ID_2 = new AtomicReference<>();
+        AtomicReference<String> TRACE_ID_3 = new AtomicReference<>();
         try {
-            TrackingContext.setCorrelationId(CORRELATION_ID_DEFAULT);
-            log.info("[testZipTasksFailureStrategyERROR_CANCEL] CORRELATION_ID: {}", CORRELATION_ID_DEFAULT);
+            TrackingContext.setTraceId(TRACE_ID_DEFAULT);
+            log.info("[testZipTasksFailureStrategyERROR_CANCEL] TRACE_ID: {}", TRACE_ID_DEFAULT);
             executorManager.zipTasks(
                     ExecutorManager.FailureStrategy.ERROR_CANCEL,
                     () -> {
                         ThreadUtils.sleep(Duration.ofSeconds(1));
                         log.info("[testZipTasksFailureStrategyERROR_CANCEL] Step one");
-                        CORRELATION_ID_1.set(TrackingContext.getCorrelationId());
+                        TRACE_ID_1.set(TrackingContext.getTraceId());
                     },
                     () -> {
                         ThreadUtils.sleep(Duration.ofSeconds(2));
                         log.info("[testZipTasksFailureStrategyERROR_CANCEL] Step two");
-                        CORRELATION_ID_2.set(TrackingContext.getCorrelationId());
+                        TRACE_ID_2.set(TrackingContext.getTraceId());
                         throw new RuntimeException("Step two exception");
                     },
                     () -> {
                         ThreadUtils.sleep(Duration.ofSeconds(3));
                         log.info("[testZipTasksFailureStrategyERROR_CANCEL] Step three");
-                        CORRELATION_ID_3.set(TrackingContext.getCorrelationId());
+                        TRACE_ID_3.set(TrackingContext.getTraceId());
                     }
             );
         } catch (Exception e) {
@@ -120,13 +120,13 @@ public class ExecutorManagerTest {
 
         long totalTime = System.currentTimeMillis() - startTime;
         log.info("[testZipTasksFailureStrategyERROR_CANCEL] Total time step: {}", totalTime);
-        log.info("[testZipTasksFailureStrategyERROR_CANCEL] CORRELATION_ID_1: {}", CORRELATION_ID_1);
-        log.info("[testZipTasksFailureStrategyERROR_CANCEL] CORRELATION_ID_2: {}", CORRELATION_ID_2);
-        log.info("[testZipTasksFailureStrategyERROR_CANCEL] CORRELATION_ID_3: {}", CORRELATION_ID_3);
+        log.info("[testZipTasksFailureStrategyERROR_CANCEL] TRACE_ID_1: {}", TRACE_ID_1);
+        log.info("[testZipTasksFailureStrategyERROR_CANCEL] TRACE_ID_2: {}", TRACE_ID_2);
+        log.info("[testZipTasksFailureStrategyERROR_CANCEL] TRACE_ID_3: {}", TRACE_ID_3);
 
-        Assertions.assertEquals(CORRELATION_ID_DEFAULT, CORRELATION_ID_1.get());
-        Assertions.assertEquals(CORRELATION_ID_DEFAULT, CORRELATION_ID_2.get());
-        Assertions.assertNull(CORRELATION_ID_3.get());
+        Assertions.assertEquals(TRACE_ID_DEFAULT, TRACE_ID_1.get());
+        Assertions.assertEquals(TRACE_ID_DEFAULT, TRACE_ID_2.get());
+        Assertions.assertNull(TRACE_ID_3.get());
         Assertions.assertTrue(totalTime >= 2000 && totalTime <= 2100);
     }
 

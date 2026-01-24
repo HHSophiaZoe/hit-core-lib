@@ -37,8 +37,8 @@ public class ChatBotMessageDispatcher {
             ChatBotMessageListener annotation = method.getAnnotation(ChatBotMessageListener.class);
             if (annotation != null) {
                 method.setAccessible(true);
-                ChatBotMessageDispatcher.ListenerMethod listenerMethod =
-                        new ChatBotMessageDispatcher.ListenerMethod(bean, method, annotation, resolver);
+                ListenerMethod listenerMethod =
+                        new ListenerMethod(bean, method, annotation, resolver);
                 listeners.add(listenerMethod);
                 log.debug("Registered listener: {} from bean {} for platforms: {} with command: {}",
                         method.getName(), beanName, Arrays.toString(annotation.platforms()), annotation.commands());
@@ -122,7 +122,7 @@ public class ChatBotMessageDispatcher {
                 log.trace("Invoking listener {}: {}", listener.method.getClass(), listener.method.getName());
                 listener.method.invoke(listener.bean, message);
             } catch (Exception e) {
-                log.trace("Error invoking listener: {}", listener.method.getName(), e);
+                log.error("Error invoking listener: {}", listener.method.getName(), e);
             }
         });
     }

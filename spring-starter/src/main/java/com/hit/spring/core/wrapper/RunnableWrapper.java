@@ -7,19 +7,19 @@ import com.hit.spring.core.extension.Procedure;
 public class RunnableWrapper implements Runnable {
 
     private final Runnable task;
-    private final String correlationId;
+    private final String traceId;
 
     private Procedure acceptContext;
     private Procedure clearContext;
 
     public RunnableWrapper(Runnable task) {
         this.task = task;
-        this.correlationId = TrackingContext.getCorrelationId();
+        this.traceId = TrackingContext.getTraceId();
     }
 
     public RunnableWrapper(Runnable task, Procedure acceptContext, Procedure clearContext) {
         this.task = task;
-        this.correlationId = TrackingContext.getCorrelationId();
+        this.traceId = TrackingContext.getTraceId();
         this.acceptContext = acceptContext;
         this.clearContext = clearContext;
     }
@@ -27,8 +27,7 @@ public class RunnableWrapper implements Runnable {
     @Override
     public void run() {
         try {
-            TrackingContext.setCorrelationId(correlationId);
-            TrackingContext.setThreadId();
+            TrackingContext.setTraceId(traceId);
             if (acceptContext != null) {
                 acceptContext.process();
             }

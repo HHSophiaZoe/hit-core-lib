@@ -30,6 +30,7 @@ public class DataSourceDefaultProperties extends HikariConfig {
         result.put(Hibernate.SHOW_SQL_CONFIG, hibernate.getShowSql());
         result.put(Hibernate.FORMAT_SQL_CONFIG, hibernate.getFormatSql());
         result.put(Hibernate.USE_SQL_COMMENTS_CONFIG, hibernate.getUseSqlComments());
+        result.put(Hibernate.ENBALE_LAZY_LOAD_NO_TRANS, hibernate.getEnableLazyLoadNoTrans());
         result.put(Hibernate.IMPLICIT_NAMING_STRATEGY_CONFIG, hibernate.getImplicitNamingStrategy());
         result.put(Hibernate.PHYSICAL_NAMING_STRATEGY_CONFIG, hibernate.getPhysicalNamingStrategy());
 
@@ -47,6 +48,7 @@ public class DataSourceDefaultProperties extends HikariConfig {
         public static final String SHOW_SQL_CONFIG = "hibernate.show_sql";
         public static final String FORMAT_SQL_CONFIG = "hibernate.format_sql";
         public static final String USE_SQL_COMMENTS_CONFIG = "hibernate.use_sql_comments";
+        public static final String ENBALE_LAZY_LOAD_NO_TRANS = "hibernate.enable_lazy_load_no_trans";
         public static final String IMPLICIT_NAMING_STRATEGY_CONFIG = "hibernate.implicit_naming_strategy";
         public static final String PHYSICAL_NAMING_STRATEGY_CONFIG = "hibernate.physical_naming_strategy";
 
@@ -57,6 +59,8 @@ public class DataSourceDefaultProperties extends HikariConfig {
         private Boolean formatSql = false;
 
         private Boolean useSqlComments = false;
+
+        private Boolean enableLazyLoadNoTrans = true;
 
         private String implicitNamingStrategy = SpringImplicitNamingStrategy.class.getName();
 

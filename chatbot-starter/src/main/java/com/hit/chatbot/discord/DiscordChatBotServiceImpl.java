@@ -57,7 +57,7 @@ public class DiscordChatBotServiceImpl implements ChatBotService {
         }
         messageCreateAction.queue(
                 success -> log.info("Send embed message success to: {}", request.getChatId()),
-                error -> log.error("Send embed message to {} failed: {}", request.getChatId(), error.getMessage())
+                error -> log.error("Send embed message to {} failed: {}", request.getChatId(), error.getMessage(), error)
         );
     }
 
@@ -72,7 +72,7 @@ public class DiscordChatBotServiceImpl implements ChatBotService {
         user.openPrivateChannel().queue(
                 privateChannel -> privateChannel.sendMessage(content).queue(
                         success -> log.info("Send private message success to: {}", userId),
-                        error -> log.error("Send private message to {} failed: {}", userId, error.getMessage())
+                        error -> log.error("Send private message to {} failed: {}", userId, error.getMessage(), error)
                 ),
                 error -> log.error("Don't open private channel: {}", error.getMessage(), error)
         );

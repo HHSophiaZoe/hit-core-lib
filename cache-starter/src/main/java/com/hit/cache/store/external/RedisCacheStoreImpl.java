@@ -86,10 +86,8 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
             entries.put(hashKeyRaw, hashValueRaw);
         }
         this.redisTemplate.execute((RedisCallback<Object>) connection -> {
-            try (connection) {
-                connection.hMSet(rawKey, entries);
-                connection.expire(rawKey, expire);
-            }
+            connection.hMSet(rawKey, entries);
+            connection.expire(rawKey, expire);
             return null;
         });
     }

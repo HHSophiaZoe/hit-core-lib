@@ -11,10 +11,10 @@ import org.springframework.context.ApplicationEvent;
 @ToString
 public abstract class BaseAppEvent extends ApplicationEvent {
 
-    private String correlationId;
+    private String traceId;
 
     public BaseAppEvent(Object source) {
         super(source);
-        this.correlationId = TrackingContext.getCorrelationId();
+        this.traceId = TrackingContext.getTraceId();
     }
 }

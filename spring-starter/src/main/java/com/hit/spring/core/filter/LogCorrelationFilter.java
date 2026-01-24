@@ -25,19 +25,17 @@ public class LogCorrelationFilter extends OncePerRequestFilter {
     @SneakyThrows
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
         long time = System.currentTimeMillis();
-        String correlationId = this.generateCorrelationIdIfNotExists(request.getHeader(TrackingContext.CORRELATION_ID));
-        response.setHeader(TrackingContext.CORRELATION_ID, correlationId);
+        String traceId = this.generateTraceIdIfNotExists(request.getHeader(TrackingContext.TRACE_ID));
+        response.setHeader(TrackingContext.TRACE_ID, traceId);
         filterChain.doFilter(request, response);
         log.info("{}: {} ms ", request.getRequestURI(), System.currentTimeMillis() - time);
         TrackingContext.clearContext();
     }
 
 
-    private String generateCorrelationIdIfNotExists(String xCorrelationId) {
-        String correlationId = StringUtils.isEmpty(xCorrelationId)
-                ? TrackingContext.genCorrelationId(this.appProperties.getName())
-                : xCorrelationId;
-        TrackingContext.setCorrelationId(correlationId);
-        return correlationId;
+    private String generateTraceIdIfNotExists(String xtraceId) {
+        String traceId = StringUtils.isEmpty(xtraceId) ? TrackingContext.genTraceId() : xtraceId;
+        TrackingContext.setTraceId(traceId);
+        return traceId;
     }
 }

@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 @TestPropertySource(properties = {
         "spring.threads.virtual.enabled=true",
         "app.task.executor.enable=true",
-        "app.task.executor.thread-name-prefix=unit-test-"
+        "app.task.executor.simple.thread-name-prefix=unit-test-"
 })
 public class EventPublisherTest {
 
@@ -41,7 +41,7 @@ public class EventPublisherTest {
     @Autowired
     private EventCaptor eventCaptor;
 
-    private static final String CORRELATION_ID_DEFAULT = "unit-test";
+    private static final String TRACE_ID_DEFAULT = "unit-test";
 
     @AfterEach
     public void cleanup() {
@@ -51,7 +51,7 @@ public class EventPublisherTest {
 
     @Test
     public void testPublisher() throws InterruptedException {
-        TrackingContext.setCorrelationId(CORRELATION_ID_DEFAULT);
+        TrackingContext.setTraceId(TRACE_ID_DEFAULT);
 
         AppOrderCreateEvent orderCreate = new AppOrderCreateEvent(this)
                 .setOrderId("1")
@@ -77,11 +77,11 @@ public class EventPublisherTest {
 
         Assertions.assertEquals(orderCreate.getOrderId(), receivedOrderCreate.getOrderId());
         Assertions.assertEquals(orderCreate.getOrderName(), receivedOrderCreate.getOrderName());
-        Assertions.assertEquals(CORRELATION_ID_DEFAULT, receivedOrderCreate.getCorrelationId());
+        Assertions.assertEquals(TRACE_ID_DEFAULT, receivedOrderCreate.getTraceId());
 
         Assertions.assertEquals(orderUpdate.getOrderId(), receivedOrderUpdate.getOrderId());
         Assertions.assertEquals(orderUpdate.getOrderName(), receivedOrderUpdate.getOrderName());
-        Assertions.assertEquals(CORRELATION_ID_DEFAULT, receivedOrderUpdate.getCorrelationId());
+        Assertions.assertEquals(TRACE_ID_DEFAULT, receivedOrderUpdate.getTraceId());
     }
 
     @TestConfiguration
@@ -100,7 +100,7 @@ public class EventPublisherTest {
         private final List<AppOrderUpdateEvent> orderUpdateEvents = new CopyOnWriteArrayList<>();
         private final CountDownLatch eventLatch = new CountDownLatch(2);
 
-        @Async("appTaskExecutor")
+        @Async
         @EventListener(AppOrderCreateEvent.class)
         public void handleOrderCreateEvent(AppOrderCreateEvent dto) {
             log.info("[EventCaptor] AppOrderCreateEvent: {}", dto);
@@ -108,7 +108,7 @@ public class EventPublisherTest {
             eventLatch.countDown();
         }
 
-        @Async("appTaskExecutor")
+        @Async
         @EventListener(AppOrderUpdateEvent.class)
         public void handleOrderUpdateEvent(AppOrderUpdateEvent dto) {
             log.info("[EventCaptor] AppOrderUpdateEvent: {}", dto);

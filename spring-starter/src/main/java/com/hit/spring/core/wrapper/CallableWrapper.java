@@ -9,19 +9,19 @@ import java.util.concurrent.Callable;
 public class CallableWrapper<T> implements Callable<T> {
 
     private final Callable<T> task;
-    private final String correlationId;
+    private final String traceId;
 
     private Procedure acceptContext;
     private Procedure clearContext;
 
     public CallableWrapper(Callable<T> task) {
         this.task = task;
-        this.correlationId = TrackingContext.getCorrelationId();
+        this.traceId = TrackingContext.getTraceId();
     }
 
     public CallableWrapper(Callable<T> task, Procedure acceptContext, Procedure clearContext) {
         this.task = task;
-        this.correlationId = TrackingContext.getCorrelationId();
+        this.traceId = TrackingContext.getTraceId();
         this.acceptContext = acceptContext;
         this.clearContext = clearContext;
     }
@@ -29,8 +29,7 @@ public class CallableWrapper<T> implements Callable<T> {
     @Override
     public T call() {
         try {
-            TrackingContext.setCorrelationId(correlationId);
-            TrackingContext.setThreadId();
+            TrackingContext.setTraceId(traceId);
             if (acceptContext != null) {
                 acceptContext.process();
             }

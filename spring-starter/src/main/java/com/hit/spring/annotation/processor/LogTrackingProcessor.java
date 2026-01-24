@@ -17,12 +17,12 @@ public class LogTrackingProcessor {
     @Around("@annotation(com.hit.spring.annotation.LogTracking)")
     public Object aroundTrackedMethod(ProceedingJoinPoint joinPoint) throws Throwable {
         try {
-            TrackingContext.setCorrelationId();
-            log.debug("CorrelationId initialized: {}, method={}", TrackingContext.getCorrelationId(), joinPoint.getSignature());
+            TrackingContext.setTraceId(TrackingContext.getTraceId());
+            log.debug("TraceId initialized: {}, method={}", TrackingContext.getTraceId(), joinPoint.getSignature());
             return joinPoint.proceed();
         } finally {
             TrackingContext.clearContext();
-            log.debug("CorrelationId cleared method={}", joinPoint.getSignature());
+            log.debug("TraceId cleared method={}", joinPoint.getSignature());
         }
     }
 

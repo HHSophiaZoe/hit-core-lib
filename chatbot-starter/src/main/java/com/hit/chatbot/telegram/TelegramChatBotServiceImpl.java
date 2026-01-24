@@ -53,7 +53,7 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
             sendMessage.setText(content);
             execute(sendMessage);
         } catch (Exception e) {
-            log.warn("Failed to send message to Telegram chatId: {}", chatId, e);
+            log.error("Failed to send message to Telegram chatId: {}", chatId, e);
         }
     }
 
@@ -75,7 +75,7 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
 
             execute(sendMessage);
         } catch (Exception e) {
-            log.warn("Failed to send message to Telegram", e);
+            log.error("Failed to send message to Telegram", e);
         }
     }
 
@@ -117,21 +117,24 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
         String content = request.getContent();
 
         if (!(request instanceof TelegramMessageRequest telegramRequest)) {
-            return merge(title, content);
+            return this.mergeContent(title, content);
         }
 
         TitleStyle titleStyle = TitleStyle.BOLD_DIVIDER; // ⭐ default đẹp nhất
 
         String renderedTitle = title != null
-                ? renderTitle(title, titleStyle, telegramRequest.getParseMode())
+                ? this.renderTitle(title, titleStyle, telegramRequest.getParseMode())
                 : null;
 
-        return merge(renderedTitle, content);
+        return this.mergeContent(renderedTitle, content);
     }
 
-    private String merge(String title, String content) {
-        if (title == null || title.isBlank()) {
+    private String mergeContent(String title, String content) {
+        if (StringUtils.isBlank(title)) {
             return content;
+        }
+        if (StringUtils.isBlank(content)) {
+            return title;
         }
         return title + content;
     }

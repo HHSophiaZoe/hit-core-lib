@@ -50,7 +50,7 @@ public class RedisSerializerImpl implements RedisSerializer {
         try {
             return objectMapper.readValue(value, type);
         } catch (Exception ex) {
-            throw new SerializationException("Could not read JSON:%s ".formatted(ex.getMessage()), ex);
+            throw new SerializationException("Could not read JSON: %s".formatted(ex.getMessage()), ex);
         }
     }
 
@@ -67,7 +67,7 @@ public class RedisSerializerImpl implements RedisSerializer {
         try {
             return objectMapper.readValue(value, type);
         } catch (Exception ex) {
-            throw new SerializationException("Could not read JSON:%s ".formatted(ex.getMessage()), ex);
+            throw new SerializationException("Could not read JSON: %s".formatted(ex.getMessage()), ex);
         }
     }
 

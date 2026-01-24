@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 public class TaskExecutorProperties {
 
     private Boolean enable = Boolean.FALSE;
-    private String threadNamePrefix = "app.executor-";
     private int taskTimeoutSeconds = 30;
     private Pool pool = new Pool();
     private Simple simple = new Simple();
@@ -20,9 +19,10 @@ public class TaskExecutorProperties {
     @Setter
     @Getter
     public static class Pool {
+        private String threadNamePrefix = "app.pool-";
         private int coreSize = 10;
-        private int maxSize = 30;
-        private int queueCapacity = 100;
+        private int maxSize = 50;
+        private int queueCapacity = 10000;
         private boolean allowCoreThreadTimeout = true;
         private int keepAliveSeconds = 60;
     }
@@ -30,6 +30,7 @@ public class TaskExecutorProperties {
     @Setter
     @Getter
     public static class Simple {
+        private String threadNamePrefix = "app.virtual-";
         private Integer concurrencyLimit = 1000;
     }
 
