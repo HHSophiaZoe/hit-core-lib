@@ -31,7 +31,7 @@ public class TaskExecutorProperties {
     @Getter
     public static class Simple {
         private String threadNamePrefix = "app.virtual-";
-        private Integer concurrencyLimit = 1000;
+        private Integer concurrencyLimit = 5000;
     }
 
 }

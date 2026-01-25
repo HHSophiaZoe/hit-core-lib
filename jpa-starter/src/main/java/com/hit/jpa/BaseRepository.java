@@ -50,4 +50,6 @@ public interface BaseRepository<E, ID> {
 
     void deleteAllInBatch();
 
+    void flush();
+
 }

@@ -252,4 +252,9 @@ public abstract class BaseJPAAdapter<E, ID, R extends BaseJPARepository<E, ID>> 
     public void deleteAllInBatch() {
         this.jpaRepository.deleteAllInBatch();
     }
+
+    @Override
+    public void flush() {
+        this.jpaRepository.flush();
+    }
 }

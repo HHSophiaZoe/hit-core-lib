@@ -50,7 +50,8 @@ public class TaskExecutorConfig {
 
     @Primary
     @Bean(name = {"appTaskExecutor"})
-    public ThreadPoolTaskExecutor appThreadPoolTaskExecutor(TaskExecutorProperties properties) {
+    @ConditionalOnThreading(Threading.PLATFORM)
+    public ThreadPoolTaskExecutor threadPoolTaskExecutor(TaskExecutorProperties properties) {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setTaskDecorator(RunnableWrapper::new);
         executor.setThreadNamePrefix(properties.getPool().getThreadNamePrefix());
@@ -63,9 +64,10 @@ public class TaskExecutorConfig {
         return executor;
     }
 
-    @Bean(name = {"appVirtualTaskExecutor"})
+    @Primary
+    @Bean(name = {"appTaskExecutor"})
     @ConditionalOnThreading(Threading.VIRTUAL)
-    public SimpleAsyncTaskExecutor appTaskExecutorVirtualThreads(TaskExecutorProperties properties) {
+    public SimpleAsyncTaskExecutor simpleAsyncTaskExecutor(TaskExecutorProperties properties) {
         SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor();
         executor.setVirtualThreads(true);
         executor.setTaskDecorator(RunnableWrapper::new);
