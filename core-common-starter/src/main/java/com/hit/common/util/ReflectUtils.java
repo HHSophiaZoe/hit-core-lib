@@ -98,7 +98,7 @@ public class ReflectUtils {
             }
         } catch (Exception e) {
             if (clazz.getSuperclass() != null && !clazz.getSuperclass().equals(Object.class)) {
-                return getSetter(clazz.getSuperclass(), fieldName);
+                return getGetter(clazz.getSuperclass(), fieldName);
             }
             log.error("[fail to get getter field {}] cause: {}", fieldName, e.getMessage(), e);
             throw new ReflectException(e.getMessage(), e);
