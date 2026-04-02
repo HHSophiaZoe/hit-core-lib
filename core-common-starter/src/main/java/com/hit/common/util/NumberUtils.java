@@ -19,6 +19,22 @@ public class NumberUtils {
         return val == null ? 0d : val;
     }
 
+    public static Double toDouble(Integer val) {
+        return val == null ? null : val.doubleValue();
+    }
+
+    public static Double toDoubleOrZero(Integer val) {
+        return val == null ? 0d : val.doubleValue();
+    }
+
+    public static Double toDouble(Long val) {
+        return val == null ? null : val.doubleValue();
+    }
+
+    public static Double toDoubleOrZero(Long val) {
+        return val == null ? 0d : val.doubleValue();
+    }
+
     public static Integer safeParseInteger(String value) {
         return safeParseInteger(value, null);
     }

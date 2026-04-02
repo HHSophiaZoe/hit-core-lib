@@ -40,6 +40,7 @@
         <kafka-starter.version>1.0</kafka-starter.version>
         <jpa-starter.version>1.0</jpa-starter.version>
         <storage-starter.version>1.0</storage-starter.version>
+        <websocket-starter.version>1.0</websocket-starter.version>
 
         <!--    Logging    -->
         <log4j-json.version>2.24.3</log4j-json.version>
@@ -60,6 +61,7 @@
         <module>storage-starter</module>
         <module>api-starter</module>
         <module>core-common-starter</module>
+        <module>websocket-starter</module>
         <module>test-core-lib</module>
     </modules>
 
