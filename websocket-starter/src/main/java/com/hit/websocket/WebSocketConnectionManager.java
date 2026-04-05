@@ -7,6 +7,8 @@ import org.springframework.web.socket.*;
 import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -212,7 +214,7 @@ public class WebSocketConnectionManager implements WebSocketHandler {
     /**
      * Send message through WebSocket
      */
-    public void sendMessage(String message) {
+    public void sendTextMessage(String message) {
         if (Objects.isNull(message)) {
             throw new IllegalArgumentException("Message cannot be null");
         }
@@ -226,6 +228,26 @@ public class WebSocketConnectionManager implements WebSocketHandler {
         } catch (Exception e) {
             log.error("Failed to send message", e);
             throw new RuntimeException("Failed to send message", e);
+        }
+    }
+
+    /**
+     * Send binary message through WebSocket
+     */
+    public void sendBinaryMessage(byte[] data) {
+        if (Objects.isNull(data)) {
+            throw new IllegalArgumentException("Data cannot be null");
+        }
+        
+        if (!isConnected()) {
+            throw new IllegalStateException("Not connected");
+        }
+
+        try {
+            session.sendMessage(new BinaryMessage(data));
+        } catch (Exception e) {
+            log.error("Failed to send binary message", e);
+            throw new RuntimeException("Failed to send binary message", e);
         }
     }
 
@@ -259,10 +281,23 @@ public class WebSocketConnectionManager implements WebSocketHandler {
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) {
         try {
-            String payload = message.getPayload().toString();
+            byte[] messageBytes;
+            
+            if (message instanceof TextMessage) {
+                String payload = ((TextMessage) message).getPayload();
+                messageBytes = payload.getBytes(StandardCharsets.UTF_8);
+            } else if (message instanceof BinaryMessage) {
+                ByteBuffer buffer = ((BinaryMessage) message).getPayload();
+                messageBytes = new byte[buffer.remaining()];
+                buffer.get(messageBytes);
+            } else {
+                // Handle other message types as string
+                String payload = message.getPayload().toString();
+                messageBytes = payload.getBytes(StandardCharsets.UTF_8);
+            }
 
             if (Objects.nonNull(messageListener)) {
-                messageListener.onMessage(payload);
+                messageListener.onMessage(messageBytes);
             }
 
         } catch (Exception e) {

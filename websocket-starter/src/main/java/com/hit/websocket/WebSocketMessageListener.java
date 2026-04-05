@@ -16,10 +16,10 @@ public interface WebSocketMessageListener {
     void onTransportConnected(WebSocketSession session);
 
     /**
-     * Called when a raw message is received from WebSocket
-     * @param message Raw message string
+     * Called when a message is received from WebSocket
+     * @param messageBytes Raw message bytes
      */
-    void onMessage(String message);
+    void onMessage(byte[] messageBytes);
 
     /**
      * Called when WebSocket transport connection is closed
