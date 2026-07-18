@@ -11,6 +11,20 @@ import java.math.RoundingMode;
 @UtilityClass
 public class NumberUtils {
 
+    public static boolean isPositiveFinite(Number value) {
+        if (value == null) return false;
+
+        double number = value.doubleValue();
+        return Double.isFinite(number) && number > 0;
+    }
+
+    public static boolean isNonNegativeFinite(Number value) {
+        if (value == null) return false;
+
+        double number = value.doubleValue();
+        return Double.isFinite(number) && number >= 0;
+    }
+
     public static Integer nullToZero(Integer val){
         return val == null ? 0 : val;
     }
@@ -125,6 +139,19 @@ public class NumberUtils {
         return new BigDecimal(value)
                 .setScale(scale, RoundingMode.HALF_UP)
                 .doubleValue();
+    }
+
+    public static String formatRound(Double value) {
+        return formatRound(value, 2);
+    }
+
+    public static String formatRound(Double value, int scale) {
+        if (value == null) return null;
+
+        return BigDecimal.valueOf(value)
+                .setScale(scale, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+                .toPlainString();
     }
 
     public static Double safeRound(Double value) {
