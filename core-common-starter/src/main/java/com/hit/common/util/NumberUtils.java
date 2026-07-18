@@ -127,4 +127,16 @@ public class NumberUtils {
                 .doubleValue();
     }
 
+    public static Double safeRound(Double value) {
+        return safeRound(value, 2);
+    }
+
+    public static Double safeRound(Double value, int scale) {
+        if (value == null) return 0.0;
+
+        return new BigDecimal(value)
+                .setScale(scale, RoundingMode.HALF_UP)
+                .doubleValue();
+    }
+
 }
