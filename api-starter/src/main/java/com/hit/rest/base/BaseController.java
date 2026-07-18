@@ -4,7 +4,7 @@ import com.hit.common.model.pagination.PageResModel;
 import com.hit.common.model.pagination.PageableReqModel;
 import com.hit.common.model.pagination.PageableSearchReqModel;
 import com.hit.spring.annotation.PaginationParameter;
-import com.hit.spring.core.mapper.ResponseMapper;
+import com.hit.common.mapper.ResponseMapper;
 import com.hit.spring.core.factory.GeneralResponse;
 import com.hit.spring.core.factory.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,7 +53,7 @@ public abstract class BaseController<M, ID, RES, Map extends ResponseMapper<M, R
             }),
     })
     @GetMapping("/{id}")
-    public ResponseEntity<GeneralResponse<RES>> getById(@PathVariable("id") ID id) {
+    public ResponseEntity<GeneralResponse<RES>> getById(@PathVariable ID id) {
         return ResponseFactory.success(mapper.toResponse(service.getById(id)));
     }
 
@@ -127,7 +127,7 @@ public abstract class BaseController<M, ID, RES, Map extends ResponseMapper<M, R
             }),
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<GeneralResponse<Object>> delete(@PathVariable("id") ID id) {
+    public ResponseEntity<GeneralResponse<Object>> delete(@PathVariable ID id) {
         return ResponseFactory.success(service.deleteById(id));
     }
 
