@@ -214,7 +214,8 @@ public class ReflectUtils {
                 (Number.class.isAssignableFrom(targetType) && Number.class.isAssignableFrom(sourceType));
     }
 
-    private Class<?> getWrapperType(Class<?> primitiveType) {
+    public Class<?> getWrapperType(Class<?> primitiveType) {
+        if (primitiveType == null || !primitiveType.isPrimitive()) return primitiveType;
         if (primitiveType == int.class) return Integer.class;
         if (primitiveType == long.class) return Long.class;
         if (primitiveType == double.class) return Double.class;

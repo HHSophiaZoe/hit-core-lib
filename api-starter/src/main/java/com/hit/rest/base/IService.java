@@ -11,8 +11,6 @@ public interface IService<M, ID> {
 
     M getById(ID id);
 
-    M getBasicById(ID id);
-
     List<M> getByIds(List<ID> ids);
 
     PageResModel<M> select(PageableReqModel request);

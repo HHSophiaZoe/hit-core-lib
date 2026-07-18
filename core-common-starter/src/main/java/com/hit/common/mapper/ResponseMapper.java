@@ -1,16 +1,16 @@
-package com.hit.spring.core.mapper;
+package com.hit.common.mapper;
 
 import org.mapstruct.IterableMapping;
 import org.mapstruct.Named;
 
 import java.util.List;
 
-public interface ResponseMapper<M, Rs> {
+public interface ResponseMapper<M, R> {
 
     @Named("toResponse")
-    Rs toResponse(M e);
+    R toResponse(M model);
 
     @IterableMapping(qualifiedByName = "toResponse")
-    List<Rs> toResponses(List<M> list);
+    List<R> toResponses(List<M> models);
 
 }

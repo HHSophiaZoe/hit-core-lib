@@ -5,6 +5,7 @@ import com.hit.common.model.pagination.PageableReqModel;
 import com.hit.common.model.pagination.PageableSearchReqModel;
 import com.hit.jpa.utils.ChunkUtils;
 import com.hit.jpa.utils.SqlUtils;
+import com.hit.common.mapper.DomainMapper;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Path;
@@ -19,12 +20,9 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.Metamodel;
 import jakarta.persistence.metamodel.SingularAttribute;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -35,18 +33,19 @@ import org.springframework.transaction.annotation.Transactional;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
-@NoArgsConstructor
-public abstract class BaseJPAAdapter<E, ID, R extends BaseJPARepository<E, ID>> implements BaseRepository<E, ID> {
+public abstract class BaseJPAAdapter<M, E, ID, R extends BaseJPARepository<E, ID>> implements BaseRepository<M, ID> {
 
     @PersistenceContext(unitName = "defaultEntityManager")
     private EntityManager entityManager;
 
-    @Setter(onMethod_ = {@Autowired})
-    protected R jpaRepository;
+    protected final R jpaRepository;
+
+    protected final DomainMapper<E, M> mapper;
+
+    protected final Class<E> entityClass;
 
     protected Field columnID;
 
@@ -58,11 +57,17 @@ public abstract class BaseJPAAdapter<E, ID, R extends BaseJPARepository<E, ID>> 
 
     protected static final Integer DEFAULT_BATCH_DELETE = 500;
 
+    protected BaseJPAAdapter(Class<E> entityClass, R jpaRepository, DomainMapper<E, M> mapper) {
+        this.entityClass = entityClass;
+        this.jpaRepository = jpaRepository;
+        this.mapper = mapper;
+    }
+
     @SneakyThrows
     @PostConstruct
     private void init() {
         Metamodel metamodel = getEntityManager().getMetamodel();
-        EntityType<E> entityType = metamodel.entity(this.getEntityClass());
+        EntityType<E> entityType = metamodel.entity(this.entityClass);
         SingularAttribute<? super E, ?> idAttribute = entityType.getId(Object.class);
         if (idAttribute.getJavaMember() instanceof Field idField) {
             this.columnID = idField;
@@ -71,7 +76,7 @@ public abstract class BaseJPAAdapter<E, ID, R extends BaseJPARepository<E, ID>> 
         }
 
         EntityPathResolver entityPathResolver = new SimpleEntityPathResolver(StringUtils.EMPTY);
-        this.entityPath = entityPathResolver.createPath(this.getEntityClass());
+        this.entityPath = entityPathResolver.createPath(this.entityClass);
         this.queryFactory = new JPAQueryFactory(this.getEntityManager());
 
         this.allColumnEntity = new HashSet<>();
@@ -93,27 +98,25 @@ public abstract class BaseJPAAdapter<E, ID, R extends BaseJPARepository<E, ID>> 
         return this.entityManager;
     }
 
-    protected abstract Class<E> getEntityClass();
-
     @SneakyThrows
     protected Set<String> getPageableColumnAccess() {
         return this.allColumnEntity;
     }
 
     @Override
-    public PageResModel<E> search(PageableReqModel request) {
+    public PageResModel<M> search(PageableReqModel request) {
         Pageable pageable = SqlUtils.createPageable(request);
-        Specification<E> specification = SqlUtils.createSpecificationPagination(request, this.getEntityClass(), this.getPageableColumnAccess());
+        Specification<E> specification = SqlUtils.createSpecificationPagination(request, this.entityClass, this.getPageableColumnAccess());
         Page<E> page = this.jpaRepository.findAll(specification, pageable);
-        return new PageResModel<>(SqlUtils.buildPagingMeta(request, page), page.getContent());
+        return new PageResModel<>(SqlUtils.buildPagingMeta(request, page), this.mapper.toModels(page.getContent()));
     }
 
     @Override
-    public PageResModel<E> search(PageableSearchReqModel request) {
+    public PageResModel<M> search(PageableSearchReqModel request) {
         Pageable pageable = SqlUtils.createPageable(request);
-        Specification<E> specification = SqlUtils.createSpecificationPaginationSearch(request, this.getEntityClass(), this.getPageableColumnAccess());
+        Specification<E> specification = SqlUtils.createSpecificationPaginationSearch(request, this.entityClass, this.getPageableColumnAccess());
         Page<E> page = this.jpaRepository.findAll(specification, pageable);
-        return new PageResModel<>(SqlUtils.buildPagingMeta(request, page), page.getContent());
+        return new PageResModel<>(SqlUtils.buildPagingMeta(request, page), this.mapper.toModels(page.getContent()));
     }
 
     @Override
@@ -144,8 +147,8 @@ public abstract class BaseJPAAdapter<E, ID, R extends BaseJPARepository<E, ID>> 
     }
 
     @Override
-    public List<E> getAll() {
-        return this.jpaRepository.findAll();
+    public List<M> getAll() {
+        return this.mapper.toModels(this.jpaRepository.findAll());
     }
 
     protected List<E> getAll(Predicate condition) {
@@ -155,22 +158,22 @@ public abstract class BaseJPAAdapter<E, ID, R extends BaseJPARepository<E, ID>> 
     }
 
     @Override
-    public List<E> getAllByIdIn(Collection<ID> ids) {
-        return this.jpaRepository.findAllById(ids);
+    public List<M> getAllByIdIn(Collection<ID> ids) {
+        return this.mapper.toModels(this.jpaRepository.findAllById(ids));
     }
 
     @Override
-    public Map<ID, E> getMapId(Collection<ID> ids) {
+    public Map<ID, M> getMapId(Collection<ID> ids) {
         List<E> entities = this.jpaRepository.findAllById(ids);
         return entities.stream().collect(Collectors.toMap(
                 item -> SqlUtils.getEntityId(this.getEntityManager(), item),
-                Function.identity()
+                this.mapper::toModel
         ));
     }
 
     @Override
-    public E getOne(ID id) {
-        return this.jpaRepository.findById(id).orElse(null);
+    public M getOne(ID id) {
+        return this.jpaRepository.findById(id).map(this.mapper::toModel).orElse(null);
     }
 
     protected E getOne(Predicate condition) {
@@ -183,48 +186,48 @@ public abstract class BaseJPAAdapter<E, ID, R extends BaseJPARepository<E, ID>> 
     }
 
     @Override
-    public E save(E entity) {
-        return this.jpaRepository.save(entity);
+    public M save(M model) {
+        return this.mapper.toModel(this.jpaRepository.save(this.mapper.toEntity(model)));
     }
 
     @Override
     @Transactional
-    public void saveAll(Collection<E> entities) {
-        for (E entity : entities) {
-            this.save(entity);
+    public void saveAll(Collection<M> models) {
+        for (M model : models) {
+            this.save(model);
         }
     }
 
     @Override
-    public List<E> saveAllReturning(Collection<E> entities) {
-        return this.jpaRepository.saveAll(entities);
+    public List<M> saveAllReturning(Collection<M> models) {
+        return this.mapper.toModels(this.jpaRepository.saveAll(this.mapper.toEntities(models)));
     }
 
     @Override
-    public E saveAndFlush(E entity) {
-        return this.jpaRepository.saveAndFlush(entity);
+    public M saveAndFlush(M model) {
+        return this.mapper.toModel(this.jpaRepository.saveAndFlush(this.mapper.toEntity(model)));
     }
 
     @Override
     @Transactional
-    public void saveAllAndFlush(Collection<E> entities) {
-        for (E entity : entities) {
-            this.save(entity);
+    public void saveAllAndFlush(Collection<M> models) {
+        for (M model : models) {
+            this.save(model);
         }
         this.jpaRepository.flush();
     }
 
     @Override
     @Transactional
-    public List<E> saveAllReturningAndFlush(Collection<E> entities) {
-        List<E> temp = this.jpaRepository.saveAll(entities);
+    public List<M> saveAllReturningAndFlush(Collection<M> models) {
+        List<E> temp = this.jpaRepository.saveAll(this.mapper.toEntities(models));
         this.jpaRepository.flush();
-        return temp;
+        return this.mapper.toModels(temp);
     }
 
     @Override
-    public E update(E entity) {
-        return this.jpaRepository.save(entity);
+    public M update(M model) {
+        return this.mapper.toModel(this.jpaRepository.save(this.mapper.toEntity(model)));
     }
 
     @Override

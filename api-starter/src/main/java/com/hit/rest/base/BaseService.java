@@ -4,7 +4,6 @@ import com.hit.common.model.pagination.PageResModel;
 import com.hit.common.model.pagination.PageableReqModel;
 import com.hit.common.model.pagination.PageableSearchReqModel;
 import com.hit.jpa.BaseRepository;
-import com.hit.spring.core.mapper.DomainMapper;
 import com.hit.spring.core.exception.BaseResponseException;
 import com.hit.spring.core.exception.ResponseStatusCodeEnum;
 import lombok.Setter;
@@ -17,10 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @Slf4j
-public abstract class BaseService<M, E, ID, Repo extends BaseRepository<E, ID>, Map extends DomainMapper<E, M>> implements IService<M, ID> {
-
-    @Setter(onMethod_ = {@Autowired})
-    protected Map mapper;
+public abstract class BaseService<M, ID, Repo extends BaseRepository<M, ID>> implements IService<M, ID> {
 
     @Setter(onMethod_ = {@Autowired})
     protected Repo repository;
@@ -28,38 +24,27 @@ public abstract class BaseService<M, E, ID, Repo extends BaseRepository<E, ID>, 
     @Override
     @Transactional
     public M getById(ID id) {
-        E e = repository.getOne(id);
-        if (e == null) throw new BaseResponseException(ResponseStatusCodeEnum.RESOURCE_NOT_FOUND);
-        return mapper.toModel(e);
-    }
-
-    @Override
-    @Transactional
-    public M getBasicById(ID id) {
-        E e = repository.getOne(id);
-        if (e == null) throw new BaseResponseException(ResponseStatusCodeEnum.RESOURCE_NOT_FOUND);
-        return mapper.toBasicModel(e);
+        M model = repository.getOne(id);
+        if (model == null) throw new BaseResponseException(ResponseStatusCodeEnum.RESOURCE_NOT_FOUND);
+        return model;
     }
 
     @Override
     @Transactional
     public List<M> getByIds(List<ID> ids) {
-        List<E> list = repository.getAllByIdIn(ids);
-        return mapper.toModels(list);
+        return repository.getAllByIdIn(ids);
     }
 
     @Override
     @Transactional
     public PageResModel<M> select(PageableReqModel request) {
-        PageResModel<E> poPageResModel = repository.search(request);
-        return poPageResModel.map(mapper::toModel);
+        return repository.search(request);
     }
 
     @Override
     @Transactional
     public PageResModel<M> search(PageableSearchReqModel request) {
-        PageResModel<E> poPageResModel = repository.search(request);
-        return poPageResModel.map(mapper::toModel);
+        return repository.search(request);
     }
 
     @Override
