@@ -14,7 +14,7 @@ public class EventPublisherImpl implements EventPublisher {
 
     @Override
     public void publish(BaseAppEvent event) {
-        log.info("{} publish event {}", event.getSource(), event);
+        log.trace("{} publish event {}", event.getSource(), event);
         publisher.publishEvent(event);
     }
 }

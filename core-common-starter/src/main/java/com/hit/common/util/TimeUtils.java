@@ -35,6 +35,14 @@ public class TimeUtils {
     public static final String TIME_ZONE_VN_ID = "Asia/Ho_Chi_Minh";
     public static final ZoneId TIME_ZONE_VN = ZoneId.of(TIME_ZONE_VN_ID);
 
+    public static LocalDate todayGmt7() {
+        return LocalDate.now(TIME_ZONE_VN);
+    }
+
+    public static LocalDateTime nowGmt7() {
+        return LocalDateTime.now(TIME_ZONE_VN);
+    }
+
     /*
      *
      * Methods parse date time
