@@ -11,6 +11,18 @@ import java.math.RoundingMode;
 @UtilityClass
 public class NumberUtils {
 
+    private static final int MONEY_SCALE = 8;
+    private static final int RATIO_SCALE = 16;
+
+    public static BigDecimal divideMoney(BigDecimal amount, int divisor) {
+        return amount.divide(BigDecimal.valueOf(divisor), MONEY_SCALE, RoundingMode.HALF_UP);
+    }
+
+    public static double ratio(BigDecimal numerator, BigDecimal denominator) {
+        if (denominator.signum() <= 0) return 0D;
+        return numerator.divide(denominator, RATIO_SCALE, RoundingMode.HALF_UP).doubleValue();
+    }
+
     public static boolean isPositiveFinite(Number value) {
         if (value == null) return false;
 
