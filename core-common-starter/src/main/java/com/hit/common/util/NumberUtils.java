@@ -30,11 +30,11 @@ public class NumberUtils {
         return Double.isFinite(number) && number > 0;
     }
 
-    public static boolean isNonNegativeFinite(Number value) {
-        if (value == null) return false;
+    public static boolean isNegativeOrNonFinite(Number value) {
+        if (value == null) return true;
 
         double number = value.doubleValue();
-        return Double.isFinite(number) && number >= 0;
+        return !Double.isFinite(number) || number < 0;
     }
 
     public static Integer nullToZero(Integer val){
