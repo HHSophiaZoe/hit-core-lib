@@ -23,8 +23,13 @@
 		<!-- Telegram Bot API -->
 		<dependency>
 			<groupId>org.telegram</groupId>
-			<artifactId>telegrambots</artifactId>
-			<version>6.8.0</version>
+			<artifactId>telegrambots-springboot-longpolling-starter</artifactId>
+			<version>10.1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.telegram</groupId>
+			<artifactId>telegrambots-client</artifactId>
+			<version>10.1.1</version>
 		</dependency>
 	</dependencies>
 

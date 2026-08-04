@@ -6,6 +6,8 @@ public interface ChatBotService {
 
     void sendMessage(String chatId, String content);
 
+    void sendMessageAsync(String chatId, String content);
+
     void sendMessage(MessageRequest request);
 
     void sendPrivateMessage(String userId, String content);
