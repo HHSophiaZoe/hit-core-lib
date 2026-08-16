@@ -56,7 +56,7 @@ public class TimeUtils {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return LocalDate.parse(dateStr, formatter);
         } catch (Exception e) {
-            log.error("parseToLocalDate ERROR", e);
+            log.warn("parseToLocalDate ERROR", e);
             return null;
         }
     }
@@ -69,7 +69,7 @@ public class TimeUtils {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return LocalTime.parse(timeStr, formatter);
         } catch (Exception e) {
-            log.error("parseToLocalTime ERROR", e);
+            log.warn("parseToLocalTime ERROR", e);
             return null;
         }
     }
@@ -86,7 +86,7 @@ public class TimeUtils {
         try {
             return LocalDateTime.parse(datetimeStr, formatter);
         } catch (Exception e) {
-            log.error("parseToLocalDateTime ERROR", e);
+            log.warn("parseToLocalDateTime ERROR", e);
             return null;
         }
     }
@@ -96,7 +96,7 @@ public class TimeUtils {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
             return simpleDateFormat.parse(dateStr);
         } catch (Exception e) {
-            log.error("parseToDate ERROR", e);
+            log.warn("parseToDate ERROR", e);
             return null;
         }
     }
@@ -168,7 +168,7 @@ public class TimeUtils {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return formatter.format(date);
         } catch (Exception e) {
-            log.error("formatLocalDate ERROR", e);
+            log.warn("formatLocalDate ERROR", e);
             return null;
         }
     }
@@ -178,7 +178,7 @@ public class TimeUtils {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return formatter.format(datetime);
         } catch (Exception e) {
-            log.error("formatLocalDateTime ERROR", e);
+            log.warn("formatLocalDateTime ERROR", e);
             return null;
         }
     }
@@ -188,7 +188,7 @@ public class TimeUtils {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
             return simpleDateFormat.format(date);
         } catch (Exception e) {
-            log.error("formatDate ERROR", e);
+            log.warn("formatDate ERROR", e);
             return null;
         }
     }

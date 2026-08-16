@@ -72,7 +72,7 @@ public class NumberUtils {
         try {
             return Integer.parseInt(value);
         } catch (Exception e) {
-            log.error("safeParseInteger err", e);
+            log.warn("safeParseInteger err", e);
             return defaultValue;
         }
     }
@@ -88,7 +88,7 @@ public class NumberUtils {
         try {
             return Long.parseLong(value);
         } catch (Exception e) {
-            log.error("safeParseLong err", e);
+            log.warn("safeParseLong err", e);
             return defaultValue;
         }
     }
@@ -104,7 +104,7 @@ public class NumberUtils {
         try {
             return Double.parseDouble(value);
         } catch (Exception e) {
-            log.error("parseDouble err", e);
+            log.warn("parseDouble err", e);
             return defaultValue;
         }
     }
@@ -120,7 +120,7 @@ public class NumberUtils {
         try {
             return Float.parseFloat(value);
         } catch (Exception e) {
-            log.error("safeParseFloat err", e);
+            log.warn("safeParseFloat err", e);
             return defaultValue;
         }
     }
@@ -136,7 +136,7 @@ public class NumberUtils {
         try {
             return Short.parseShort(value);
         } catch (Exception e) {
-            log.error("safeParseShort err", e);
+            log.warn("safeParseShort err", e);
             return (short) defaultValue;
         }
     }

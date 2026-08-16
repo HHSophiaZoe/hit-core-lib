@@ -16,6 +16,7 @@ import com.querydsl.core.types.dsl.SimplePath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.Metamodel;
@@ -226,8 +227,18 @@ public abstract class BaseJPAAdapter<M, E, ID, R extends BaseJPARepository<E, ID
     }
 
     @Override
+    @Transactional
     public M update(M model) {
-        return this.mapper.toModel(this.jpaRepository.save(this.mapper.toEntity(model)));
+        E source = this.mapper.toEntity(model);
+        ID id = SqlUtils.getEntityId(this.getEntityManager(), source);
+        if (id == null) {
+            throw new IllegalArgumentException("Cannot update entity without an identifier");
+        }
+
+        E entity = this.jpaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("%s with id %s not found".formatted(this.entityClass.getSimpleName(), id)));
+        this.mapper.updateEntity(model, entity);
+        return this.mapper.toModel(entity);
     }
 
     @Override
