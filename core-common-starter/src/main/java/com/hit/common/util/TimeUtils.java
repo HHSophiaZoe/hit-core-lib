@@ -27,7 +27,10 @@ public class TimeUtils {
     public static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
     public static final String DATE_TIME_PATTERN_VN = "dd/MM/yyyy HH:mm:ss";
     public static final String TIME_DATE_PATTERN = "HH:mm:ss yyyy-MM-dd";
+    public static final String YEAR_MONTH_PATTERN = "yyyy-MM";
     public static final String DATE_PATTERN = "yyyy-MM-dd";
+    public static final String DATE_PATTERN_DASH_VN = "dd-MM-yyyy";
+    public static final String DATE_PATTERN_SLASH = "yyyy/MM/dd";
     public static final String DATE_PATTERN_VN = "dd/MM/yyyy";
     public static final String TIME_PATTERN = "HH:mm:ss";
     public static final String DATE_TIME_ID_PATTERN = "yyyyMMddHHmmss";
@@ -103,10 +106,10 @@ public class TimeUtils {
 
     public static LocalDate parseToLocalDate(String input) {
         try {
-            DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-            DateTimeFormatter formatter3 = DateTimeFormatter.ofPattern("yyyy/MM/dd");
-            DateTimeFormatter formatter4 = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern(DATE_PATTERN);
+            DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern(DATE_PATTERN_DASH_VN);
+            DateTimeFormatter formatter3 = DateTimeFormatter.ofPattern(DATE_PATTERN_SLASH);
+            DateTimeFormatter formatter4 = DateTimeFormatter.ofPattern(DATE_PATTERN_VN);
 
             String[] inputSplit1 = input.split("-");
             if (inputSplit1.length == 3) {
@@ -115,19 +118,19 @@ public class TimeUtils {
                 } else {
                     return LocalDate.parse(input, formatter2);
                 }
-            } else if (input.split("-").length == 2) {
+            } else if (inputSplit1.length == 2) {
                 return LocalDate.parse(input.concat("-" + now().getYear()), formatter2);
             }
 
             String[] inputSplit2 = input.split("/");
             if (inputSplit2.length == 3) {
-                if (inputSplit1[0].length() == 4) {
+                if (inputSplit2[0].length() == 4) {
                     return LocalDate.parse(input, formatter3);
                 } else {
                     return LocalDate.parse(input, formatter4);
                 }
             } else if (inputSplit2.length == 2) {
-                return LocalDate.parse(input.concat("-" + now().getYear()), formatter4);
+                return LocalDate.parse(input.concat("/" + now().getYear()), formatter4);
             }
             return LocalDate.parse(input.concat("-" + now().getMonthValue() + "-" + now().getYear()), formatter2);
         } catch (Exception e) {
