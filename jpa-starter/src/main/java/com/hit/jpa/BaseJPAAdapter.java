@@ -152,6 +152,11 @@ public abstract class BaseJPAAdapter<M, E, ID, R extends BaseJPARepository<E, ID
         return this.mapper.toModels(this.jpaRepository.findAll());
     }
 
+    @Override
+    public long count() {
+        return this.jpaRepository.count();
+    }
+
     protected List<E> getAll(Predicate condition) {
         return queryFactory.selectFrom(entityPath)
                 .where(condition)
