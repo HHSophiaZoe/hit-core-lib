@@ -59,8 +59,18 @@ public class SqlDslPredicateUtils {
                 log.warn("[Filter] Cannot find path from column access: {}", columnName);
                 return null;
             }
+
+            if (operator == Operator.NULL) {
+                return createNullPredicate(path);
+            }
+            if (operator == Operator.NOT_NULL) {
+                return createNotNullPredicate(path);
+            }
+
             Class<?> columnType = getPathType(path);
-            Object convertedValue = SqlPredicateUtils.convertFilterValue(operator, value, columnType);
+            Object convertedValue = Objects.requireNonNull(
+                    SqlPredicateUtils.convertFilterValue(operator, value, columnType),
+                    () -> "Converted filter value must not be null: " + columnName);
 
             return switch (operator) {
                 case EQUAL -> createEqualPredicate(path, convertedValue);
@@ -69,12 +79,13 @@ public class SqlDslPredicateUtils {
                 case LIKE -> createLikePredicate(path, convertedValue);
                 case GREATER_THAN, LESS_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL ->
                         createComparisonPredicate(path, convertedValue, operator);
-                case NULL -> createNullPredicate(path);
-                case NOT_NULL -> createNotNullPredicate(path);
+                case NULL, NOT_NULL -> throw new IllegalStateException("Null operator was not handled");
                 default -> null;
             };
+        } catch (QueryException e) {
+            throw e;
         } catch (Exception e) {
-            throw new QueryException("Error processing filter for column: " + columnName, e);
+            throw new QueryException("Invalid filter value '%s' for column '%s'".formatted(value, columnName), e);
         }
     }
 

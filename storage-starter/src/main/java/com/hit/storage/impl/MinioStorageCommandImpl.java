@@ -72,7 +72,7 @@ public class MinioStorageCommandImpl implements BaseStorageCommand {
                         return FileEntryDTO.builder()
                                 .filePath(item.objectName())
                                 .fileName(FileUtils.getFilename(item.objectName()))
-                                .lastModifiedDate(item.lastModified().toLocalDateTime())
+                                .lastModifiedAt(item.lastModified().toInstant())
                                 .build();
                     } catch (Exception e) {
                         log.error("[MinIO] Error fetching item: {}", e.getMessage());

@@ -35,17 +35,6 @@ public class TimeUtils {
     public static final String TIME_PATTERN = "HH:mm:ss";
     public static final String DATE_TIME_ID_PATTERN = "yyyyMMddHHmmss";
 
-    public static final String TIME_ZONE_VN_ID = "Asia/Ho_Chi_Minh";
-    public static final ZoneId TIME_ZONE_VN = ZoneId.of(TIME_ZONE_VN_ID);
-
-    public static LocalDate todayGmt7() {
-        return LocalDate.now(TIME_ZONE_VN);
-    }
-
-    public static LocalDateTime nowGmt7() {
-        return LocalDateTime.now(TIME_ZONE_VN);
-    }
-
     /*
      *
      * Methods parse date time
@@ -90,6 +79,18 @@ public class TimeUtils {
             return LocalDateTime.parse(datetimeStr, formatter);
         } catch (Exception e) {
             log.warn("parseToLocalDateTime ERROR", e);
+            return null;
+        }
+    }
+
+    public static Instant parseToInstant(String datetimeStr, DateTimeFormatter formatter) {
+        if (StringUtils.isEmptyOrBlank(datetimeStr)) {
+            return null;
+        }
+        try {
+            return formatter.parse(datetimeStr, Instant::from);
+        } catch (Exception e) {
+            log.warn("parseToInstant ERROR", e);
             return null;
         }
     }
@@ -201,34 +202,44 @@ public class TimeUtils {
      * Methods convert date time
      *
      * */
-    public static LocalDate toLocalDate(Date date) {
+    public static LocalDate toLocalDate(Date date, ZoneId zoneId) {
         if (date == null) return null;
-        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return date.toInstant().atZone(zoneId).toLocalDate();
     }
 
-    public static LocalDateTime toLocalDateTime(Date date) {
+    public static LocalDate toLocalDate(Instant instant, ZoneId zoneId) {
+        if (instant == null) return null;
+        return instant.atZone(zoneId).toLocalDate();
+    }
+
+    public static LocalDate toLocalDate(Long epochSecond, ZoneId zoneId) {
+        if (epochSecond == null) return null;
+        return toLocalDate(Instant.ofEpochSecond(epochSecond), zoneId);
+    }
+
+    public static LocalDateTime toLocalDateTime(Date date, ZoneId zoneId) {
         if (date == null) return null;
-        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        return date.toInstant().atZone(zoneId).toLocalDateTime();
     }
 
-    public static LocalDateTime toLocalDateTime(Long epochSecond) {
+    public static LocalDateTime toLocalDateTime(Long epochSecond, ZoneId zoneId) {
         if (epochSecond == null) return null;
-        return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneId.systemDefault());
+        return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSecond), zoneId);
     }
 
-    public static LocalTime toLocalTime(Long epochSecond) {
+    public static LocalTime toLocalTime(Long epochSecond, ZoneId zoneId) {
         if (epochSecond == null) return null;
-        return LocalTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneId.systemDefault());
+        return LocalTime.ofInstant(Instant.ofEpochSecond(epochSecond), zoneId);
     }
 
-    public static Long toEpochSecond(LocalDateTime datetime) {
+    public static Long toEpochSecond(LocalDateTime datetime, ZoneId zoneId) {
         if (datetime == null) return null;
-        return datetime.atZone(ZoneId.systemDefault()).toEpochSecond();
+        return datetime.atZone(zoneId).toEpochSecond();
     }
 
-    public static Long toEpochSecond(LocalDate date) {
+    public static Long toEpochSecond(LocalDate date, ZoneId zoneId) {
         if (date == null) return null;
-        return date.atStartOfDay().atZone(ZoneId.systemDefault()).toEpochSecond();
+        return date.atStartOfDay(zoneId).toEpochSecond();
     }
 
     /*
