@@ -20,6 +20,8 @@ public interface BaseRepository<M, ID> {
 
     List<M> getAll();
 
+    long count();
+
     List<M> getAllByIdIn(Collection<ID> ids);
 
     Map<ID, M> getMapId(Collection<ID> ids);

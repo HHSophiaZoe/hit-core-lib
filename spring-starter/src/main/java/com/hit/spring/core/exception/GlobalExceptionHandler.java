@@ -15,6 +15,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -24,6 +25,15 @@ import java.util.Map;
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler({NoResourceFoundException.class})
+    @org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.NOT_FOUND)
+    public <T> GeneralResponse<T> handleNoResourceFoundException(NoResourceFoundException ex) {
+        GeneralResponse<T> response = new GeneralResponse<>();
+        ResponseStatus responseStatus = new ResponseStatus(ResponseStatusCodeEnum.RESOURCE_NOT_FOUND.code(), ex.getMessage());
+        response.setStatus(responseStatus);
+        return response;
+    }
 
     //Error validate for param
     @ExceptionHandler(ConstraintViolationException.class)
@@ -59,8 +69,7 @@ public class GlobalExceptionHandler {
     @org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.BAD_REQUEST)
     public <T> GeneralResponse<T> handleValidationExceptions(ServletRequestBindingException ex) {
         GeneralResponse<T> response = new GeneralResponse<>();
-        ResponseStatus responseStatus = new ResponseStatus(ResponseStatusCodeEnum.VALIDATION_ERROR.code(),
-                ex.getMessage());
+        ResponseStatus responseStatus = new ResponseStatus(ResponseStatusCodeEnum.VALIDATION_ERROR.code(), ex.getMessage());
         response.setStatus(responseStatus);
         return response;
     }

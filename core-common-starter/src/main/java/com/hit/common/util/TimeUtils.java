@@ -27,13 +27,24 @@ public class TimeUtils {
     public static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
     public static final String DATE_TIME_PATTERN_VN = "dd/MM/yyyy HH:mm:ss";
     public static final String TIME_DATE_PATTERN = "HH:mm:ss yyyy-MM-dd";
+    public static final String YEAR_MONTH_PATTERN = "yyyy-MM";
     public static final String DATE_PATTERN = "yyyy-MM-dd";
+    public static final String DATE_PATTERN_DASH_VN = "dd-MM-yyyy";
+    public static final String DATE_PATTERN_SLASH = "yyyy/MM/dd";
     public static final String DATE_PATTERN_VN = "dd/MM/yyyy";
     public static final String TIME_PATTERN = "HH:mm:ss";
     public static final String DATE_TIME_ID_PATTERN = "yyyyMMddHHmmss";
 
     public static final String TIME_ZONE_VN_ID = "Asia/Ho_Chi_Minh";
     public static final ZoneId TIME_ZONE_VN = ZoneId.of(TIME_ZONE_VN_ID);
+
+    public static LocalDate todayGmt7() {
+        return LocalDate.now(TIME_ZONE_VN);
+    }
+
+    public static LocalDateTime nowGmt7() {
+        return LocalDateTime.now(TIME_ZONE_VN);
+    }
 
     /*
      *
@@ -48,7 +59,7 @@ public class TimeUtils {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return LocalDate.parse(dateStr, formatter);
         } catch (Exception e) {
-            log.error("parseToLocalDate ERROR", e);
+            log.warn("parseToLocalDate ERROR", e);
             return null;
         }
     }
@@ -61,7 +72,7 @@ public class TimeUtils {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return LocalTime.parse(timeStr, formatter);
         } catch (Exception e) {
-            log.error("parseToLocalTime ERROR", e);
+            log.warn("parseToLocalTime ERROR", e);
             return null;
         }
     }
@@ -78,7 +89,7 @@ public class TimeUtils {
         try {
             return LocalDateTime.parse(datetimeStr, formatter);
         } catch (Exception e) {
-            log.error("parseToLocalDateTime ERROR", e);
+            log.warn("parseToLocalDateTime ERROR", e);
             return null;
         }
     }
@@ -88,17 +99,17 @@ public class TimeUtils {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
             return simpleDateFormat.parse(dateStr);
         } catch (Exception e) {
-            log.error("parseToDate ERROR", e);
+            log.warn("parseToDate ERROR", e);
             return null;
         }
     }
 
     public static LocalDate parseToLocalDate(String input) {
         try {
-            DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-            DateTimeFormatter formatter3 = DateTimeFormatter.ofPattern("yyyy/MM/dd");
-            DateTimeFormatter formatter4 = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern(DATE_PATTERN);
+            DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern(DATE_PATTERN_DASH_VN);
+            DateTimeFormatter formatter3 = DateTimeFormatter.ofPattern(DATE_PATTERN_SLASH);
+            DateTimeFormatter formatter4 = DateTimeFormatter.ofPattern(DATE_PATTERN_VN);
 
             String[] inputSplit1 = input.split("-");
             if (inputSplit1.length == 3) {
@@ -107,19 +118,19 @@ public class TimeUtils {
                 } else {
                     return LocalDate.parse(input, formatter2);
                 }
-            } else if (input.split("-").length == 2) {
+            } else if (inputSplit1.length == 2) {
                 return LocalDate.parse(input.concat("-" + now().getYear()), formatter2);
             }
 
             String[] inputSplit2 = input.split("/");
             if (inputSplit2.length == 3) {
-                if (inputSplit1[0].length() == 4) {
+                if (inputSplit2[0].length() == 4) {
                     return LocalDate.parse(input, formatter3);
                 } else {
                     return LocalDate.parse(input, formatter4);
                 }
             } else if (inputSplit2.length == 2) {
-                return LocalDate.parse(input.concat("-" + now().getYear()), formatter4);
+                return LocalDate.parse(input.concat("/" + now().getYear()), formatter4);
             }
             return LocalDate.parse(input.concat("-" + now().getMonthValue() + "-" + now().getYear()), formatter2);
         } catch (Exception e) {
@@ -160,7 +171,7 @@ public class TimeUtils {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return formatter.format(date);
         } catch (Exception e) {
-            log.error("formatLocalDate ERROR", e);
+            log.warn("formatLocalDate ERROR", e);
             return null;
         }
     }
@@ -170,7 +181,7 @@ public class TimeUtils {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return formatter.format(datetime);
         } catch (Exception e) {
-            log.error("formatLocalDateTime ERROR", e);
+            log.warn("formatLocalDateTime ERROR", e);
             return null;
         }
     }
@@ -180,7 +191,7 @@ public class TimeUtils {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
             return simpleDateFormat.format(date);
         } catch (Exception e) {
-            log.error("formatDate ERROR", e);
+            log.warn("formatDate ERROR", e);
             return null;
         }
     }

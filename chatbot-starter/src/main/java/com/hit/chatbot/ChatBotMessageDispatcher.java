@@ -11,8 +11,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -65,11 +65,12 @@ public class ChatBotMessageDispatcher {
             chatId = String.valueOf(message.getChatId());
         }
         String text = message.getText() != null ? message.getText() : StringUtils.EMPTY;
+        Pair<String, String> commandContent = ChatBotCommandParser.parse(text);
 
         log.trace("Handling Telegram message from message: {}", message);
         for (ListenerMethod listener : listeners) {
-            if (listener.isPlatformSupported(Platform.TELEGRAM) && listener.isMatchesMessage(chatId, text)) {
-                Pair<String, String> commandContent = this.getCommandContent(text);
+            if (listener.isPlatformSupported(Platform.TELEGRAM)
+                    && listener.isMatchesMessage(chatId, commandContent.getLeft())) {
                 MessageResponse messageResponse = MessageResponse.builder()
                         .chatId(chatId)
                         .command(commandContent.getKey())
@@ -83,11 +84,12 @@ public class ChatBotMessageDispatcher {
     private void handleDiscordMessage(MessageReceivedEvent event) {
         String channelId = event.getChannel().getId();
         String text = event.getMessage().getContentRaw();
+        Pair<String, String> commandContent = ChatBotCommandParser.parse(text);
 
         log.trace("Handling Discord message from event: {}", event);
         for (ListenerMethod listener : listeners) {
-            if (listener.isPlatformSupported(Platform.DISCORD) && listener.isMatchesMessage(channelId, text)) {
-                Pair<String, String> commandContent = this.getCommandContent(text);
+            if (listener.isPlatformSupported(Platform.DISCORD)
+                    && listener.isMatchesMessage(channelId, commandContent.getLeft())) {
                 MessageResponse messageResponse = MessageResponse.builder()
                         .chatId(channelId)
                         .command(commandContent.getKey())
@@ -96,24 +98,6 @@ public class ChatBotMessageDispatcher {
                 this.invokeListener(listener, messageResponse);
             }
         }
-    }
-
-    private Pair<String, String> getCommandContent(final String text) {
-        if (StringUtils.isBlank(text) || !text.startsWith("/")) {
-            return Pair.of(StringUtils.EMPTY, text);
-        }
-
-        String trimmed = text.trim();
-        int firstSpace = trimmed.indexOf(StringUtils.SPACE);
-
-        if (firstSpace == -1) { // only command
-            return Pair.of(trimmed, StringUtils.EMPTY);
-        }
-
-        String command = trimmed.substring(0, firstSpace);
-        String content = trimmed.substring(firstSpace + 1).trim();
-
-        return Pair.of(command, content);
     }
 
     private void invokeListener(ListenerMethod listener, MessageResponse message) {
@@ -147,7 +131,7 @@ public class ChatBotMessageDispatcher {
             return Arrays.asList(this.annotation.platforms()).contains(platform);
         }
 
-        private boolean isMatchesMessage(String id, String text) {
+        private boolean isMatchesMessage(String id, String command) {
             // Check chatId
             if (this.resolvedIds != null && this.resolvedIds.length > 0) {
                 boolean chatIdMatches = Arrays.asList(this.resolvedIds).contains(id);
@@ -158,7 +142,8 @@ public class ChatBotMessageDispatcher {
 
             // Check command
             if (this.resolvedCommands != null && this.resolvedCommands.length > 0) {
-                return Arrays.stream(this.resolvedCommands).anyMatch(text::startsWith);
+                return Arrays.stream(this.resolvedCommands)
+                        .anyMatch(expectedCommand -> ChatBotCommandParser.matches(command, expectedCommand));
             }
 
             return true;

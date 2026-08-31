@@ -1,5 +1,6 @@
 package com.hit.spring.core.manager;
 
+import com.hit.spring.config.condition.annotation.ConditionalOnAppExecutorEnable;
 import com.hit.spring.core.wrapper.RunnableWrapper;
 import com.hit.spring.core.exception.ExecutorException;
 import lombok.SneakyThrows;
@@ -16,6 +17,7 @@ import java.util.function.Function;
 
 @Slf4j
 @Component
+@ConditionalOnAppExecutorEnable
 public class ExecutorManager extends ExecutorManagerBase {
 
     public enum FailureStrategy {

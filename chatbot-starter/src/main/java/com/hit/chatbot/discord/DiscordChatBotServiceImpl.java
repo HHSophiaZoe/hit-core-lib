@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
@@ -33,6 +34,12 @@ public class DiscordChatBotServiceImpl implements ChatBotService {
                 success -> log.info("Send message success to: {}", chatId),
                 error -> log.error("Send message to {} failed: {}", chatId, error.getMessage())
         );
+    }
+
+    @Async
+    @Override
+    public void sendMessageAsync(String chatId, String content) {
+        this.sendMessage(chatId, content);
     }
 
     @Override

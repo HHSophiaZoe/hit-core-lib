@@ -11,26 +11,27 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Primary;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
+import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
+import org.telegram.telegrambots.longpolling.util.DefaultLongPollingUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 @Slf4j
 @Primary
 @Service
 @RequiredArgsConstructor
 @ConditionalOnTelegramEnable
-public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implements ChatBotService {
+public class TelegramChatBotServiceImpl extends DefaultLongPollingUpdateConsumer implements ChatBotService, SpringLongPollingBot {
 
     private final TelegramProperties telegramProperties;
 
     private final ChatBotMessageDispatcher dispatcher;
 
-    @Override
-    public String getBotUsername() {
-        return telegramProperties.getUsername();
-    }
+    private final TelegramClient telegramClient;
 
     @Override
     public String getBotToken() {
@@ -38,7 +39,12 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
     }
 
     @Override
-    public void onUpdateReceived(Update update) {
+    public LongPollingUpdateConsumer getUpdatesConsumer() {
+        return this;
+    }
+
+    @Override
+    public void consume(Update update) {
         dispatcher.dispatchTelegramUpdate(update);
     }
 
@@ -46,26 +52,34 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
     public void sendMessage(String chatId, String content) {
         try {
             log.trace("Sending message to Telegram chatId: {}, message: {}", chatId, content);
-            SendMessage sendMessage = new SendMessage();
             Pair<String, Integer> chatIdAndSubChatId = this.getChatIdAndSubChatId(chatId);
-            sendMessage.setChatId(chatIdAndSubChatId.getLeft());
-            sendMessage.setMessageThreadId(chatIdAndSubChatId.getRight());
-            sendMessage.setText(content);
-            execute(sendMessage);
+            SendMessage sendMessage = SendMessage.builder()
+                    .chatId(chatIdAndSubChatId.getLeft())
+                    .messageThreadId(chatIdAndSubChatId.getRight())
+                    .text(content)
+                    .build();
+            telegramClient.execute(sendMessage);
         } catch (Exception e) {
             log.error("Failed to send message to Telegram chatId: {}", chatId, e);
         }
+    }
+
+    @Async
+    @Override
+    public void sendMessageAsync(String chatId, String content) {
+        this.sendMessage(chatId, content);
     }
 
     @Override
     public void sendMessage(MessageRequest request) {
         try {
             log.trace("Sending message to Telegram: {}", request);
-            SendMessage sendMessage = new SendMessage();
             Pair<String, Integer> chatIdAndSubChatId = this.getChatIdAndSubChatId(request.getChatId());
-            sendMessage.setChatId(chatIdAndSubChatId.getLeft());
-            sendMessage.setMessageThreadId(chatIdAndSubChatId.getRight());
-            sendMessage.setText(this.formatContent(request));
+            SendMessage sendMessage = SendMessage.builder()
+                    .chatId(chatIdAndSubChatId.getLeft())
+                    .messageThreadId(chatIdAndSubChatId.getRight())
+                    .text(this.formatContent(request))
+                    .build();
 
             if (request instanceof TelegramMessageRequest telegramRequest) {
                 this.applyParseMode(sendMessage, telegramRequest.getParseMode());
@@ -73,7 +87,7 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
                 sendMessage.setProtectContent(telegramRequest.isProtectContent());
             }
 
-            execute(sendMessage);
+            telegramClient.execute(sendMessage);
         } catch (Exception e) {
             log.error("Failed to send message to Telegram", e);
         }
@@ -142,28 +156,32 @@ public class TelegramChatBotServiceImpl extends TelegramLongPollingBot implement
     private String renderTitle(String title, TitleStyle style, TelegramMessageRequest.ParseMode parseMode) {
         return switch (style) {
 
-            case BOLD_DIVIDER -> switch (parseMode) {
-                case HTML -> """
-                        <b>%s</b>
-                        ───────────────
-                        """.formatted(title);
-
-                case MARKDOWN, MARKDOWN_V2 -> """
-                        *%s*
-                        ───────────────
-                        """.formatted(title);
-
-                default -> """
+            case BOLD_DIVIDER -> {
+                if (parseMode == null) {
+                    yield """
                         %s
                         ───────────────
                         """.formatted(title);
-            };
+                }
+                yield switch (parseMode) {
+                    case HTML -> """
+                            <b>%s</b>
+                            ───────────────
+                            """.formatted(title);
 
-            case EMOJI -> switch (parseMode) {
-                case HTML -> "<b>🚀 %s</b>".formatted(title);
-                case MARKDOWN, MARKDOWN_V2 -> "*🚀 %s*".formatted(title);
-                default -> "🚀 " + title;
-            };
+                    case MARKDOWN, MARKDOWN_V2 -> """
+                            *%s*
+                            ───────────────
+                            """.formatted(title);
+                };
+            }
+
+            case EMOJI -> parseMode == null
+                    ? "🚀 " + title
+                    : switch (parseMode) {
+                        case HTML -> "<b>🚀 %s</b>".formatted(title);
+                        case MARKDOWN, MARKDOWN_V2 -> "*🚀 %s*".formatted(title);
+                    };
 
             case BOX -> """
                     ╔══════════════════════╗
