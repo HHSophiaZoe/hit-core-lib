@@ -232,6 +232,16 @@ public class TimeUtils {
         return LocalTime.ofInstant(Instant.ofEpochSecond(epochSecond), zoneId);
     }
 
+    public static Instant toInstant(LocalDate date, ZoneId zoneId) {
+        if (date == null) return null;
+        return date.atStartOfDay(zoneId).toInstant();
+    }
+
+    public static Instant toInstant(LocalDateTime datetime, ZoneId zoneId) {
+        if (datetime == null) return null;
+        return datetime.atZone(zoneId).toInstant();
+    }
+
     public static Long toEpochSecond(LocalDateTime datetime, ZoneId zoneId) {
         if (datetime == null) return null;
         return datetime.atZone(zoneId).toEpochSecond();
