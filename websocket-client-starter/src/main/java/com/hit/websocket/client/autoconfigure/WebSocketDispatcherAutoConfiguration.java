@@ -1,0 +1,46 @@
+package com.hit.websocket.client.autoconfigure;
+
+import com.hit.websocket.client.autoconfigure.condition.ConditionalOnWebSocketObservabilityEnabled;
+import com.hit.websocket.client.autoconfigure.properties.WebSocketClientDispatcherProperties;
+import com.hit.websocket.client.dispatch.MessageDispatcherFactory;
+import com.hit.websocket.client.dispatch.MessageDispatcherObserver;
+import com.hit.websocket.client.dispatch.MessageDispatcherRegistry;
+import com.hit.websocket.client.dispatch.micrometer.MicrometerMessageDispatcherObserver;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+
+import java.util.List;
+
+@AutoConfiguration
+@EnableConfigurationProperties(WebSocketClientDispatcherProperties.class)
+public class WebSocketDispatcherAutoConfiguration {
+
+    @Bean
+    @ConditionalOnWebSocketObservabilityEnabled
+    @ConditionalOnClass(MeterRegistry.class)
+    @ConditionalOnBean(MeterRegistry.class)
+    @ConditionalOnMissingBean(MicrometerMessageDispatcherObserver.class)
+    MicrometerMessageDispatcherObserver webSocketMicrometerMessageDispatcherObserver(MeterRegistry meterRegistry) {
+        return new MicrometerMessageDispatcherObserver(meterRegistry);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    MessageDispatcherFactory messageDispatcherFactory(List<MessageDispatcherObserver> observers) {
+        return new MessageDispatcherFactory(observers);
+    }
+
+    @Bean(destroyMethod = "close")
+    @ConditionalOnMissingBean
+    MessageDispatcherRegistry messageDispatcherRegistry(
+            MessageDispatcherFactory dispatcherFactory,
+            WebSocketClientDispatcherProperties properties
+    ) {
+        return new MessageDispatcherRegistry(dispatcherFactory, properties);
+    }
+}

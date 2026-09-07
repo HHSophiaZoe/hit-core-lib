@@ -16,13 +16,15 @@ REST API, JPA, cache, Kafka, storage, chatbot, websocket và test utilities.
 - `kafka-starter`
 - `storage-starter`
 - `chatbot-starter`
-- `websocket-starter`
+- `websocket-client-starter`
 - `test-core-lib`
 
 ## Build
 
+Từ repository gốc:
+
 ```bash
-mvn clean install
+./mvnw -f hit-core-lib/pom.xml clean install
 ```
 
 ## Tài liệu

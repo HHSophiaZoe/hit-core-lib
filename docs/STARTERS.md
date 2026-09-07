@@ -256,13 +256,12 @@ Tất cả versions được quản lý trong parent POM:
 ## Build Commands
 
 ```bash
-# Build all
-mvn clean install
+# Build all starters from repository root
+./mvnw -f hit-core-lib/pom.xml clean install
 
 # Build specific starter
-cd hit-core-lib/spring-starter
-mvn clean install
+./mvnw -f hit-core-lib/spring-starter/pom.xml clean install
 
 # Build service using starters
-mvn clean package -pl hit-trading-stock-service -am
+./mvnw clean package -pl hit-trading-stock-service -am
 ```

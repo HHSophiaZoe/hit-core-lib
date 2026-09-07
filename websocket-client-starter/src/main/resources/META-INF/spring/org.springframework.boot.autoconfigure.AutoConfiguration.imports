@@ -1,0 +1,4 @@
+com.hit.websocket.client.autoconfigure.WebSocketTransportAutoConfiguration
+com.hit.websocket.client.autoconfigure.WebSocketObservabilityAutoConfiguration
+com.hit.websocket.client.autoconfigure.WebSocketDispatcherAutoConfiguration
+com.hit.websocket.client.autoconfigure.WebSocketConnectionAutoConfiguration
