@@ -6,6 +6,16 @@ import java.util.Objects;
 /** Transport-neutral WebSocket frame. */
 public sealed interface WebSocketFrame {
 
+    /** Payload size without cloning binary/control frame storage for metrics. */
+    default int payloadSize() {
+        return switch (this) {
+            case Text text -> text.bytes().length;
+            case Binary binary -> binary.payload.length;
+            case Ping ping -> ping.payload.length;
+            case Pong pong -> pong.payload.length;
+        };
+    }
+
     record Text(String payload) implements WebSocketFrame {
         public Text {
             Objects.requireNonNull(payload, "payload cannot be null");

@@ -29,6 +29,7 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
     private final ConcurrentMap<ConnectionId, AtomicLong> lastMessageEpochSeconds = new ConcurrentHashMap<>();
     private final ConcurrentMap<ConnectionId, StateTiming> stateTimings = new ConcurrentHashMap<>();
     private final ConcurrentMap<ConnectionId, AttemptTiming> attemptTimings = new ConcurrentHashMap<>();
+    private final ConcurrentMap<ConnectionId, ConnectionEvent> latestEvents = new ConcurrentHashMap<>();
 
     public MicrometerConnectionObserver(MeterRegistry meterRegistry) {
         this(meterRegistry, Clock.systemDefaultZone());
@@ -40,7 +41,11 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
     }
 
     @Override
-    public void onEvent(ConnectionEvent event) {
+    public synchronized void onEvent(ConnectionEvent event) {
+        ConnectionEvent previous = latestEvents.get(event.connectionId());
+        if (previous != null && (event.generation() < previous.generation()
+                || event.generation() == previous.generation() && event.sequence() <= previous.sequence())) return;
+        latestEvents.put(event.connectionId(), event);
         stateGauge(event.connectionId()).set(metricValue(event.state()));
         recordStateDuration(event);
         recordLifecycleMetrics(event);
@@ -67,7 +72,8 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
     }
 
     @Override
-    public void onMessageReceived(ConnectionId connectionId, long generation, int payloadBytes) {
+    public synchronized void onMessageReceived(ConnectionId connectionId, long generation, int payloadBytes) {
+        if (!isCurrentGeneration(connectionId, generation)) return;
         lastMessageGauge(connectionId).set(clock.instant().getEpochSecond());
         meterRegistry.counter("websocket.client.messages.received",
                 "provider", connectionId.provider(),
@@ -78,7 +84,8 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
     }
 
     @Override
-    public void onMessageSent(ConnectionId connectionId, long generation, int payloadBytes) {
+    public synchronized void onMessageSent(ConnectionId connectionId, long generation, int payloadBytes) {
+        if (!isCurrentGeneration(connectionId, generation)) return;
         meterRegistry.counter("websocket.client.messages.sent",
                 "provider", connectionId.provider(),
                 "connection", connectionId.name()).increment();
@@ -99,6 +106,11 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
         });
     }
 
+    private boolean isCurrentGeneration(ConnectionId connectionId, long generation) {
+        ConnectionEvent event = latestEvents.get(connectionId);
+        return event != null && event.generation() == generation;
+    }
+
     private AtomicLong lastMessageGauge(ConnectionId connectionId) {
         return lastMessageEpochSeconds.computeIfAbsent(connectionId, id -> {
             AtomicLong value = new AtomicLong();
@@ -113,6 +125,7 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
 
     private void recordStateDuration(ConnectionEvent event) {
         stateTimings.compute(event.connectionId(), (id, previous) -> {
+            if (previous != null && previous.state() == event.state()) return previous;
             if (previous != null && event.occurredAt().isAfter(previous.enteredAt())) {
                 Timer.builder("websocket.client.state.duration")
                         .description("Time spent in a WebSocket lifecycle state")

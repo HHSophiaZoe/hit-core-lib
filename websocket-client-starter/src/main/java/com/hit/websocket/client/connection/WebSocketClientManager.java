@@ -116,8 +116,12 @@ final class WebSocketClientManager implements ManagedWebSocketClient {
     @Override
     public CompletionStage<Void> send(WebSocketFrame frame) {
         Objects.requireNonNull(frame, "frame cannot be null");
-        WebSocketTransport current = transport;
-        long currentGeneration = generation.get();
+        WebSocketTransport current;
+        long currentGeneration;
+        synchronized (monitor) {
+            current = transport;
+            currentGeneration = generation.get();
+        }
         if (current == null || !current.isOpen()) {
             return CompletableFuture.failedFuture(new IllegalStateException("WebSocket is not connected"));
         }
@@ -129,7 +133,7 @@ final class WebSocketClientManager implements ManagedWebSocketClient {
         }
         result.whenComplete((ignored, error) -> {
             if (error == null) {
-                notifyMessageSent(currentGeneration, payloadSize(frame));
+                if (!observers.isEmpty()) notifyMessageSent(currentGeneration, frame.payloadSize());
             } else {
                 terminate(currentGeneration, transportFailure(error), null);
             }
@@ -222,6 +226,12 @@ final class WebSocketClientManager implements ManagedWebSocketClient {
     }
 
     private void open(Attempt attempt) {
+        synchronized (monitor) {
+            if (!desiredRunning || !isCurrentLocked(attempt.generation(), attempt.transport())) {
+                safeDisconnect(attempt.transport(), CloseReason.normal());
+                return;
+            }
+        }
         WebSocketTransportListener transportListener = new WebSocketTransportListener() {
             @Override
             public void onFrame(WebSocketFrame frame) {
@@ -260,6 +270,9 @@ final class WebSocketClientManager implements ManagedWebSocketClient {
                 safeDisconnect(attempt.transport(), CloseReason.normal());
                 return;
             }
+            // An eager transport may deliver welcome/auth before connect() returns its stage.
+            // Do not move an already advanced protocol back to TRANSPORT_CONNECTED.
+            if (state != ConnectionState.CONNECTING) return;
             state = ConnectionState.TRANSPORT_CONNECTED;
             event = eventLocked(ConnectionEventType.TRANSPORT_CONNECTED);
             startLifecycleStageTimeoutLocked(attempt.generation(), ConnectionState.TRANSPORT_CONNECTED);
@@ -279,6 +292,7 @@ final class WebSocketClientManager implements ManagedWebSocketClient {
                 return;
             }
         }
+        if (!observers.isEmpty()) notifyMessageReceived(eventGeneration, frame.payloadSize());
         if (frame instanceof WebSocketFrame.Pong) {
             markPongReceived();
             return;
@@ -287,7 +301,6 @@ final class WebSocketClientManager implements ManagedWebSocketClient {
             send(new WebSocketFrame.Pong(ping.payload()));
             return;
         }
-        notifyMessageReceived(eventGeneration, payloadSize(frame));
         try {
             listener.onMessage(frame);
         } catch (RuntimeException error) {
@@ -335,7 +348,9 @@ final class WebSocketClientManager implements ManagedWebSocketClient {
         Duration delay = Duration.ZERO;
         boolean scheduled = false;
         synchronized (monitor) {
-            if (!desiredRunning || terminatedGeneration != generation.get()) {
+            // A listener may already have disconnected and started another generation.
+            if (terminatedGeneration != generation.get()) return;
+            if (!desiredRunning) {
                 state = ConnectionState.STOPPED;
                 event = eventLocked(ConnectionEventType.STOPPED);
             } else if (!retryable) {
@@ -405,15 +420,13 @@ final class WebSocketClientManager implements ManagedWebSocketClient {
                 return;
             } else {
                 supplier = heartbeatFrameSupplier;
+                if (supplier == null) return;
                 awaitingPong = true;
                 lastPingNanos = System.nanoTime();
                 pongTimeoutFuture = scheduler.schedule(
                         () -> heartbeatTimedOut(heartbeatGeneration),
                         options.pongTimeout().toMillis(), TimeUnit.MILLISECONDS);
             }
-        }
-        if (supplier == null) {
-            return;
         }
         try {
             send(supplier.get());
@@ -607,15 +620,6 @@ final class WebSocketClientManager implements ManagedWebSocketClient {
     ) {
         return new ConnectionEventDetails.Failure(
                 failure.category(), failure.code(), failure.message(), failure.retryable(), terminal);
-    }
-
-    private static int payloadSize(WebSocketFrame frame) {
-        return switch (frame) {
-            case WebSocketFrame.Text text -> text.bytes().length;
-            case WebSocketFrame.Binary binary -> binary.payload().length;
-            case WebSocketFrame.Ping ping -> ping.payload().length;
-            case WebSocketFrame.Pong pong -> pong.payload().length;
-        };
     }
 
     private static String safeMessage(Throwable error) {

@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 
 import java.util.List;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,11 +26,14 @@ public class WebSocketConnectionAutoConfiguration {
             throw new IllegalArgumentException("websocket-client.scheduler.pool-size must be positive");
         }
         AtomicInteger threadNumber = new AtomicInteger();
-        return Executors.newScheduledThreadPool(properties.getPoolSize(), runnable -> {
+        ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(properties.getPoolSize(), runnable -> {
             Thread thread = new Thread(runnable, "websocket-client-scheduler-" + threadNumber.incrementAndGet());
             thread.setDaemon(true);
             return thread;
         });
+        executor.setRemoveOnCancelPolicy(true);
+        executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+        return executor;
     }
 
     @Bean

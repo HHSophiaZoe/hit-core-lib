@@ -16,6 +16,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PartitionedMessageDispatcherTest {
 
     @Test
+    void closeReleasesBlockedProducerAndRejectsFurtherDispatch() throws Exception {
+        MessageDispatcherOptions options = new MessageDispatcherOptions("test-close", 1, 1, DispatchOverflowPolicy.BLOCK);
+        MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of()).create(options);
+        CountDownLatch workerStarted = new CountDownLatch(1);
+        CountDownLatch holdWorker = new CountDownLatch(1);
+        java.util.concurrent.ExecutorService producer = java.util.concurrent.Executors.newSingleThreadExecutor();
+        try {
+            dispatcher.dispatch("FPT", () -> {
+                workerStarted.countDown();
+                await(holdWorker);
+            });
+            assertThat(workerStarted.await(2, TimeUnit.SECONDS)).isTrue();
+            dispatcher.dispatch("FPT", () -> { });
+            CountDownLatch producerStarted = new CountDownLatch(1);
+            java.util.concurrent.Future<?> blocked = producer.submit(() -> {
+                producerStarted.countDown();
+                dispatcher.dispatch("FPT", () -> { });
+            });
+            assertThat(producerStarted.await(2, TimeUnit.SECONDS)).isTrue();
+            dispatcher.close();
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> blocked.get(2, TimeUnit.SECONDS))
+                    .isInstanceOf(java.util.concurrent.ExecutionException.class);
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> dispatcher.dispatch("FPT", () -> { }))
+                    .isInstanceOf(IllegalStateException.class);
+        } finally {
+            holdWorker.countDown();
+            dispatcher.close();
+            producer.shutdownNow();
+        }
+    }
+
+    @Test
     void preservesOrderForTheSameOrderingKey() throws InterruptedException {
         MessageDispatcherOptions options = new MessageDispatcherOptions(
                 "test", 2, 10, DispatchOverflowPolicy.DROP_OLDEST);

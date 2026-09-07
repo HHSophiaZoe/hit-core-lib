@@ -13,10 +13,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import java.time.Clock;
 
-@AutoConfiguration
+@AutoConfiguration(afterName = "org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration")
 @EnableConfigurationProperties(WebSocketClientObservabilityProperties.class)
 public class WebSocketObservabilityAutoConfiguration {
 
@@ -36,15 +37,18 @@ public class WebSocketObservabilityAutoConfiguration {
         return Clock.system(properties.getStatisticsZone());
     }
 
-    @Bean
-    @ConditionalOnWebSocketObservabilityEnabled
+    @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass(MeterRegistry.class)
     @ConditionalOnBean(MeterRegistry.class)
-    @ConditionalOnMissingBean(MicrometerConnectionObserver.class)
-    MicrometerConnectionObserver webSocketMicrometerConnectionObserver(
-            MeterRegistry meterRegistry,
-            @Qualifier("webSocketObservabilityClock") Clock clock
-    ) {
-        return new MicrometerConnectionObserver(meterRegistry, clock);
+    @ConditionalOnWebSocketObservabilityEnabled
+    static class MicrometerConfiguration {
+        @Bean
+        @ConditionalOnMissingBean(MicrometerConnectionObserver.class)
+        MicrometerConnectionObserver webSocketMicrometerConnectionObserver(
+                MeterRegistry meterRegistry,
+                @Qualifier("webSocketObservabilityClock") Clock clock
+        ) {
+            return new MicrometerConnectionObserver(meterRegistry, clock);
+        }
     }
 }

@@ -168,8 +168,10 @@ public final class InMemoryConnectionStateRegistry
                 readyAt = null;
             }
             lastSequence = event.sequence();
-            state = event.state();
-            stateChangedAt = event.occurredAt();
+            if (state != event.state()) {
+                state = event.state();
+                stateChangedAt = event.occurredAt();
+            }
             dailyCounters.resetIfNeeded(dateOf(event.occurredAt()));
 
             if (event.type() == ConnectionEventType.CONNECT_REQUESTED) {

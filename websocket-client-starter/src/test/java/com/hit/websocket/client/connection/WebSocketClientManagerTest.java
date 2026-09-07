@@ -27,6 +27,30 @@ class WebSocketClientManagerTest {
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
+    @Test
+    void oldTerminationCannotStopConnectionStartedByErrorCallback() {
+        FakeTransportFactory transports = new FakeTransportFactory();
+        java.util.concurrent.atomic.AtomicReference<ManagedWebSocketClient> reference = new java.util.concurrent.atomic.AtomicReference<>();
+        WebSocketClientListener listener = new WebSocketClientListener() {
+            @Override
+            public void onMessage(WebSocketFrame frame) {
+            }
+
+            @Override
+            public void onError(TransportFailure failure) {
+                reference.get().disconnect();
+                reference.get().connect();
+            }
+        };
+        ManagedWebSocketClient client = new WebSocketClientManagerFactory(transports, scheduler, List.of()).create(options(), listener);
+        reference.set(client);
+        client.connect();
+        client.fail(TransportFailure.unknown(new IllegalStateException("broken transport")));
+        assertThat(transports.created.get()).isEqualTo(2);
+        assertThat(client.state()).isEqualTo(ConnectionState.TRANSPORT_CONNECTED);
+        client.disconnect();
+    }
+
     @AfterEach
     void tearDown() {
         scheduler.shutdownNow();

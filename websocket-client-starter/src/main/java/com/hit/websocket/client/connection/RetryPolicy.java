@@ -19,7 +19,7 @@ public record RetryPolicy(
         if (maxDelay == null || maxDelay.compareTo(initialDelay) < 0) {
             throw new IllegalArgumentException("maxDelay must be >= initialDelay");
         }
-        if (jitter < 0 || jitter > 1) {
+        if (!Double.isFinite(jitter) || jitter < 0 || jitter > 1) {
             throw new IllegalArgumentException("jitter must be between 0 and 1");
         }
     }

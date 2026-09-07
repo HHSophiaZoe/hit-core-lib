@@ -13,20 +13,24 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
-@AutoConfiguration
+@AutoConfiguration(afterName = "org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration")
 @EnableConfigurationProperties(WebSocketClientDispatcherProperties.class)
 public class WebSocketDispatcherAutoConfiguration {
 
-    @Bean
-    @ConditionalOnWebSocketObservabilityEnabled
+    @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass(MeterRegistry.class)
     @ConditionalOnBean(MeterRegistry.class)
-    @ConditionalOnMissingBean(MicrometerMessageDispatcherObserver.class)
-    MicrometerMessageDispatcherObserver webSocketMicrometerMessageDispatcherObserver(MeterRegistry meterRegistry) {
-        return new MicrometerMessageDispatcherObserver(meterRegistry);
+    @ConditionalOnWebSocketObservabilityEnabled
+    static class MicrometerConfiguration {
+        @Bean
+        @ConditionalOnMissingBean(MicrometerMessageDispatcherObserver.class)
+        MicrometerMessageDispatcherObserver webSocketMicrometerMessageDispatcherObserver(MeterRegistry meterRegistry) {
+            return new MicrometerMessageDispatcherObserver(meterRegistry);
+        }
     }
 
     @Bean

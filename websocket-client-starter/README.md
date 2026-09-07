@@ -27,8 +27,8 @@ observability không phụ thuộc Reactor Netty; Reactor Netty chỉ là transp
 
 ## Thành phần
 
-- `api`: transport-neutral frames, request, failure và transport port.
-- `lifecycle`: connection state, reconnect, heartbeat và send serialization contract.
+- `transport`: transport-neutral frames, request, failure và transport port.
+- `connection`: connection state, reconnect, heartbeat và send serialization contract.
 - `observability`: snapshot registry, lifecycle events và Micrometer adapter.
 - `dispatch`: bounded partitioned dispatcher, ordering theo key và overflow policy.
 - `transport.reactor`: Reactor Netty transport mặc định.
@@ -181,3 +181,20 @@ Các provider adapter, metric, snapshot API và dashboard không cần thay đ�
 Scheduler retry/heartbeat chỉ chạy task ngắn và mặc định dùng 2 platform thread. Có thể đổi bằng
 `websocket-client.scheduler.pool-size` hoặc khai báo bean `webSocketClientScheduler`; bật virtual
 thread cho application không tự thay thế scheduler bean này.
+
+## Lifecycle và giới hạn sử dụng
+
+- Mỗi transport dùng cho một lần kết nối; manager tạo transport mới khi retry. Application phải đóng
+  các managed client lúc shutdown. Callback và observer phải nhanh, không block I/O thread.
+- `send()` thành công nghĩa là frame được nhận vào outbound queue; không chứng minh server đã nhận
+  hoặc đã xử lý. Provider adapter phải quản lý ACK nghiệp vụ riêng.
+- Reactor adapter copy inbound payload ngay trên receive thread. Pooled buffer vẫn thuộc Reactor;
+  không gọi `DataBufferUtils.release()` khi chưa tự retain buffer.
+- `close()` của dispatcher từ chối task mới, đánh thức producer đang BLOCK, hủy task đang chờ và
+  interrupt worker. Handler phải tuân thủ interruption; thư viện không thể cưỡng chế dừng handler.
+- Ordering chỉ được đảm bảo trong cùng dispatcher/key, theo thứ tự enqueue. Hai dispatcher khác nhau
+  không có ordering chung. `BLOCK` từ chính worker khi queue đầy bị từ chối để tránh deadlock.
+- Normal server close 1000/1001 hiện kết thúc lifecycle. Provider có session hết hạn cần xử lý thông
+  báo expiration bằng `fail()` retryable hoặc chủ động connect lại theo lịch nghiệp vụ.
+- Daily snapshot và recent events nằm trong RAM, không tổng hợp giữa replica. Tên connection,
+  dispatcher và category phải có tập giá trị hữu hạn để tránh tăng cardinality và số worker.

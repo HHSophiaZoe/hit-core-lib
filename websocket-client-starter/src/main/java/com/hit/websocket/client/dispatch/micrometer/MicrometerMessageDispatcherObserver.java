@@ -20,6 +20,7 @@ public class MicrometerMessageDispatcherObserver implements MessageDispatcherObs
     @Override
     public void queueRegistered(String dispatcher, int partition, IntSupplier queueSize) {
         Gauge.builder("websocket.client.dispatch.queue.size", queueSize, IntSupplier::getAsInt)
+                .strongReference(true)
                 .tag("dispatcher", dispatcher)
                 .tag("partition", String.valueOf(partition))
                 .register(meterRegistry);

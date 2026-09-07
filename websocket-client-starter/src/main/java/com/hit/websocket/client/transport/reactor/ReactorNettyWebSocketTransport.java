@@ -11,7 +11,6 @@ import com.hit.websocket.client.transport.WebSocketTransport;
 import com.hit.websocket.client.transport.WebSocketTransportListener;
 import io.netty.channel.ChannelOption;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.socket.CloseStatus;
 import org.springframework.web.reactive.socket.WebSocketHandler;
@@ -53,6 +52,7 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
     private volatile WebSocketTransportListener listener;
     private volatile Disposable connectionSubscription;
     private volatile CompletableFuture<Void> connectFuture;
+    private volatile CloseStatus closeStatus = CloseStatus.NO_STATUS_CODE;
 
     ReactorNettyWebSocketTransport(HttpClient baseHttpClient, ConnectionId connectionId) {
         this.baseHttpClient = Objects.requireNonNull(baseHttpClient);
@@ -89,22 +89,31 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
             @Override
             public Mono<Void> handle(WebSocketSession openedSession) {
                 session.set(openedSession);
+                if (clientClosing.get()) return openedSession.close();
                 opened.set(true);
                 connectFuture.complete(null);
 
                 Mono<Void> receive = openedSession.receive()
-                        .doOnNext(message -> dispatch(openedSession, message))
+                        .doOnNext(ReactorNettyWebSocketTransport.this::dispatch)
+                        .doOnComplete(ReactorNettyWebSocketTransport.this::completeOutbound)
                         .then();
                 Mono<Void> send = openedSession.send(
                         outbound.asFlux().map(frame -> toSpringFrame(openedSession, frame)));
-                return Mono.when(receive, send);
+                return Mono.when(receive, send)
+                        .then(openedSession.closeStatus())
+                        .doOnNext(status -> closeStatus = status)
+                        .then();
             }
         };
 
         connectionSubscription = client.execute(request.uri(), headers, handler)
                 .subscribe(ignored -> { }, this::onTerminalError, this::onTerminalComplete);
-        return connectFuture.orTimeout(
-                request.connectTimeout().toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS);
+        if (clientClosing.get()) connectionSubscription.dispose();
+        connectFuture.orTimeout(request.connectTimeout().toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS)
+                .whenComplete((ignored, error) -> {
+                    if (error != null) disconnect(CloseReason.normal());
+                });
+        return connectFuture;
     }
 
     @Override
@@ -113,7 +122,10 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
         if (!isOpen()) {
             return CompletableFuture.failedFuture(new IllegalStateException("WebSocket transport " + connectionId.value() + " is not open"));
         }
-        Sinks.EmitResult result = outbound.tryEmitNext(frame);
+        Sinks.EmitResult result;
+        synchronized (outbound) {
+            result = outbound.tryEmitNext(frame);
+        }
         if (result.isSuccess()) {
             return CompletableFuture.completedFuture(null);
         }
@@ -123,7 +135,7 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
     @Override
     public CompletionStage<Void> disconnect(CloseReason reason) {
         clientClosing.set(true);
-        outbound.tryEmitComplete();
+        completeOutbound();
         WebSocketSession current = session.getAndSet(null);
         if (current != null && current.isOpen()) {
             return current.close(CloseStatus.create(reason.code(), reason.reason())).toFuture();
@@ -145,7 +157,14 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
         return opened.get() && !terminated.get() && current != null && current.isOpen();
     }
 
-    private void dispatch(WebSocketSession currentSession, WebSocketMessage message) {
+    private void completeOutbound() {
+        synchronized (outbound) {
+            outbound.tryEmitComplete();
+        }
+    }
+
+    private void dispatch(WebSocketMessage message) {
+        // Copy synchronously: Reactor owns and releases the pooled inbound buffer.
         DataBuffer payload = message.getPayload();
         try {
             WebSocketFrame frame = switch (message.getType()) {
@@ -156,8 +175,8 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
             };
             listener.onFrame(frame);
         } catch (RuntimeException error) {
-            listener.onFailure(new TransportFailure(FailureCategory.PROTOCOL, "FRAME_PROCESSING_FAILED", safeMessage(error), true));
-            currentSession.close(CloseStatus.PROTOCOL_ERROR).subscribe();
+            throw new TransportFailureException(new TransportFailure(
+                    FailureCategory.PROTOCOL, "FRAME_PROCESSING_FAILED", safeMessage(error), true), error);
         }
     }
 
@@ -188,7 +207,7 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
         if (!terminated.compareAndSet(false, true)) {
             return;
         }
-        WebSocketSession closedSession = session.getAndSet(null);
+        session.set(null);
         if (!opened.get()) {
             CompletableFuture<Void> pendingConnect = connectFuture;
             if (pendingConnect != null) {
@@ -197,14 +216,7 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
             }
             return;
         }
-        if (closedSession == null) {
-            listener.onClosed(new CloseReason(1000, "Connection closed", clientClosing.get()));
-            return;
-        }
-        closedSession.closeStatus()
-                .defaultIfEmpty(CloseStatus.NO_STATUS_CODE)
-                .subscribe(status -> listener.onClosed(new CloseReason(
-                        status.getCode(), status.getReason(), clientClosing.get())));
+        listener.onClosed(new CloseReason(closeStatus.getCode(), closeStatus.getReason(), clientClosing.get()));
     }
 
     private static byte[] copy(DataBuffer dataBuffer) {
@@ -214,6 +226,7 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
     }
 
     private static TransportFailure classify(Throwable error) {
+        if (error instanceof TransportFailureException failure) return failure.failure();
         Throwable cause = unwrap(error);
         FailureCategory category;
         if (cause instanceof UnknownHostException) {

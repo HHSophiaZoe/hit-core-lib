@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -17,6 +18,7 @@ final class PartitionedMessageDispatcher implements MessageDispatcher {
 
     private final MessageDispatcherOptions options;
     private final List<MessageDispatcherObserver> observers;
+    private final Object lifecycleMonitor = new Object();
     private final AtomicBoolean running = new AtomicBoolean(true);
     private final List<BlockingQueue<DispatchTask>> queues = new ArrayList<>();
     private final List<Thread> workers = new ArrayList<>();
@@ -29,22 +31,29 @@ final class PartitionedMessageDispatcher implements MessageDispatcher {
 
     @Override
     public void dispatch(String metricCategory, String orderingKey, Runnable handler) {
-        if (!running.get()) throw new IllegalStateException("Message dispatcher is closed");
+        Objects.requireNonNull(handler, "handler cannot be null");
         if (orderingKey == null || orderingKey.isBlank()) throw new IllegalArgumentException("orderingKey cannot be blank");
         String category = metricCategory == null || metricCategory.isBlank() ? UNSPECIFIED_CATEGORY : metricCategory;
         int partition = Math.floorMod(orderingKey.hashCode(), queues.size());
         DispatchTask task = new DispatchTask(new DispatchContext(options.name(), category, partition), handler);
         BlockingQueue<DispatchTask> queue = queues.get(partition);
-        if (queue.offer(task)) return;
-        handleOverflow(queue, task);
+        synchronized (lifecycleMonitor) {
+            if (!running.get()) throw new IllegalStateException("Message dispatcher is closed");
+            if (queue.offer(task)) return;
+            handleOverflow(queue, task);
+        }
     }
 
     @Override
     public void close() {
-        if (!running.compareAndSet(true, false)) return;
-        workers.forEach(Thread::interrupt);
-        workers.clear();
-        queues.clear();
+        List<DispatchTask> discarded = new ArrayList<>();
+        synchronized (lifecycleMonitor) {
+            if (!running.compareAndSet(true, false)) return;
+            workers.forEach(Thread::interrupt);
+            queues.forEach(queue -> queue.drainTo(discarded));
+            lifecycleMonitor.notifyAll();
+        }
+        discarded.forEach(this::dropped);
     }
 
     private void start() {
@@ -64,6 +73,13 @@ final class PartitionedMessageDispatcher implements MessageDispatcher {
         while (running.get() && !Thread.currentThread().isInterrupted()) {
             try {
                 DispatchTask task = queue.take();
+                synchronized (lifecycleMonitor) {
+                    lifecycleMonitor.notifyAll();
+                }
+                if (!running.get()) {
+                    dropped(task);
+                    return;
+                }
                 execute(task);
             } catch (InterruptedException error) {
                 Thread.currentThread().interrupt();
@@ -98,8 +114,15 @@ final class PartitionedMessageDispatcher implements MessageDispatcher {
     }
 
     private void put(BlockingQueue<DispatchTask> queue, DispatchTask task) {
+        if (workers.contains(Thread.currentThread())) {
+            throw new RejectedExecutionException("A dispatcher worker cannot block on its own dispatcher");
+        }
         try {
-            queue.put(task);
+            while (running.get()) {
+                if (queue.offer(task)) return;
+                lifecycleMonitor.wait();
+            }
+            throw new RejectedExecutionException("Message dispatcher closed while waiting for capacity");
         } catch (InterruptedException error) {
             Thread.currentThread().interrupt();
             throw new RejectedExecutionException("Interrupted while waiting for dispatcher capacity", error);
