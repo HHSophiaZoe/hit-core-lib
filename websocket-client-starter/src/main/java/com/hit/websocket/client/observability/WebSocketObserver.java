@@ -3,7 +3,7 @@ package com.hit.websocket.client.observability;
 import com.hit.websocket.client.connection.ConnectionId;
 import com.hit.websocket.client.observability.model.ConnectionEvent;
 
-public interface ConnectionObserver {
+public interface WebSocketObserver {
 
     default void onEvent(ConnectionEvent event) {
     }

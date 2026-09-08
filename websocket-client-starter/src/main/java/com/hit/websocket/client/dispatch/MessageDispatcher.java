@@ -1,6 +1,6 @@
 package com.hit.websocket.client.dispatch;
 
-public interface MessageDispatcher {
+public interface MessageDispatcher extends AutoCloseable {
 
     String UNSPECIFIED_CATEGORY = "unspecified";
 

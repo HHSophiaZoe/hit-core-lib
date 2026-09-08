@@ -6,8 +6,10 @@ import com.hit.websocket.client.connection.ConnectionState;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import lombok.Builder;
 
 /** Lifecycle event safe to expose to monitoring consumers. Attributes must never contain credentials. */
+@Builder
 public record ConnectionEvent(
         ConnectionId connectionId,
         long generation,

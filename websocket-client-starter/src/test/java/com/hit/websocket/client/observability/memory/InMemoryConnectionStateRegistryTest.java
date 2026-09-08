@@ -23,7 +23,7 @@ class InMemoryConnectionStateRegistryTest {
     @Test
     void ignoresEventsAndTrafficFromStaleConnectionGeneration() {
         registry.onEvent(event(1, 1, ConnectionEventType.TRANSPORT_CONNECTED,
-                ConnectionState.TRANSPORT_CONNECTED));
+                ConnectionState.CONNECTED));
         registry.onEvent(event(2, 1, ConnectionEventType.CONNECT_REQUESTED,
                 ConnectionState.CONNECTING));
         registry.onEvent(event(1, 2, ConnectionEventType.TRANSPORT_CLOSED,

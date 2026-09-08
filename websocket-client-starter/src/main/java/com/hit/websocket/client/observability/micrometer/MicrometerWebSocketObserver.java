@@ -2,7 +2,7 @@ package com.hit.websocket.client.observability.micrometer;
 
 import com.hit.websocket.client.connection.ConnectionId;
 import com.hit.websocket.client.connection.ConnectionState;
-import com.hit.websocket.client.observability.ConnectionObserver;
+import com.hit.websocket.client.observability.WebSocketObserver;
 import com.hit.websocket.client.observability.model.ConnectionEvent;
 import com.hit.websocket.client.observability.model.ConnectionEventDetails;
 import com.hit.websocket.client.observability.model.ConnectionEventType;
@@ -15,27 +15,27 @@ import io.micrometer.core.instrument.Timer;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Low-cardinality Micrometer metrics for WebSocket client connections. */
-public final class MicrometerConnectionObserver implements ConnectionObserver {
+public final class MicrometerWebSocketObserver implements WebSocketObserver {
 
     private final MeterRegistry meterRegistry;
     private final Clock clock;
-    private final ConcurrentMap<ConnectionId, AtomicInteger> stateGauges = new ConcurrentHashMap<>();
-    private final ConcurrentMap<ConnectionId, AtomicLong> lastMessageEpochSeconds = new ConcurrentHashMap<>();
-    private final ConcurrentMap<ConnectionId, StateTiming> stateTimings = new ConcurrentHashMap<>();
-    private final ConcurrentMap<ConnectionId, AttemptTiming> attemptTimings = new ConcurrentHashMap<>();
-    private final ConcurrentMap<ConnectionId, ConnectionEvent> latestEvents = new ConcurrentHashMap<>();
+    private final Map<ConnectionId, AtomicInteger> stateGauges = new HashMap<>();
+    private final Map<ConnectionId, AtomicLong> lastMessageEpochSeconds = new HashMap<>();
+    private final Map<ConnectionId, StateTiming> stateTimings = new HashMap<>();
+    private final Map<ConnectionId, AttemptTiming> attemptTimings = new HashMap<>();
+    private final Map<ConnectionId, ConnectionEvent> latestEvents = new HashMap<>();
 
-    public MicrometerConnectionObserver(MeterRegistry meterRegistry) {
+    public MicrometerWebSocketObserver(MeterRegistry meterRegistry) {
         this(meterRegistry, Clock.systemDefaultZone());
     }
 
-    public MicrometerConnectionObserver(MeterRegistry meterRegistry, Clock clock) {
+    public MicrometerWebSocketObserver(MeterRegistry meterRegistry, Clock clock) {
         this.meterRegistry = meterRegistry;
         this.clock = clock;
     }
@@ -57,8 +57,7 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
                 .register(meterRegistry)
                 .increment();
 
-        if (event.type() == ConnectionEventType.ERROR
-                || event.type() == ConnectionEventType.HEARTBEAT_TIMEOUT) {
+        if (event.type() == ConnectionEventType.ERROR) {
             ConnectionEventDetails.Failure failure = event.details() instanceof ConnectionEventDetails.Failure value
                     ? value : null;
             Counter.builder("websocket.client.errors")
@@ -73,7 +72,7 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
 
     @Override
     public synchronized void onMessageReceived(ConnectionId connectionId, long generation, int payloadBytes) {
-        if (!isCurrentGeneration(connectionId, generation)) return;
+        if (isStaleGeneration(connectionId, generation)) return;
         lastMessageGauge(connectionId).set(clock.instant().getEpochSecond());
         meterRegistry.counter("websocket.client.messages.received",
                 "provider", connectionId.provider(),
@@ -85,7 +84,7 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
 
     @Override
     public synchronized void onMessageSent(ConnectionId connectionId, long generation, int payloadBytes) {
-        if (!isCurrentGeneration(connectionId, generation)) return;
+        if (isStaleGeneration(connectionId, generation)) return;
         meterRegistry.counter("websocket.client.messages.sent",
                 "provider", connectionId.provider(),
                 "connection", connectionId.name()).increment();
@@ -106,9 +105,9 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
         });
     }
 
-    private boolean isCurrentGeneration(ConnectionId connectionId, long generation) {
+    private boolean isStaleGeneration(ConnectionId connectionId, long generation) {
         ConnectionEvent event = latestEvents.get(connectionId);
-        return event != null && event.generation() == generation;
+        return event == null || event.generation() != generation;
     }
 
     private AtomicLong lastMessageGauge(ConnectionId connectionId) {
@@ -143,7 +142,6 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
         String metric = switch (event.type()) {
             case CONNECT_REQUESTED -> "websocket.client.connections.attempted";
             case TRANSPORT_CONNECTED -> "websocket.client.connections.transport";
-            case READY -> "websocket.client.connections.ready";
             case DISCONNECT_REQUESTED -> "websocket.client.disconnects";
             case RETRY_SCHEDULED -> "websocket.client.retries";
             case HEARTBEAT_TIMEOUT -> "websocket.client.heartbeat.timeouts";
@@ -167,21 +165,15 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
         }
 
         if (event.type() == ConnectionEventType.CONNECT_REQUESTED) {
-            attemptTimings.put(event.connectionId(), new AttemptTiming(event.generation(), event.occurredAt(), null));
+            attemptTimings.put(event.connectionId(), new AttemptTiming(event.generation(), event.occurredAt()));
         } else if (event.type() == ConnectionEventType.TRANSPORT_CONNECTED) {
-            attemptTimings.computeIfPresent(event.connectionId(), (id, timing) ->
-                    timing.generation() == event.generation()
-                            ? new AttemptTiming(timing.generation(), timing.startedAt(), event.occurredAt()) : timing);
-        } else if (event.type() == ConnectionEventType.READY) {
             AttemptTiming timing = attemptTimings.remove(event.connectionId());
             if (timing != null && timing.generation() == event.generation()) {
-                recordTimer("websocket.client.connection.to.ready", event.connectionId(),
+                recordTimer("websocket.client.connect.duration", event.connectionId(),
                         Duration.between(timing.startedAt(), event.occurredAt()));
-                if (timing.transportConnectedAt() != null) {
-                    recordTimer("websocket.client.transport.to.ready", event.connectionId(),
-                            Duration.between(timing.transportConnectedAt(), event.occurredAt()));
-                }
             }
+        } else if (event.type() == ConnectionEventType.FAILED || event.type() == ConnectionEventType.STOPPED) {
+            attemptTimings.remove(event.connectionId());
         }
     }
 
@@ -197,20 +189,17 @@ public final class MicrometerConnectionObserver implements ConnectionObserver {
     private record StateTiming(ConnectionState state, Instant enteredAt) {
     }
 
-    private record AttemptTiming(long generation, Instant startedAt, Instant transportConnectedAt) {
+    private record AttemptTiming(long generation, Instant startedAt) {
     }
 
     private static int metricValue(ConnectionState state) {
         return switch (state) {
             case STOPPED -> 0;
             case CONNECTING -> 1;
-            case TRANSPORT_CONNECTED -> 2;
-            case AUTHENTICATING -> 3;
-            case RESUBSCRIBING -> 4;
-            case READY -> 5;
-            case RETRY_WAIT -> 6;
-            case DISCONNECTING -> 7;
-            case FAILED -> 8;
+            case CONNECTED -> 2;
+            case RETRY_WAIT -> 3;
+            case DISCONNECTING -> 4;
+            case FAILED -> 5;
         };
     }
 }

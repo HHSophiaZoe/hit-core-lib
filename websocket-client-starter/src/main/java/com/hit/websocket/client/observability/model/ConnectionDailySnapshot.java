@@ -10,7 +10,6 @@ public record ConnectionDailySnapshot(
         LocalDate date,
         long connectAttempts,
         long transportConnections,
-        long readyTransitions,
         long disconnects,
         long connectionLosses,
         long retries,

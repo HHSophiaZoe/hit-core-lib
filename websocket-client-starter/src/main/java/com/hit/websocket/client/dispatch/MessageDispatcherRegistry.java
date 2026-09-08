@@ -1,13 +1,13 @@
 package com.hit.websocket.client.dispatch;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 
 public class MessageDispatcherRegistry {
 
     private final MessageDispatcherFactory dispatcherFactory;
     private final MessageDispatcherOptionsProvider optionsProvider;
-    private final Map<String, MessageDispatcher> dispatchers = new ConcurrentHashMap<>();
+    private final Map<String, MessageDispatcher> dispatchers = new HashMap<>();
     private boolean closed;
 
     public MessageDispatcherRegistry(MessageDispatcherFactory dispatcherFactory, MessageDispatcherOptionsProvider optionsProvider) {

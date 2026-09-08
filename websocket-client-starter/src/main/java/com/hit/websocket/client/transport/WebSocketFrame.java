@@ -41,6 +41,7 @@ public sealed interface WebSocketFrame {
     record Ping(byte[] payload) implements WebSocketFrame {
         public Ping {
             payload = payload == null ? new byte[0] : payload.clone();
+            if (payload.length > 125) throw new IllegalArgumentException("Ping payload exceeds 125 bytes");
         }
 
         @Override
@@ -52,6 +53,7 @@ public sealed interface WebSocketFrame {
     record Pong(byte[] payload) implements WebSocketFrame {
         public Pong {
             payload = payload == null ? new byte[0] : payload.clone();
+            if (payload.length > 125) throw new IllegalArgumentException("Pong payload exceeds 125 bytes");
         }
 
         @Override

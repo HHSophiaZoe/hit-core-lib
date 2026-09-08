@@ -14,7 +14,6 @@ public record ConnectionSnapshot(
         ConnectionState state,
         Instant stateChangedAt,
         Instant connectedAt,
-        Instant readyAt,
         Instant lastMessageAt,
         Instant lastErrorAt,
         String lastErrorCategory,

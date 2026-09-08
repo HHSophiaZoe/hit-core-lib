@@ -4,6 +4,7 @@ import com.hit.websocket.client.transport.CloseReason;
 import com.hit.websocket.client.transport.FailureCategory;
 
 import java.time.Duration;
+import lombok.Builder;
 
 /** Typed lifecycle data. Applications may implement this interface for diagnostic-only custom events. */
 public interface ConnectionEventDetails {
@@ -18,6 +19,7 @@ public interface ConnectionEventDetails {
     record RetryScheduled(int attempt, int maxAttempts, Duration delay) implements ConnectionEventDetails {
     }
 
+    @Builder
     record Failure(
             FailureCategory category,
             String code,

@@ -7,11 +7,11 @@ import java.time.Duration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class RetryPolicyTest {
+class ReconnectPolicyTest {
 
     @Test
     void capsExponentialDelayWithoutOverflow() {
-        RetryPolicy policy = new RetryPolicy(
+        ReconnectPolicy policy = new ReconnectPolicy(
                 -1, Duration.ofSeconds(1), Duration.ofSeconds(30), 0);
 
         assertThat(policy.delayFor(1)).isEqualTo(Duration.ofSeconds(1));
@@ -21,14 +21,14 @@ class RetryPolicyTest {
 
     @Test
     void zeroAttemptsDisablesRetry() {
-        RetryPolicy policy = RetryPolicy.disabled();
+        ReconnectPolicy policy = ReconnectPolicy.disabled();
 
         assertThat(policy.allows(1)).isFalse();
     }
 
     @Test
     void rejectsAmbiguousNegativeAttemptValues() {
-        assertThatThrownBy(() -> new RetryPolicy(
+        assertThatThrownBy(() -> new ReconnectPolicy(
                 -2, Duration.ZERO, Duration.ZERO, 0))
                 .isInstanceOf(IllegalArgumentException.class);
     }

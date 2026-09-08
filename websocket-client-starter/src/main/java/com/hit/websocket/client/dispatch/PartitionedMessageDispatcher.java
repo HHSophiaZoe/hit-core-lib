@@ -1,174 +1,137 @@
 package com.hit.websocket.client.dispatch;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import lombok.extern.slf4j.Slf4j;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
+/** One bounded, single-worker executor per partition; JDK owns worker lifecycle and queue wakeups. */
+@Slf4j
 final class PartitionedMessageDispatcher implements MessageDispatcher {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PartitionedMessageDispatcher.class);
-
     private final MessageDispatcherOptions options;
     private final List<MessageDispatcherObserver> observers;
-    private final Object lifecycleMonitor = new Object();
-    private final AtomicBoolean running = new AtomicBoolean(true);
-    private final List<BlockingQueue<DispatchTask>> queues = new ArrayList<>();
-    private final List<Thread> workers = new ArrayList<>();
+    private final List<Partition> partitions = new ArrayList<>();
+    private final AtomicBoolean closed = new AtomicBoolean();
 
-    PartitionedMessageDispatcher(MessageDispatcherOptions options, List<MessageDispatcherObserver> observers) {
-        this.options = options;
+    PartitionedMessageDispatcher(MessageDispatcherOptions options, List<MessageDispatcherObserver> observers, ThreadFactory threads) {
+        this.options = Objects.requireNonNull(options);
         this.observers = List.copyOf(observers);
-        start();
+        for (int partition = 0; partition < options.partitions(); partition++) {
+            ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS,
+                    new ArrayBlockingQueue<>(options.queueCapacity()), threads);
+            partitions.add(new Partition(executor));
+            registerQueue(partition, executor);
+        }
     }
 
     @Override
     public void dispatch(String metricCategory, String orderingKey, Runnable handler) {
-        Objects.requireNonNull(handler, "handler cannot be null");
+        Objects.requireNonNull(handler, "handler");
         if (orderingKey == null || orderingKey.isBlank()) throw new IllegalArgumentException("orderingKey cannot be blank");
         String category = metricCategory == null || metricCategory.isBlank() ? UNSPECIFIED_CATEGORY : metricCategory;
-        int partition = Math.floorMod(orderingKey.hashCode(), queues.size());
+        int partition = Math.floorMod(orderingKey.hashCode(), partitions.size());
         DispatchTask task = new DispatchTask(new DispatchContext(options.name(), category, partition), handler);
-        BlockingQueue<DispatchTask> queue = queues.get(partition);
-        synchronized (lifecycleMonitor) {
-            if (!running.get()) throw new IllegalStateException("Message dispatcher is closed");
-            if (queue.offer(task)) return;
-            handleOverflow(queue, task);
-        }
+        DispatchTask discarded = partitions.get(partition).submit(task);
+        if (discarded != null) dropped(discarded);
     }
 
     @Override
     public void close() {
-        List<DispatchTask> discarded = new ArrayList<>();
-        synchronized (lifecycleMonitor) {
-            if (!running.compareAndSet(true, false)) return;
-            workers.forEach(Thread::interrupt);
-            queues.forEach(queue -> queue.drainTo(discarded));
-            lifecycleMonitor.notifyAll();
-        }
-        discarded.forEach(this::dropped);
-    }
-
-    private void start() {
-        for (int partition = 0; partition < options.partitions(); partition++) {
-            BlockingQueue<DispatchTask> queue = new ArrayBlockingQueue<>(options.queueCapacity());
-            queues.add(queue);
-            int registeredPartition = partition;
-            notifyQueueRegistered(registeredPartition, queue);
-            Thread worker = new Thread(() -> consume(queue), options.name() + "-dispatcher-" + partition);
-            worker.setDaemon(true);
-            worker.start();
-            workers.add(worker);
+        if (!closed.compareAndSet(false, true)) return;
+        for (Partition partition : partitions) {
+            partition.stop().forEach(task -> dropped((DispatchTask) task));
         }
     }
 
-    private void consume(BlockingQueue<DispatchTask> queue) {
-        while (running.get() && !Thread.currentThread().isInterrupted()) {
+    /** Serialize producers and shutdown only. Neither handlers nor observers run under this lock. */
+    private final class Partition {
+        private final ThreadPoolExecutor executor;
+        private final ReentrantLock submissionLock = new ReentrantLock();
+
+        private Partition(ThreadPoolExecutor executor) {
+            this.executor = executor;
+        }
+
+        private DispatchTask submit(DispatchTask task) {
+            submissionLock.lock();
             try {
-                DispatchTask task = queue.take();
-                synchronized (lifecycleMonitor) {
-                    lifecycleMonitor.notifyAll();
+                if (closed.get()) throw new IllegalStateException("Message dispatcher is closed");
+                try {
+                    executor.execute(task);
+                    return null;
+                } catch (RejectedExecutionException error) {
+                    return switch (options.overflowPolicy()) {
+                        case FAIL -> throw error;
+                        case DROP_LATEST -> task;
+                        case DROP_OLDEST -> {
+                            DispatchTask removed = (DispatchTask) executor.getQueue().poll();
+                            // Other producers and shutdown cannot steal this slot; workers only free slots.
+                            executor.execute(task);
+                            yield removed;
+                        }
+                    };
                 }
-                if (!running.get()) {
-                    dropped(task);
-                    return;
-                }
-                execute(task);
-            } catch (InterruptedException error) {
-                Thread.currentThread().interrupt();
+            } finally {
+                submissionLock.unlock();
+            }
+        }
+
+        private List<Runnable> stop() {
+            submissionLock.lock();
+            try {
+                return executor.shutdownNow();
+            } finally {
+                submissionLock.unlock();
             }
         }
     }
 
-    private void execute(DispatchTask task) {
-        long startedAt = System.nanoTime();
-        try {
-            task.handler().run();
-            Duration duration = Duration.ofNanos(System.nanoTime() - startedAt);
-            notifyProcessed(task.context(), duration);
-        } catch (RuntimeException error) {
-            LOG.error("Message dispatch failed for dispatcher={}, metricCategory={}, partition={}",
-                    task.context().dispatcher(), task.context().metricCategory(), task.context().partition(), error);
-            notifyFailed(task.context(), error);
-        }
-    }
-
-    private void handleOverflow(BlockingQueue<DispatchTask> queue, DispatchTask task) {
-        switch (options.overflowPolicy()) {
-            case BLOCK -> put(queue, task);
-            case DROP_LATEST -> dropped(task);
-            case DROP_OLDEST -> {
-                DispatchTask removed = queue.poll();
-                if (removed != null) dropped(removed);
-                if (!queue.offer(task)) dropped(task);
-            }
-            case FAIL -> throw new RejectedExecutionException("Message dispatcher queue is full: " + options.name());
-        }
-    }
-
-    private void put(BlockingQueue<DispatchTask> queue, DispatchTask task) {
-        if (workers.contains(Thread.currentThread())) {
-            throw new RejectedExecutionException("A dispatcher worker cannot block on its own dispatcher");
-        }
-        try {
-            while (running.get()) {
-                if (queue.offer(task)) return;
-                lifecycleMonitor.wait();
-            }
-            throw new RejectedExecutionException("Message dispatcher closed while waiting for capacity");
-        } catch (InterruptedException error) {
-            Thread.currentThread().interrupt();
-            throw new RejectedExecutionException("Interrupted while waiting for dispatcher capacity", error);
-        }
+    private void registerQueue(int partition, ThreadPoolExecutor executor) {
+        observe(observer -> observer.queueRegistered(options.name(), partition, executor.getQueue()::size));
     }
 
     private void dropped(DispatchTask task) {
+        observe(observer -> observer.dropped(task.context));
+    }
+
+    private void observe(Consumer<MessageDispatcherObserver> notification) {
         for (MessageDispatcherObserver observer : observers) {
             try {
-                observer.dropped(task.context());
+                notification.accept(observer);
             } catch (RuntimeException error) {
-                LOG.warn("Message dispatcher observer failed while recording a dropped task", error);
+                log.warn("Dispatcher observer failed for {}", options.name(), error);
             }
         }
     }
 
-    private void notifyQueueRegistered(int partition, BlockingQueue<DispatchTask> queue) {
-        for (MessageDispatcherObserver observer : observers) {
+    private final class DispatchTask implements Runnable {
+        private final DispatchContext context;
+        private final Runnable handler;
+
+        private DispatchTask(DispatchContext context, Runnable handler) {
+            this.context = context;
+            this.handler = handler;
+        }
+
+        @Override
+        public void run() {
+            long started = System.nanoTime();
             try {
-                observer.queueRegistered(options.name(), partition, queue::size);
+                handler.run();
+                observe(observer -> observer.processed(context, Duration.ofNanos(System.nanoTime() - started)));
             } catch (RuntimeException error) {
-                LOG.warn("Message dispatcher observer failed while registering queue metrics", error);
+                log.error("Message dispatch failed for {}", context, error);
+                observe(observer -> observer.failed(context, error));
             }
         }
-    }
-
-    private void notifyProcessed(DispatchContext context, Duration duration) {
-        for (MessageDispatcherObserver observer : observers) {
-            try {
-                observer.processed(context, duration);
-            } catch (RuntimeException error) {
-                LOG.warn("Message dispatcher observer failed while recording a processed task", error);
-            }
-        }
-    }
-
-    private void notifyFailed(DispatchContext context, RuntimeException dispatchError) {
-        for (MessageDispatcherObserver observer : observers) {
-            try {
-                observer.failed(context, dispatchError);
-            } catch (RuntimeException observerError) {
-                LOG.warn("Message dispatcher observer failed while recording a failed task", observerError);
-            }
-        }
-    }
-
-    private record DispatchTask(DispatchContext context, Runnable handler) {
     }
 }

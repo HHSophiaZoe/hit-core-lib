@@ -7,7 +7,7 @@ import com.hit.websocket.client.transport.WebSocketFrame;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
-public interface ManagedWebSocketClient extends AutoCloseable {
+public interface WebSocketClient extends AutoCloseable {
 
     void connect();
 
@@ -21,15 +21,10 @@ public interface ManagedWebSocketClient extends AutoCloseable {
 
     ConnectionState state();
 
+    /** Overrides native Ping; returning null skips this tick (for example while authenticating). */
     void setHeartbeatFrameSupplier(Supplier<WebSocketFrame> supplier);
 
     void markPongReceived();
-
-    void markAuthenticating();
-
-    void markResubscribing();
-
-    void markReady();
 
     void reportError(FailureCategory category, String code, String message);
 
@@ -37,7 +32,5 @@ public interface ManagedWebSocketClient extends AutoCloseable {
     void fail(TransportFailure failure);
 
     @Override
-    default void close() {
-        disconnect();
-    }
+    void close();
 }

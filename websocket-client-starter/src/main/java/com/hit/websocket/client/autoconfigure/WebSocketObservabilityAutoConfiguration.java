@@ -1,10 +1,10 @@
 package com.hit.websocket.client.autoconfigure;
 
-import com.hit.websocket.client.autoconfigure.condition.ConditionalOnWebSocketObservabilityEnabled;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.hit.websocket.client.autoconfigure.properties.WebSocketClientObservabilityProperties;
 import com.hit.websocket.client.observability.ConnectionSnapshotQuery;
 import com.hit.websocket.client.observability.memory.InMemoryConnectionStateRegistry;
-import com.hit.websocket.client.observability.micrometer.MicrometerConnectionObserver;
+import com.hit.websocket.client.observability.micrometer.MicrometerWebSocketObserver;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -22,7 +22,7 @@ import java.time.Clock;
 public class WebSocketObservabilityAutoConfiguration {
 
     @Bean
-    @ConditionalOnWebSocketObservabilityEnabled
+    @ConditionalOnProperty(prefix = "websocket-client.observability", name = "enabled", havingValue = "true")
     @ConditionalOnMissingBean(ConnectionSnapshotQuery.class)
     InMemoryConnectionStateRegistry webSocketConnectionStateRegistry(
             @Qualifier("webSocketObservabilityClock") Clock clock,
@@ -40,15 +40,15 @@ public class WebSocketObservabilityAutoConfiguration {
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass(MeterRegistry.class)
     @ConditionalOnBean(MeterRegistry.class)
-    @ConditionalOnWebSocketObservabilityEnabled
+    @ConditionalOnProperty(prefix = "websocket-client.observability", name = "enabled", havingValue = "true")
     static class MicrometerConfiguration {
         @Bean
-        @ConditionalOnMissingBean(MicrometerConnectionObserver.class)
-        MicrometerConnectionObserver webSocketMicrometerConnectionObserver(
+        @ConditionalOnMissingBean(MicrometerWebSocketObserver.class)
+        MicrometerWebSocketObserver webSocketMicrometerObserver(
                 MeterRegistry meterRegistry,
                 @Qualifier("webSocketObservabilityClock") Clock clock
         ) {
-            return new MicrometerConnectionObserver(meterRegistry, clock);
+            return new MicrometerWebSocketObserver(meterRegistry, clock);
         }
     }
 }

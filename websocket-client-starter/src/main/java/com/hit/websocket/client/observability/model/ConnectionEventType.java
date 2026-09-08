@@ -3,10 +3,6 @@ package com.hit.websocket.client.observability.model;
 public enum ConnectionEventType {
     CONNECT_REQUESTED,
     TRANSPORT_CONNECTED,
-    AUTHENTICATION_STARTED,
-    AUTHENTICATED,
-    RESUBSCRIBE_STARTED,
-    READY,
     RETRY_SCHEDULED,
     HEARTBEAT_TIMEOUT,
     TRANSPORT_CLOSED,

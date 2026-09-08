@@ -10,6 +10,8 @@ import com.hit.websocket.client.transport.WebSocketFrame;
 import com.hit.websocket.client.transport.WebSocketTransport;
 import com.hit.websocket.client.transport.WebSocketTransportListener;
 import io.netty.channel.ChannelOption;
+import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakeException;
+import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.socket.CloseStatus;
@@ -25,6 +27,8 @@ import reactor.netty.http.client.WebsocketClientSpec;
 
 import java.net.ConnectException;
 import java.net.UnknownHostException;
+import javax.net.ssl.SSLException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -43,7 +47,7 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
     private final ConnectionId connectionId;
     private final AtomicReference<WebSocketSession> session = new AtomicReference<>();
     private final AtomicBoolean connecting = new AtomicBoolean();
-    private final AtomicBoolean opened = new AtomicBoolean();
+    private volatile boolean opened;
     private final AtomicBoolean terminated = new AtomicBoolean();
     private final AtomicBoolean clientClosing = new AtomicBoolean();
     private final Sinks.Many<WebSocketFrame> outbound = Sinks.many().unicast()
@@ -51,7 +55,8 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
 
     private volatile WebSocketTransportListener listener;
     private volatile Disposable connectionSubscription;
-    private volatile CompletableFuture<Void> connectFuture;
+    private final CompletableFuture<Void> connectFuture = new CompletableFuture<>();
+    private final CompletableFuture<Void> disconnectFuture = new CompletableFuture<>();
     private volatile CloseStatus closeStatus = CloseStatus.NO_STATUS_CODE;
 
     ReactorNettyWebSocketTransport(HttpClient baseHttpClient, ConnectionId connectionId) {
@@ -63,14 +68,12 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
     public CompletionStage<Void> connect(WebSocketConnectRequest request, WebSocketTransportListener listener) {
         Objects.requireNonNull(request);
         Objects.requireNonNull(listener);
-        if (!connecting.compareAndSet(false, true)) {
+        if (clientClosing.get() || !connecting.compareAndSet(false, true)) {
             return CompletableFuture.failedFuture(new IllegalStateException("Transport is already connecting or connected"));
         }
         this.listener = listener;
-        this.connectFuture = new CompletableFuture<>();
 
-        int timeoutMillis = Math.toIntExact(Math.min(
-                request.connectTimeout().toMillis(), Integer.MAX_VALUE));
+        int timeoutMillis = Math.toIntExact(Math.clamp(request.connectTimeout().toMillis(), 1, Integer.MAX_VALUE));
         HttpClient configuredClient = baseHttpClient
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeoutMillis);
         ReactorNettyWebSocketClient client = new ReactorNettyWebSocketClient(
@@ -90,7 +93,7 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
             public Mono<Void> handle(WebSocketSession openedSession) {
                 session.set(openedSession);
                 if (clientClosing.get()) return openedSession.close();
-                opened.set(true);
+                opened = true;
                 connectFuture.complete(null);
 
                 Mono<Void> receive = openedSession.receive()
@@ -109,7 +112,7 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
         connectionSubscription = client.execute(request.uri(), headers, handler)
                 .subscribe(ignored -> { }, this::onTerminalError, this::onTerminalComplete);
         if (clientClosing.get()) connectionSubscription.dispose();
-        connectFuture.orTimeout(request.connectTimeout().toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS)
+        connectFuture.orTimeout(request.connectTimeout().toNanos(), java.util.concurrent.TimeUnit.NANOSECONDS)
                 .whenComplete((ignored, error) -> {
                     if (error != null) disconnect(CloseReason.normal());
                 });
@@ -134,27 +137,38 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
 
     @Override
     public CompletionStage<Void> disconnect(CloseReason reason) {
-        clientClosing.set(true);
+        Objects.requireNonNull(reason);
+        if (!clientClosing.compareAndSet(false, true)) return disconnectFuture;
+        connectFuture.completeExceptionally(new IllegalStateException("WebSocket connection was cancelled"));
         completeOutbound();
         WebSocketSession current = session.getAndSet(null);
         if (current != null && current.isOpen()) {
-            return current.close(CloseStatus.create(reason.code(), reason.reason())).toFuture();
+            try {
+                current.close(CloseStatus.create(reason.code(), reason.reason()))
+                        .timeout(Duration.ofSeconds(3))
+                        .doFinally(ignored -> disposeConnection())
+                        .subscribe(ignored -> { }, disconnectFuture::completeExceptionally,
+                                () -> disconnectFuture.complete(null));
+            } catch (RuntimeException error) {
+                disposeConnection();
+                disconnectFuture.completeExceptionally(error);
+            }
+        } else {
+            disposeConnection();
+            disconnectFuture.complete(null);
         }
+        return disconnectFuture;
+    }
+
+    private void disposeConnection() {
         Disposable subscription = connectionSubscription;
-        if (subscription != null) {
-            subscription.dispose();
-        }
-        CompletableFuture<Void> pendingConnect = connectFuture;
-        if (pendingConnect != null && !pendingConnect.isDone()) {
-            pendingConnect.completeExceptionally(new IllegalStateException("WebSocket connection was cancelled"));
-        }
-        return CompletableFuture.completedFuture(null);
+        if (subscription != null) subscription.dispose();
     }
 
     @Override
     public boolean isOpen() {
         WebSocketSession current = session.get();
-        return opened.get() && !terminated.get() && current != null && current.isOpen();
+        return opened && !clientClosing.get() && !terminated.get() && current != null && current.isOpen();
     }
 
     private void completeOutbound() {
@@ -194,10 +208,9 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
             return;
         }
         session.set(null);
-        CompletableFuture<Void> pendingConnect = connectFuture;
-        if (!opened.get() && pendingConnect != null) {
+        if (!opened) {
             TransportFailure failure = classify(error);
-            pendingConnect.completeExceptionally(new TransportFailureException(failure, error));
+            connectFuture.completeExceptionally(new TransportFailureException(failure, error));
             return;
         }
         listener.onFailure(classify(error));
@@ -208,12 +221,8 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
             return;
         }
         session.set(null);
-        if (!opened.get()) {
-            CompletableFuture<Void> pendingConnect = connectFuture;
-            if (pendingConnect != null) {
-                pendingConnect.completeExceptionally(
-                        new IllegalStateException("WebSocket completed before opening"));
-            }
+        if (!opened) {
+            connectFuture.completeExceptionally(new IllegalStateException("WebSocket completed before opening"));
             return;
         }
         listener.onClosed(new CloseReason(closeStatus.getCode(), closeStatus.getReason(), clientClosing.get()));
@@ -226,43 +235,28 @@ final class ReactorNettyWebSocketTransport implements WebSocketTransport {
     }
 
     private static TransportFailure classify(Throwable error) {
-        if (error instanceof TransportFailureException failure) return failure.failure();
-        Throwable cause = unwrap(error);
-        FailureCategory category;
-        if (cause instanceof UnknownHostException) {
-            category = FailureCategory.DNS;
-        } else if (cause instanceof TimeoutException) {
-            category = FailureCategory.CONNECT_TIMEOUT;
-        } else if (cause instanceof ConnectException) {
-            category = FailureCategory.NETWORK;
-        } else if (cause.getClass().getSimpleName().toLowerCase().contains("ssl")) {
-            category = FailureCategory.TLS;
-        } else if (isHandshakeFailure(cause)) {
-            category = FailureCategory.HANDSHAKE;
-        } else {
-            category = FailureCategory.UNKNOWN;
+        Objects.requireNonNull(error, "error");
+        // Keep typed failures anywhere in the chain; inspecting only the root loses HTTP/TLS context.
+        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (cause instanceof TransportFailureException failure) return failure.failure();
+            if (cause instanceof SSLException) return classified(FailureCategory.TLS, cause, false);
+            if (cause instanceof WebSocketClientHandshakeException handshake && handshake.response() != null) {
+                int status = handshake.response().status().code();
+                return new TransportFailure(FailureCategory.HANDSHAKE, "HTTP_" + status,
+                        "WebSocket handshake rejected (HTTP " + status + ")", status == 408 || status == 429 || status >= 500);
+            }
+            if (cause instanceof WebSocketHandshakeException) return classified(FailureCategory.HANDSHAKE, cause, false);
+            if (cause instanceof UnknownHostException) return classified(FailureCategory.DNS, cause, true);
+            if (cause instanceof TimeoutException) return classified(FailureCategory.CONNECT_TIMEOUT, cause, true);
+            if (cause instanceof ConnectException) return classified(FailureCategory.NETWORK, cause, true);
+            if (cause.getCause() == cause) break;
         }
-        boolean retryable = category != FailureCategory.HANDSHAKE || isRetryableHandshake(cause);
-        return new TransportFailure(category, cause.getClass().getSimpleName(), safeMessage(cause), retryable);
+        return classified(FailureCategory.UNKNOWN, error, true);
     }
 
-    private static boolean isHandshakeFailure(Throwable error) {
-        String type = error.getClass().getSimpleName().toLowerCase();
-        String message = safeMessage(error).toLowerCase();
-        return type.contains("handshake") || message.contains("handshake") || message.matches(".*\\b(401|403|404|408|429|5\\d\\d)\\b.*");
-    }
-
-    private static boolean isRetryableHandshake(Throwable error) {
-        String message = safeMessage(error);
-        return message.matches(".*\\b(408|429|5\\d\\d)\\b.*");
-    }
-
-    private static Throwable unwrap(Throwable error) {
-        Throwable current = error;
-        while (current.getCause() != null && current.getCause() != current) {
-            current = current.getCause();
-        }
-        return current;
+    private static TransportFailure classified(FailureCategory category, Throwable error, boolean retryable) {
+        // Exception messages can contain request URLs/tokens. Keep transport diagnostics safe for metrics/API.
+        return new TransportFailure(category, error.getClass().getSimpleName(), "WebSocket transport failure: " + category, retryable);
     }
 
     private static String safeMessage(Throwable error) {

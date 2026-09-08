@@ -9,7 +9,7 @@ import com.hit.websocket.client.observability.model.ConnectionEventType;
 import com.hit.websocket.client.observability.model.ConnectionSnapshot;
 import com.hit.websocket.client.observability.ConnectionEventQuery;
 import com.hit.websocket.client.observability.ConnectionEventSource;
-import com.hit.websocket.client.observability.ConnectionObserver;
+import com.hit.websocket.client.observability.WebSocketObserver;
 import com.hit.websocket.client.observability.ConnectionSnapshotQuery;
 import com.hit.websocket.client.transport.CloseReason;
 
@@ -27,7 +27,7 @@ import java.util.function.Consumer;
 
 /** Current-state registry. Stale generations and out-of-order events are ignored. */
 public final class InMemoryConnectionStateRegistry
-        implements ConnectionObserver, ConnectionSnapshotQuery, ConnectionEventSource, ConnectionEventQuery {
+        implements WebSocketObserver, ConnectionSnapshotQuery, ConnectionEventSource, ConnectionEventQuery {
 
     private static final int DEFAULT_RECENT_EVENT_CAPACITY = 0;
 
@@ -135,7 +135,6 @@ public final class InMemoryConnectionStateRegistry
         private ConnectionState state = ConnectionState.STOPPED;
         private Instant stateChangedAt;
         private Instant connectedAt;
-        private Instant readyAt;
         private Instant lastMessageAt;
         private Instant lastErrorAt;
         private String lastErrorCategory;
@@ -165,7 +164,6 @@ public final class InMemoryConnectionStateRegistry
                 generation = event.generation();
                 lastSequence = 0;
                 connectedAt = null;
-                readyAt = null;
             }
             lastSequence = event.sequence();
             if (state != event.state()) {
@@ -179,10 +177,6 @@ public final class InMemoryConnectionStateRegistry
             } else if (event.type() == ConnectionEventType.TRANSPORT_CONNECTED) {
                 connectedAt = event.occurredAt();
                 dailyCounters.transportConnected();
-            } else if (event.type() == ConnectionEventType.READY) {
-                readyAt = event.occurredAt();
-                reconnectAttempts = 0;
-                dailyCounters.becameReady();
             } else if (event.type() == ConnectionEventType.RETRY_SCHEDULED) {
                 if (event.details() instanceof ConnectionEventDetails.RetryScheduled retry) {
                     reconnectAttempts = retry.attempt();
@@ -247,7 +241,6 @@ public final class InMemoryConnectionStateRegistry
                     .state(state)
                     .stateChangedAt(stateChangedAt)
                     .connectedAt(connectedAt)
-                    .readyAt(readyAt)
                     .lastMessageAt(lastMessageAt)
                     .lastErrorAt(lastErrorAt)
                     .lastErrorCategory(lastErrorCategory)
@@ -271,7 +264,6 @@ public final class InMemoryConnectionStateRegistry
         private LocalDate date;
         private long connectAttempts;
         private long transportConnections;
-        private long readyTransitions;
         private long disconnects;
         private long connectionLosses;
         private long retries;
@@ -288,7 +280,6 @@ public final class InMemoryConnectionStateRegistry
 
         private void connectAttempted() { connectAttempts++; }
         private void transportConnected() { transportConnections++; }
-        private void becameReady() { readyTransitions++; }
         private void disconnectRequested() { disconnects++; }
         private void connectionLost() { connectionLosses++; }
         private void retryScheduled() { retries++; }
@@ -310,7 +301,6 @@ public final class InMemoryConnectionStateRegistry
             date = currentDate;
             connectAttempts = 0;
             transportConnections = 0;
-            readyTransitions = 0;
             disconnects = 0;
             connectionLosses = 0;
             retries = 0;
@@ -327,7 +317,6 @@ public final class InMemoryConnectionStateRegistry
                     .date(date)
                     .connectAttempts(connectAttempts)
                     .transportConnections(transportConnections)
-                    .readyTransitions(readyTransitions)
                     .disconnects(disconnects)
                     .connectionLosses(connectionLosses)
                     .retries(retries)

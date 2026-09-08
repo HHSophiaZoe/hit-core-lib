@@ -3,13 +3,13 @@ package com.hit.websocket.client.connection;
 import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 
-public record RetryPolicy(
+public record ReconnectPolicy(
         int maxAttempts,
         Duration initialDelay,
         Duration maxDelay,
         double jitter
 ) {
-    public RetryPolicy {
+    public ReconnectPolicy {
         if (maxAttempts < -1) {
             throw new IllegalArgumentException("maxAttempts must be -1, 0, or positive");
         }
@@ -22,14 +22,16 @@ public record RetryPolicy(
         if (!Double.isFinite(jitter) || jitter < 0 || jitter > 1) {
             throw new IllegalArgumentException("jitter must be between 0 and 1");
         }
+        initialDelay.toNanos();
+        maxDelay.toNanos();
     }
 
-    public static RetryPolicy unlimited(Duration initialDelay, Duration maxDelay) {
-        return new RetryPolicy(-1, initialDelay, maxDelay, 0.2);
+    public static ReconnectPolicy unlimited(Duration initialDelay, Duration maxDelay) {
+        return new ReconnectPolicy(-1, initialDelay, maxDelay, 0.2);
     }
 
-    public static RetryPolicy disabled() {
-        return new RetryPolicy(0, Duration.ZERO, Duration.ZERO, 0);
+    public static ReconnectPolicy disabled() {
+        return new ReconnectPolicy(0, Duration.ZERO, Duration.ZERO, 0);
     }
 
     public boolean allows(int nextAttempt) {

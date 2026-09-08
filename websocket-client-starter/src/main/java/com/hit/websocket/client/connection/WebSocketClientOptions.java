@@ -10,26 +10,15 @@ import java.util.Objects;
 public record WebSocketClientOptions(
         ConnectionId connectionId,
         WebSocketConnectRequest connectRequest,
-        RetryPolicy retryPolicy,
-        Duration heartbeatInterval,
-        Duration pongTimeout,
-        Duration lifecycleStageTimeout
+        ReconnectPolicy reconnectPolicy,
+        HeartbeatOptions heartbeat,
+        int inboundCapacity
 ) {
     public WebSocketClientOptions {
         Objects.requireNonNull(connectionId, "connectionId cannot be null");
         Objects.requireNonNull(connectRequest, "connectRequest cannot be null");
-        Objects.requireNonNull(retryPolicy, "retryPolicy cannot be null");
-        if (heartbeatInterval != null && (heartbeatInterval.isZero() || heartbeatInterval.isNegative())) {
-            throw new IllegalArgumentException("heartbeatInterval must be positive when configured");
-        }
-        if (heartbeatInterval != null) {
-            Objects.requireNonNull(pongTimeout, "pongTimeout is required when heartbeat is enabled");
-            if (pongTimeout.isZero() || pongTimeout.isNegative()) {
-                throw new IllegalArgumentException("pongTimeout must be positive");
-            }
-        }
-        if (lifecycleStageTimeout != null && (lifecycleStageTimeout.isZero() || lifecycleStageTimeout.isNegative())) {
-            throw new IllegalArgumentException("lifecycleStageTimeout must be positive when configured");
-        }
+        reconnectPolicy = reconnectPolicy == null ? ReconnectPolicy.unlimited(Duration.ofSeconds(1), Duration.ofSeconds(30)) : reconnectPolicy;
+        inboundCapacity = inboundCapacity == 0 ? 1024 : inboundCapacity;
+        if (inboundCapacity < 1) throw new IllegalArgumentException("inboundCapacity must be positive");
     }
 }

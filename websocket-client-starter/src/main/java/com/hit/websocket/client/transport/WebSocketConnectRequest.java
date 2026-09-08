@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import lombok.Builder;
 
+@Builder
 public record WebSocketConnectRequest(
         URI uri,
         Map<String, List<String>> headers,
@@ -21,17 +23,19 @@ public record WebSocketConnectRequest(
         }
         headers = immutableHeaders(headers);
         subProtocols = subProtocols == null ? List.of() : List.copyOf(subProtocols);
-        Objects.requireNonNull(connectTimeout, "connectTimeout cannot be null");
+        connectTimeout = connectTimeout == null ? Duration.ofSeconds(10) : connectTimeout;
         if (connectTimeout.isZero() || connectTimeout.isNegative()) {
             throw new IllegalArgumentException("connectTimeout must be positive");
         }
+        connectTimeout.toNanos();
+        maxFramePayloadBytes = maxFramePayloadBytes == 0 ? 1024 * 1024 : maxFramePayloadBytes;
         if (maxFramePayloadBytes <= 0) {
             throw new IllegalArgumentException("maxFramePayloadBytes must be positive");
         }
     }
 
     public static WebSocketConnectRequest of(URI uri, Duration connectTimeout) {
-        return new WebSocketConnectRequest(uri, Map.of(), List.of(), connectTimeout, 1024 * 1024);
+        return builder().uri(uri).connectTimeout(connectTimeout).build();
     }
 
     private static Map<String, List<String>> immutableHeaders(Map<String, List<String>> headers) {
