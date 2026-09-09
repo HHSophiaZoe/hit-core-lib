@@ -1,4 +1,6 @@
 package com.hit.websocket.client.dispatch;
 
-public record DispatchContext(String dispatcher, String metricCategory, int partition) {
+import com.hit.websocket.client.connection.ConnectionId;
+
+public record DispatchContext(ConnectionId connectionId, String dispatcher, String metricCategory, int partition) {
 }

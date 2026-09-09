@@ -2,6 +2,7 @@ package com.hit.websocket.client.dispatch.micrometer;
 
 import com.hit.websocket.client.dispatch.DispatchContext;
 import com.hit.websocket.client.dispatch.MessageDispatcherObserver;
+import com.hit.websocket.client.connection.ConnectionId;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 
@@ -18,9 +19,11 @@ public class MicrometerMessageDispatcherObserver implements MessageDispatcherObs
     }
 
     @Override
-    public void queueRegistered(String dispatcher, int partition, IntSupplier queueSize) {
+    public void queueRegistered(ConnectionId connectionId, String dispatcher, int partition, IntSupplier queueSize) {
         Gauge.builder("websocket.client.dispatch.queue.size", queueSize, IntSupplier::getAsInt)
                 .strongReference(true)
+                .tag("provider", connectionId.provider())
+                .tag("connection", connectionId.name())
                 .tag("dispatcher", dispatcher)
                 .tag("partition", String.valueOf(partition))
                 .register(meterRegistry);
@@ -45,6 +48,8 @@ public class MicrometerMessageDispatcherObserver implements MessageDispatcherObs
 
     private String[] tags(DispatchContext context) {
         return new String[]{
+                "provider", context.connectionId().provider(),
+                "connection", context.connectionId().name(),
                 "dispatcher", context.dispatcher(),
                 "category", context.metricCategory(),
                 "partition", String.valueOf(context.partition())

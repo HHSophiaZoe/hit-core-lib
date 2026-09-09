@@ -1,11 +1,12 @@
 package com.hit.websocket.client.dispatch;
 
+import com.hit.websocket.client.connection.ConnectionId;
 import java.time.Duration;
 import java.util.function.IntSupplier;
 
 public interface MessageDispatcherObserver {
 
-    default void queueRegistered(String dispatcher, int partition, IntSupplier queueSize) {
+    default void queueRegistered(ConnectionId connectionId, String dispatcher, int partition, IntSupplier queueSize) {
     }
 
     default void processed(DispatchContext context, Duration duration) {

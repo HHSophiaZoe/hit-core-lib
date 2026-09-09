@@ -13,6 +13,10 @@ public interface WebSocketClientListener {
 
     void onMessage(WebSocketFrame frame);
 
+    /** Transport acceptance, not a peer acknowledgement. Includes automatic heartbeat frames. */
+    default void onSendCompleted(WebSocketFrame frame, boolean accepted) {
+    }
+
     default void onTransportDisconnected(CloseReason reason) {
     }
 

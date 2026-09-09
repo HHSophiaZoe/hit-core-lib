@@ -4,9 +4,11 @@ import com.hit.websocket.client.autoconfigure.properties.WebSocketClientDispatch
 import com.hit.websocket.client.dispatch.MessageDispatcherFactory;
 import com.hit.websocket.client.dispatch.MessageDispatcherObserver;
 import com.hit.websocket.client.dispatch.MessageDispatcherRegistry;
+import com.hit.websocket.client.dispatch.memory.InMemoryDispatcherStateRegistry;
 import com.hit.websocket.client.dispatch.micrometer.MicrometerMessageDispatcherObserver;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -18,10 +20,19 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
+import java.time.Clock;
 
 @AutoConfiguration(afterName = "org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration")
 @EnableConfigurationProperties(WebSocketClientDispatcherProperties.class)
 public class WebSocketDispatcherAutoConfiguration {
+
+    @Bean
+    @ConditionalOnProperty(prefix = "websocket-client.observability", name = "enabled", havingValue = "true")
+    @ConditionalOnMissingBean
+    InMemoryDispatcherStateRegistry webSocketDispatcherStateRegistry(
+            @Qualifier("webSocketObservabilityClock") Clock clock) {
+        return new InMemoryDispatcherStateRegistry(clock);
+    }
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass(MeterRegistry.class)

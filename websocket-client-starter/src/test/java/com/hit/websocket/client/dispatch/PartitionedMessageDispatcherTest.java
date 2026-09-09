@@ -20,6 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PartitionedMessageDispatcherTest {
 
+    private static final com.hit.websocket.client.connection.ConnectionId CONNECTION_ID =
+            new com.hit.websocket.client.connection.ConnectionId("test", "market-data");
+
     @Test
     void closeDiscardsQueuedTasksAndRejectsNewOnes() throws Exception {
         AtomicInteger dropped = new AtomicInteger();
@@ -27,7 +30,7 @@ class PartitionedMessageDispatcherTest {
             @Override public void dropped(DispatchContext context) { dropped.incrementAndGet(); }
         };
         MessageDispatcherOptions options = new MessageDispatcherOptions("test-close", 1, 1, DispatchOverflowPolicy.FAIL);
-        MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of(observer)).create(options);
+        MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of(observer)).create(CONNECTION_ID, options);
         CountDownLatch entered = new CountDownLatch(1);
         CountDownLatch hold = new CountDownLatch(1);
         try {
@@ -55,7 +58,7 @@ class PartitionedMessageDispatcherTest {
         MessageDispatcherOptions options = new MessageDispatcherOptions(
                 "test", 2, 10, DispatchOverflowPolicy.DROP_OLDEST);
         ThreadFactory threads = virtualThreads ? Thread.ofVirtual().factory() : Thread.ofPlatform().daemon().factory();
-        MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of(), threads).create(options);
+        MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of(), threads).create(CONNECTION_ID, options);
         List<Integer> processed = Collections.synchronizedList(new ArrayList<>());
         CountDownLatch completed = new CountDownLatch(3);
 
@@ -79,7 +82,7 @@ class PartitionedMessageDispatcherTest {
         };
         MessageDispatcherOptions options = new MessageDispatcherOptions(
                 "test", 1, 1, DispatchOverflowPolicy.DROP_OLDEST);
-        MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of(observer)).create(options);
+        MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of(observer)).create(CONNECTION_ID, options);
         List<Integer> processed = Collections.synchronizedList(new ArrayList<>());
         CountDownLatch firstStarted = new CountDownLatch(1);
         CountDownLatch releaseFirst = new CountDownLatch(1);
@@ -105,7 +108,7 @@ class PartitionedMessageDispatcherTest {
     void observerFailureDoesNotStopDispatcherWorkers() throws InterruptedException {
         MessageDispatcherObserver failingObserver = new MessageDispatcherObserver() {
             @Override
-            public void queueRegistered(String dispatcher, int partition, IntSupplier queueSize) {
+            public void queueRegistered(com.hit.websocket.client.connection.ConnectionId connectionId, String dispatcher, int partition, IntSupplier queueSize) {
                 throw new IllegalStateException("queue metric failed");
             }
 
@@ -116,7 +119,7 @@ class PartitionedMessageDispatcherTest {
         };
         MessageDispatcherOptions options = new MessageDispatcherOptions(
                 "test", 1, 10, DispatchOverflowPolicy.DROP_OLDEST);
-        MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of(failingObserver)).create(options);
+        MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of(failingObserver)).create(CONNECTION_ID, options);
         CountDownLatch completed = new CountDownLatch(2);
 
         dispatcher.dispatch("FPT", completed::countDown);
@@ -135,7 +138,7 @@ class PartitionedMessageDispatcherTest {
         MessageDispatcherOptions options = new MessageDispatcherOptions("concurrent", 1, 1, DispatchOverflowPolicy.DROP_OLDEST);
         CountDownLatch entered = new CountDownLatch(1);
         CountDownLatch hold = new CountDownLatch(1);
-        try (MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of(observer), Thread.ofVirtual().factory()).create(options)) {
+        try (MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of(observer), Thread.ofVirtual().factory()).create(CONNECTION_ID, options)) {
             dispatcher.dispatch("key", () -> {
                 entered.countDown();
                 try {
@@ -170,7 +173,7 @@ class PartitionedMessageDispatcherTest {
         CountDownLatch entered = new CountDownLatch(1);
         CountDownLatch hold = new CountDownLatch(1);
         CountDownLatch completed = new CountDownLatch(1);
-        try (MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of(observer)).create(options)) {
+        try (MessageDispatcher dispatcher = new MessageDispatcherFactory(List.of(observer)).create(CONNECTION_ID, options)) {
             dispatcher.dispatch("key", () -> { entered.countDown(); await(hold); });
             assertThat(entered.await(2, TimeUnit.SECONDS)).isTrue();
             dispatcher.dispatch("key", completed::countDown);

@@ -96,15 +96,16 @@ final class DefaultWebSocketClient implements WebSocketClient {
         Objects.requireNonNull(frame, "frame");
         Attempt attempt = active;
         if (attempt == null || !attempt.transport.isOpen()) {
-            return CompletableFuture.failedFuture(new IllegalStateException("WebSocket is not connected"));
+            return rejectedSend(frame, new IllegalStateException("WebSocket is not connected"));
         }
         if (!attempt.pendingSends.tryAcquire()) {
-            return CompletableFuture.failedFuture(new RejectedExecutionException("WebSocket pending send limit reached"));
+            return rejectedSend(frame, new RejectedExecutionException("WebSocket pending send limit reached"));
         }
         try {
             CompletionStage<Void> sent = attempt.transport.send(frame);
             sent.whenComplete((ignored, error) -> execute(() -> {
                 try {
+                    notifyListener(() -> listener.onSendCompleted(frame, error == null));
                     if (active != attempt) return;
                     if (error != null) terminate(attempt, failure(error), null);
                     else observe(observer -> observer.onMessageSent(options.connectionId(), attempt.generation, frame.payloadSize()));
@@ -116,8 +117,13 @@ final class DefaultWebSocketClient implements WebSocketClient {
         } catch (RuntimeException error) {
             attempt.pendingSends.release();
             execute(() -> terminate(attempt, failure(error), null));
-            return CompletableFuture.failedFuture(error);
+            return rejectedSend(frame, error);
         }
+    }
+
+    private CompletionStage<Void> rejectedSend(WebSocketFrame frame, RuntimeException error) {
+        execute(() -> notifyListener(() -> listener.onSendCompleted(frame, false)));
+        return CompletableFuture.failedFuture(error);
     }
 
     @Override

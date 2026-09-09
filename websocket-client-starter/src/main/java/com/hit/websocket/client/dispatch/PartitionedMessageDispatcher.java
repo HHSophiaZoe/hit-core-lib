@@ -1,6 +1,7 @@
 package com.hit.websocket.client.dispatch;
 
 import lombok.extern.slf4j.Slf4j;
+import com.hit.websocket.client.connection.ConnectionId;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,12 +18,15 @@ import java.util.function.Consumer;
 /** One bounded, single-worker executor per partition; JDK owns worker lifecycle and queue wakeups. */
 @Slf4j
 final class PartitionedMessageDispatcher implements MessageDispatcher {
+    private final ConnectionId connectionId;
     private final MessageDispatcherOptions options;
     private final List<MessageDispatcherObserver> observers;
     private final List<Partition> partitions = new ArrayList<>();
     private final AtomicBoolean closed = new AtomicBoolean();
 
-    PartitionedMessageDispatcher(MessageDispatcherOptions options, List<MessageDispatcherObserver> observers, ThreadFactory threads) {
+    PartitionedMessageDispatcher(ConnectionId connectionId, MessageDispatcherOptions options,
+                                 List<MessageDispatcherObserver> observers, ThreadFactory threads) {
+        this.connectionId = Objects.requireNonNull(connectionId, "connectionId");
         this.options = Objects.requireNonNull(options);
         this.observers = List.copyOf(observers);
         for (int partition = 0; partition < options.partitions(); partition++) {
@@ -39,7 +43,7 @@ final class PartitionedMessageDispatcher implements MessageDispatcher {
         if (orderingKey == null || orderingKey.isBlank()) throw new IllegalArgumentException("orderingKey cannot be blank");
         String category = metricCategory == null || metricCategory.isBlank() ? UNSPECIFIED_CATEGORY : metricCategory;
         int partition = Math.floorMod(orderingKey.hashCode(), partitions.size());
-        DispatchTask task = new DispatchTask(new DispatchContext(options.name(), category, partition), handler);
+        DispatchTask task = new DispatchTask(new DispatchContext(connectionId, options.name(), category, partition), handler);
         DispatchTask discarded = partitions.get(partition).submit(task);
         if (discarded != null) dropped(discarded);
     }
@@ -88,7 +92,10 @@ final class PartitionedMessageDispatcher implements MessageDispatcher {
         private List<Runnable> stop() {
             submissionLock.lock();
             try {
-                return executor.shutdownNow();
+                List<Runnable> queued = new ArrayList<>();
+                executor.getQueue().drainTo(queued);
+                executor.shutdown();
+                return queued;
             } finally {
                 submissionLock.unlock();
             }
@@ -96,7 +103,7 @@ final class PartitionedMessageDispatcher implements MessageDispatcher {
     }
 
     private void registerQueue(int partition, ThreadPoolExecutor executor) {
-        observe(observer -> observer.queueRegistered(options.name(), partition, executor.getQueue()::size));
+        observe(observer -> observer.queueRegistered(connectionId, options.name(), partition, executor.getQueue()::size));
     }
 
     private void dropped(DispatchTask task) {

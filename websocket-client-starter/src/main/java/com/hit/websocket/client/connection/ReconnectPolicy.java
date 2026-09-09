@@ -22,8 +22,9 @@ public record ReconnectPolicy(
         if (!Double.isFinite(jitter) || jitter < 0 || jitter > 1) {
             throw new IllegalArgumentException("jitter must be between 0 and 1");
         }
-        initialDelay.toNanos();
-        maxDelay.toNanos();
+        if (maxDelay.compareTo(Duration.ofNanos(Long.MAX_VALUE)) > 0) {
+            throw new IllegalArgumentException("maxDelay exceeds the scheduler nanosecond range");
+        }
     }
 
     public static ReconnectPolicy unlimited(Duration initialDelay, Duration maxDelay) {

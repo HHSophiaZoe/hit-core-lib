@@ -27,7 +27,9 @@ public record WebSocketConnectRequest(
         if (connectTimeout.isZero() || connectTimeout.isNegative()) {
             throw new IllegalArgumentException("connectTimeout must be positive");
         }
-        connectTimeout.toNanos();
+        if (connectTimeout.compareTo(Duration.ofNanos(Long.MAX_VALUE)) > 0) {
+            throw new IllegalArgumentException("connectTimeout exceeds the scheduler nanosecond range");
+        }
         maxFramePayloadBytes = maxFramePayloadBytes == 0 ? 1024 * 1024 : maxFramePayloadBytes;
         if (maxFramePayloadBytes <= 0) {
             throw new IllegalArgumentException("maxFramePayloadBytes must be positive");

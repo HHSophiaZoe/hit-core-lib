@@ -13,6 +13,8 @@ public record HeartbeatOptions(Duration interval, Duration pongTimeout) {
     private static void positive(Duration value, String name) {
         Objects.requireNonNull(value, name);
         if (value.isNegative() || value.isZero()) throw new IllegalArgumentException(name + " must be positive");
-        value.toNanos(); // Reject values that cannot be scheduled.
+        if (value.compareTo(Duration.ofNanos(Long.MAX_VALUE)) > 0) {
+            throw new IllegalArgumentException(name + " exceeds the scheduler nanosecond range");
+        }
     }
 }

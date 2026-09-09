@@ -50,6 +50,26 @@ class DefaultWebSocketClientTest {
     }
 
     @Test
+    void sendCompletionReportsHeartbeatAndRejectedSend() {
+        List<Boolean> outcomes = new CopyOnWriteArrayList<>();
+        List<WebSocketFrame> frames = new CopyOnWriteArrayList<>();
+        transportSupplier = () -> { FakeTransport transport = new FakeTransport(); transport.echoPong = true; return transport; };
+        WebSocketClient client = create(options().heartbeat(new HeartbeatOptions(Duration.ofMillis(20), Duration.ofSeconds(1))).build(),
+                new WebSocketClientListener() {
+                    @Override public void onMessage(WebSocketFrame frame) { }
+                    @Override public void onSendCompleted(WebSocketFrame frame, boolean accepted) {
+                        frames.add(frame);
+                        outcomes.add(accepted);
+                    }
+                });
+        client.send(new WebSocketFrame.Text("not connected"));
+        await().untilAsserted(() -> assertThat(outcomes).containsExactly(false));
+        connected(client);
+        await().untilAsserted(() -> assertThat(frames).anyMatch(frame -> frame instanceof WebSocketFrame.Ping));
+        assertThat(outcomes).contains(true);
+    }
+
+    @Test
     void noAuthConnectsImmediatelyAndUsesInjectedClock() {
         WebSocketClient client = create(options().build(), frame -> { });
         connected(client);

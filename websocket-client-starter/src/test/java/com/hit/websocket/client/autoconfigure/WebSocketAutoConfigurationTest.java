@@ -2,6 +2,7 @@ package com.hit.websocket.client.autoconfigure;
 
 import com.hit.websocket.client.connection.WebSocketClientFactory;
 import com.hit.websocket.client.dispatch.MessageDispatcherRegistry;
+import com.hit.websocket.client.dispatch.DispatcherSnapshotQuery;
 import com.hit.websocket.client.observability.ConnectionSnapshotQuery;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,6 +29,7 @@ class WebSocketAutoConfigurationTest {
                 .run(application -> {
                     assertThat(application).hasNotFailed();
                     assertThat(application).hasSingleBean(ConnectionSnapshotQuery.class);
+                    assertThat(application).hasSingleBean(DispatcherSnapshotQuery.class);
                     assertThat(application).hasSingleBean(WebSocketClientFactory.class);
                     assertThat(application).hasSingleBean(MessageDispatcherRegistry.class);
                 });
@@ -36,9 +38,10 @@ class WebSocketAutoConfigurationTest {
     @Test
     void observabilityIsOptIn() {
         context.run(application -> {
-            assertThat(application).hasNotFailed();
-            assertThat(application).doesNotHaveBean(ConnectionSnapshotQuery.class);
-            assertThat(application).hasSingleBean(WebSocketClientFactory.class);
+                    assertThat(application).hasNotFailed();
+                    assertThat(application).doesNotHaveBean(ConnectionSnapshotQuery.class);
+                    assertThat(application).doesNotHaveBean(DispatcherSnapshotQuery.class);
+                    assertThat(application).hasSingleBean(WebSocketClientFactory.class);
         });
     }
 
@@ -49,7 +52,7 @@ class WebSocketAutoConfigurationTest {
                 .run(application -> {
                     assertThat(application).hasNotFailed();
                     CompletableFuture<Boolean> threadType = new CompletableFuture<>();
-                    application.getBean(MessageDispatcherRegistry.class).get("thread-test")
+                    application.getBean(MessageDispatcherRegistry.class).get(new com.hit.websocket.client.connection.ConnectionId("test", "thread-test"), "thread-test")
                             .dispatch("key", () -> threadType.complete(Thread.currentThread().isVirtual()));
                     assertThat(threadType.get(2, TimeUnit.SECONDS)).isEqualTo(virtualThreads);
                 });

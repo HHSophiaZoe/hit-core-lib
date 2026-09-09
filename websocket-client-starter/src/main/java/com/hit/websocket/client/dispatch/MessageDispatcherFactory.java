@@ -1,5 +1,6 @@
 package com.hit.websocket.client.dispatch;
 
+import com.hit.websocket.client.connection.ConnectionId;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ThreadFactory;
@@ -18,7 +19,7 @@ public class MessageDispatcherFactory {
         this.threads = Objects.requireNonNull(threads, "threads");
     }
 
-    public MessageDispatcher create(MessageDispatcherOptions options) {
-        return new PartitionedMessageDispatcher(options, observers, threads);
+    public MessageDispatcher create(ConnectionId connectionId, MessageDispatcherOptions options) {
+        return new PartitionedMessageDispatcher(connectionId, options, observers, threads);
     }
 }
