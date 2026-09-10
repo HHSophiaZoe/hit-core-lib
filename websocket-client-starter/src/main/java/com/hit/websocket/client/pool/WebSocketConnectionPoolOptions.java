@@ -7,8 +7,7 @@ public record WebSocketConnectionPoolOptions(
 
     public WebSocketConnectionPoolOptions {
         if (maxResourcesPerConnection < 1 || maxTotalResources < maxResourcesPerConnection) {
-            throw new IllegalArgumentException(
-                    "Connection pool limits must satisfy 0 < maxResourcesPerConnection <= maxTotalResources");
+            throw new IllegalArgumentException("Connection pool limits must satisfy 0 < maxResourcesPerConnection <= maxTotalResources");
         }
     }
 }
