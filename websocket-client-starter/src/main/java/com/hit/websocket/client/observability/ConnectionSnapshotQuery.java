@@ -11,4 +11,10 @@ public interface ConnectionSnapshotQuery {
     Optional<ConnectionSnapshot> find(ConnectionId connectionId);
 
     List<ConnectionSnapshot> findAll();
+
+    default List<ConnectionSnapshot> findBySource(String source) {
+        return findAll().stream()
+                .filter(snapshot -> snapshot.connectionId().provider().equals(source))
+                .toList();
+    }
 }

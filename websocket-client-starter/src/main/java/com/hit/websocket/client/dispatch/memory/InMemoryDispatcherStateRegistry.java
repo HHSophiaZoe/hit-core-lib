@@ -64,6 +64,15 @@ public final class InMemoryDispatcherStateRegistry implements MessageDispatcherO
                 .toList();
     }
 
+    @Override
+    public List<DispatcherSnapshot> findBySource(String source) {
+        return dispatchers.entrySet().stream()
+                .filter(entry -> entry.getKey().connectionId().provider().equals(source))
+                .map(entry -> entry.getValue().snapshot(entry.getKey()))
+                .sorted(Comparator.comparing(snapshot -> snapshot.connectionId().value()))
+                .toList();
+    }
+
     private MutableDispatcher state(ConnectionId connectionId, String dispatcher) {
         return dispatchers.computeIfAbsent(new DispatcherId(connectionId, dispatcher), ignored -> new MutableDispatcher());
     }

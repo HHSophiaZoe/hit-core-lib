@@ -115,6 +115,17 @@ Policy: FAIL ném lỗi, DROP_LATEST bỏ task mới, DROP_OLDEST bỏ task đan
 Không dùng policy drop cho dữ liệu bắt buộc xử lý đầy đủ. BLOCK đã bỏ để tránh chặn receive thread.
 Close từ chối task mới, bỏ task chờ và interrupt worker; handler phải hợp tác với interruption.
 
+## Connection pool
+
+`WebSocketConnectionPool` phân bổ các resource quota do adapter định nghĩa vào nhiều physical connection.
+Pool dùng first-fit, giới hạn capacity và reference counting; nó không biết auth, topic hay payload của provider.
+Adapter triển khai `PooledWebSocketConnection` và cung cấp factory tạo connection theo sequence.
+
+`WebSocketConnectionPoolFactory` do lib auto-configure và tự chọn virtual hoặc daemon platform coordinator
+từ `spring.threads.virtual.enabled`. Adapter không truyền thread name, thread type hay tự quản lý `ExecutorService`.
+Coordinator chỉ tuần tự hóa thay đổi allocation. Callback và lifecycle của provider chạy bên ngoài coordinator
+để có thể gọi ngược lại pool mà không deadlock.
+
 Lib cũng giới hạn frame đang chờ callback và send completion (mặc định 1024 cho mỗi loại,
 cấu hình bằng `inboundCapacity`). Inbound đầy sẽ fail/reconnect; pending send đầy trả failed stage.
 Outbound Reactor giới hạn 1024 frame. Send thành công chỉ có nghĩa frame đã được nhận vào pipeline,

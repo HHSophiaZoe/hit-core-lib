@@ -8,4 +8,6 @@ import java.util.List;
 public interface DispatcherSnapshotQuery {
 
     List<DispatcherSnapshot> findByConnection(ConnectionId connectionId);
+
+    List<DispatcherSnapshot> findBySource(String source);
 }

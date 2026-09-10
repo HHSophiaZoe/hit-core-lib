@@ -57,8 +57,9 @@ class ReactorNettyWebSocketTransportTest {
         WebSocketObserver observer = new WebSocketObserver() {
             @Override public void onMessageReceived(ConnectionId id, long generation, int bytes) { received.incrementAndGet(); }
         };
-        try (WebSocketClientFactory factory = new WebSocketClientFactory(
-                new ReactorNettyWebSocketTransportFactory(HttpClient.create()), List.of(observer), Clock.systemDefaultZone())) {
+        WebSocketClientFactory factory = new WebSocketClientFactory(
+                new ReactorNettyWebSocketTransportFactory(HttpClient.create()), List.of(observer), Clock.systemDefaultZone());
+        try {
             WebSocketClient client = factory.create(WebSocketClientOptions.builder()
                     .connectionId(new ConnectionId("test", "heartbeat"))
                     .connectRequest(WebSocketConnectRequest.of(URI.create("ws://127.0.0.1:" + server.port()), Duration.ofSeconds(3)))
@@ -69,6 +70,7 @@ class ReactorNettyWebSocketTransportTest {
             await().atMost(Duration.ofSeconds(5)).until(() -> received.get() >= 3);
             assertThat(client.isHealthy()).isTrue();
         } finally {
+            factory.close();
             server.disposeNow();
         }
     }

@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Owns created clients and closes their control threads when the application stops. */
-public final class WebSocketClientFactory implements AutoCloseable {
+public final class WebSocketClientFactory {
     private final WebSocketTransportFactory transportFactory;
     private final List<WebSocketObserver> observers;
     private final Clock clock;
@@ -19,7 +19,7 @@ public final class WebSocketClientFactory implements AutoCloseable {
     private boolean closed;
 
     public WebSocketClientFactory(WebSocketTransportFactory transportFactory,
-                                         List<WebSocketObserver> observers, Clock clock) {
+                                  List<WebSocketObserver> observers, Clock clock) {
         this.transportFactory = Objects.requireNonNull(transportFactory);
         this.observers = List.copyOf(observers);
         this.clock = Objects.requireNonNull(clock);
@@ -34,7 +34,6 @@ public final class WebSocketClientFactory implements AutoCloseable {
         return client;
     }
 
-    @Override
     public synchronized void close() {
         closed = true;
         clients.values().forEach(WebSocketClient::close);

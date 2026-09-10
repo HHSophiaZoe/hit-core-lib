@@ -58,7 +58,7 @@ public final class MicrometerWebSocketObserver implements WebSocketObserver {
         recordLifecycleMetrics(event);
         Counter.builder("websocket.client.events")
                 .description("WebSocket client lifecycle events")
-                .tag("provider", event.connectionId().provider())
+                .tag("source", event.connectionId().provider())
                 .tag("connection", event.connectionId().name())
                 .tag("event", event.type().name().toLowerCase())
                 .register(meterRegistry)
@@ -69,7 +69,7 @@ public final class MicrometerWebSocketObserver implements WebSocketObserver {
                     ? value : null;
             Counter.builder("websocket.client.errors")
                     .description("WebSocket client errors")
-                    .tag("provider", event.connectionId().provider())
+                    .tag("source", event.connectionId().provider())
                     .tag("connection", event.connectionId().name())
                     .tag("category", failure == null ? "unknown" : failure.category().name().toLowerCase())
                     .register(meterRegistry)
@@ -82,10 +82,10 @@ public final class MicrometerWebSocketObserver implements WebSocketObserver {
         if (isStaleGeneration(connectionId, generation)) return;
         lastMessageGauge(connectionId).set(clock.instant().getEpochSecond());
         meterRegistry.counter("websocket.client.messages.received",
-                "provider", connectionId.provider(),
+                "source", connectionId.provider(),
                 "connection", connectionId.name()).increment();
         meterRegistry.counter("websocket.client.bytes.received",
-                "provider", connectionId.provider(),
+                "source", connectionId.provider(),
                 "connection", connectionId.name()).increment(Math.max(payloadBytes, 0));
     }
 
@@ -93,10 +93,10 @@ public final class MicrometerWebSocketObserver implements WebSocketObserver {
     public void onMessageSent(ConnectionId connectionId, long generation, int payloadBytes) {
         if (isStaleGeneration(connectionId, generation)) return;
         meterRegistry.counter("websocket.client.messages.sent",
-                "provider", connectionId.provider(),
+                "source", connectionId.provider(),
                 "connection", connectionId.name()).increment();
         meterRegistry.counter("websocket.client.bytes.sent",
-                "provider", connectionId.provider(),
+                "source", connectionId.provider(),
                 "connection", connectionId.name()).increment(Math.max(payloadBytes, 0));
     }
 
@@ -105,7 +105,7 @@ public final class MicrometerWebSocketObserver implements WebSocketObserver {
             AtomicInteger value = new AtomicInteger(metricValue(ConnectionState.STOPPED));
             Gauge.builder("websocket.client.state", value, AtomicInteger::get)
                     .description("Current WebSocket client connection state code")
-                    .tag("provider", id.provider())
+                    .tag("source", id.provider())
                     .tag("connection", id.name())
                     .register(meterRegistry);
             return value;
@@ -122,7 +122,7 @@ public final class MicrometerWebSocketObserver implements WebSocketObserver {
             AtomicLong value = new AtomicLong();
             Gauge.builder("websocket.client.last.message.epoch.seconds", value, AtomicLong::get)
                     .description("Epoch second of the last received WebSocket frame")
-                    .tag("provider", id.provider())
+                    .tag("source", id.provider())
                     .tag("connection", id.name())
                     .register(meterRegistry);
             return value;
@@ -135,7 +135,7 @@ public final class MicrometerWebSocketObserver implements WebSocketObserver {
             if (previous != null && event.occurredAt().isAfter(previous.enteredAt())) {
                 Timer.builder("websocket.client.state.duration")
                         .description("Time spent in a WebSocket lifecycle state")
-                        .tag("provider", id.provider())
+                        .tag("source", id.provider())
                         .tag("connection", id.name())
                         .tag("state", previous.state().name().toLowerCase())
                         .register(meterRegistry)
@@ -155,7 +155,7 @@ public final class MicrometerWebSocketObserver implements WebSocketObserver {
             default -> null;
         };
         if (metric != null) {
-            meterRegistry.counter(metric, "provider", event.connectionId().provider(),
+            meterRegistry.counter(metric, "source", event.connectionId().provider(),
                     "connection", event.connectionId().name()).increment();
         }
         boolean terminalFailure = event.type() == ConnectionEventType.ERROR
@@ -167,7 +167,7 @@ public final class MicrometerWebSocketObserver implements WebSocketObserver {
                 && !reason.initiatedByClient();
         if (terminalFailure || unexpectedClose) {
             meterRegistry.counter("websocket.client.connection.losses",
-                    "provider", event.connectionId().provider(),
+                    "source", event.connectionId().provider(),
                     "connection", event.connectionId().name()).increment();
         }
 
@@ -187,7 +187,7 @@ public final class MicrometerWebSocketObserver implements WebSocketObserver {
     private void recordTimer(String name, ConnectionId id, Duration duration) {
         if (duration.isNegative()) return;
         Timer.builder(name)
-                .tag("provider", id.provider())
+                .tag("source", id.provider())
                 .tag("connection", id.name())
                 .register(meterRegistry)
                 .record(duration);

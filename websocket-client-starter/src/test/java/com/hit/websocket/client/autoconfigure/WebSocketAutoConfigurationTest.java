@@ -1,9 +1,14 @@
 package com.hit.websocket.client.autoconfigure;
 
 import com.hit.websocket.client.connection.WebSocketClientFactory;
+import com.hit.websocket.client.connection.ConnectionId;
 import com.hit.websocket.client.dispatch.MessageDispatcherRegistry;
 import com.hit.websocket.client.dispatch.DispatcherSnapshotQuery;
 import com.hit.websocket.client.observability.ConnectionSnapshotQuery;
+import com.hit.websocket.client.pool.PooledWebSocketConnection;
+import com.hit.websocket.client.pool.WebSocketConnectionPool;
+import com.hit.websocket.client.pool.WebSocketConnectionPoolFactory;
+import com.hit.websocket.client.pool.WebSocketConnectionPoolOptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -20,7 +25,7 @@ class WebSocketAutoConfigurationTest {
     private final ApplicationContextRunner context = new ApplicationContextRunner()
             .withConfiguration(AutoConfigurations.of(WebSocketTransportAutoConfiguration.class,
                     WebSocketConnectionAutoConfiguration.class, WebSocketObservabilityAutoConfiguration.class,
-                    WebSocketDispatcherAutoConfiguration.class));
+                    WebSocketDispatcherAutoConfiguration.class, WebSocketConnectionPoolAutoConfiguration.class));
 
     @Test
     void worksWithoutOptionalMicrometerClasses() {
@@ -32,6 +37,7 @@ class WebSocketAutoConfigurationTest {
                     assertThat(application).hasSingleBean(DispatcherSnapshotQuery.class);
                     assertThat(application).hasSingleBean(WebSocketClientFactory.class);
                     assertThat(application).hasSingleBean(MessageDispatcherRegistry.class);
+                    assertThat(application).hasSingleBean(WebSocketConnectionPoolFactory.class);
                 });
     }
 
@@ -47,14 +53,37 @@ class WebSocketAutoConfigurationTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void dispatcherUsesConfiguredThreadType(boolean virtualThreads) {
+    void managedWorkersUseConfiguredThreadType(boolean virtualThreads) {
         context.withPropertyValues("spring.threads.virtual.enabled=" + virtualThreads)
                 .run(application -> {
                     assertThat(application).hasNotFailed();
-                    CompletableFuture<Boolean> threadType = new CompletableFuture<>();
-                    application.getBean(MessageDispatcherRegistry.class).get(new com.hit.websocket.client.connection.ConnectionId("test", "thread-test"), "thread-test")
-                            .dispatch("key", () -> threadType.complete(Thread.currentThread().isVirtual()));
-                    assertThat(threadType.get(2, TimeUnit.SECONDS)).isEqualTo(virtualThreads);
+                    CompletableFuture<Boolean> dispatcherThreadType = new CompletableFuture<>();
+                    ConnectionId connectionId = new ConnectionId("test", "thread-test");
+                    application.getBean(MessageDispatcherRegistry.class).get(connectionId, "thread-test")
+                            .dispatch("key", () -> dispatcherThreadType.complete(Thread.currentThread().isVirtual()));
+
+                    CompletableFuture<Boolean> poolThreadType = new CompletableFuture<>();
+                    WebSocketConnectionPool<String, TestPoolConnection> pool = application
+                            .getBean(WebSocketConnectionPoolFactory.class)
+                            .create(new WebSocketConnectionPoolOptions(1, 1), sequence -> {
+                                poolThreadType.complete(Thread.currentThread().isVirtual());
+                                return new TestPoolConnection(new ConnectionId("test", "pool-" + sequence));
+                            });
+                    try {
+                        pool.acquire(java.util.List.of("resource"));
+                        assertThat(dispatcherThreadType.get(2, TimeUnit.SECONDS)).isEqualTo(virtualThreads);
+                        assertThat(poolThreadType.get(2, TimeUnit.SECONDS)).isEqualTo(virtualThreads);
+                    } finally {
+                        pool.close();
+                    }
                 });
+    }
+
+    private record TestPoolConnection(ConnectionId connectionId) implements PooledWebSocketConnection {
+        @Override public void connect() { }
+        @Override public void disconnect() { }
+        @Override public boolean isConnected() { return false; }
+        @Override public void maintain() { }
+        @Override public void close() { }
     }
 }

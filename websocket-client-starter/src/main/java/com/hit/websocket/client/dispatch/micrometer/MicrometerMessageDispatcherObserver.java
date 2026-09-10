@@ -8,11 +8,14 @@ import io.micrometer.core.instrument.MeterRegistry;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntSupplier;
 
 public class MicrometerMessageDispatcherObserver implements MessageDispatcherObserver {
 
     private final MeterRegistry meterRegistry;
+    private final Map<QueueId, IntSupplier> queues = new ConcurrentHashMap<>();
 
     public MicrometerMessageDispatcherObserver(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
@@ -20,9 +23,10 @@ public class MicrometerMessageDispatcherObserver implements MessageDispatcherObs
 
     @Override
     public void queueRegistered(ConnectionId connectionId, String dispatcher, int partition, IntSupplier queueSize) {
-        Gauge.builder("websocket.client.dispatch.queue.size", queueSize, IntSupplier::getAsInt)
-                .strongReference(true)
-                .tag("provider", connectionId.provider())
+        QueueId id = new QueueId(connectionId, dispatcher, partition);
+        IntSupplier registeredQueue = queues.computeIfAbsent(id, ignored -> queueSize);
+        Gauge.builder("websocket.client.dispatch.queue.size", registeredQueue, IntSupplier::getAsInt)
+                .tag("source", connectionId.provider())
                 .tag("connection", connectionId.name())
                 .tag("dispatcher", dispatcher)
                 .tag("partition", String.valueOf(partition))
@@ -48,11 +52,13 @@ public class MicrometerMessageDispatcherObserver implements MessageDispatcherObs
 
     private String[] tags(DispatchContext context) {
         return new String[]{
-                "provider", context.connectionId().provider(),
+                "source", context.connectionId().provider(),
                 "connection", context.connectionId().name(),
                 "dispatcher", context.dispatcher(),
                 "category", context.metricCategory(),
                 "partition", String.valueOf(context.partition())
         };
     }
+
+    private record QueueId(ConnectionId connectionId, String dispatcher, int partition) { }
 }
