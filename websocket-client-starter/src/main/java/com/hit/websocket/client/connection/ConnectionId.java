@@ -14,6 +14,15 @@ public record ConnectionId(String provider, String name) {
         return provider + ":" + name;
     }
 
+    public static ConnectionId parse(String value) {
+        Objects.requireNonNull(value, "connectionId cannot be null");
+        int separator = value.indexOf(':');
+        if (separator < 1 || separator == value.length() - 1) {
+            throw new IllegalArgumentException("connectionId must use source:name format");
+        }
+        return new ConnectionId(value.substring(0, separator), value.substring(separator + 1));
+    }
+
     private static String requireText(String value, String field) {
         Objects.requireNonNull(value, field + " cannot be null");
         String normalized = value.trim();
