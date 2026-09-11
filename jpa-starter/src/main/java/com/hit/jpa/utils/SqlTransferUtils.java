@@ -2,7 +2,6 @@ package com.hit.jpa.utils;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Field;
@@ -12,13 +11,8 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
 import java.time.temporal.Temporal;
-import java.time.temporal.TemporalAccessor;
 import java.util.Date;
-import java.util.function.Function;
-import java.util.stream.Stream;
 
 @Slf4j
 @UtilityClass
@@ -38,22 +32,43 @@ public class SqlTransferUtils {
 
     public static Object castValueByClass(String value, Class<?> fieldType) {
         try {
+            Object convertedValue;
             if (String.class.equals(fieldType)) {
                 return value;
-            } else if (Number.class.isAssignableFrom(fieldType)) {
-                return parseNumber(value, fieldType);
+            } else if (isNumberType(fieldType)) {
+                convertedValue = parseNumber(value, fieldType);
             } else if (Boolean.class.equals(fieldType) || boolean.class.equals(fieldType)) {
-                return Boolean.parseBoolean(value);
+                String normalizedValue = value == null ? null : value.trim();
+                if (!"true".equalsIgnoreCase(normalizedValue) && !"false".equalsIgnoreCase(normalizedValue)) {
+                    throw new IllegalArgumentException("Invalid boolean value: " + value);
+                }
+                convertedValue = Boolean.parseBoolean(normalizedValue);
             } else if (Date.class.isAssignableFrom(fieldType) || Temporal.class.isAssignableFrom(fieldType)) {
-                return parseDateTime(value, fieldType);
+                convertedValue = parseDateTime(value, fieldType);
             } else if (fieldType.isEnum()) {
-                return parseEnum(value, fieldType);
+                convertedValue = parseEnum(value, fieldType);
+            } else {
+                return value;
             }
-            return value;
+
+            if (convertedValue == null) {
+                throw new IllegalArgumentException("Cannot convert value '%s' to %s".formatted(value, fieldType.getSimpleName()));
+            }
+            return convertedValue;
         } catch (Exception e) {
-            log.error("Error converting value '{}' to {}", value, fieldType.getName(), e);
-            return null;
+            log.debug("Cannot convert value '{}' to {}", value, fieldType.getName());
+            throw new IllegalArgumentException("Cannot convert value '%s' to %s".formatted(value, fieldType.getSimpleName()), e);
         }
+    }
+
+    private boolean isNumberType(Class<?> fieldType) {
+        return Number.class.isAssignableFrom(fieldType)
+                || fieldType == byte.class
+                || fieldType == short.class
+                || fieldType == int.class
+                || fieldType == long.class
+                || fieldType == float.class
+                || fieldType == double.class;
     }
 
     public static Number parseNumber(String value, Class<?> fieldType) {
@@ -94,37 +109,6 @@ public class SqlTransferUtils {
         }
     }
 
-    public static void main(String[] args) {
-        System.out.println(parseDateTime("2025-03-20T14:30:00.123+07:00", LocalDateTime.class));
-        System.out.println(parseDateTime("2025-03-20T14:30:00.123488885+07:00", LocalDateTime.class));
-        System.out.println(parseDateTime("2025-03-20T14:30:00.123Z", LocalDateTime.class));
-        System.out.println(parseDateTime("2025-03-20T14:30:00.12345886Z", LocalDateTime.class));
-        System.out.println(parseDateTime("2025-03-20T14:30:00+07:00", LocalDateTime.class));
-        System.out.println(parseDateTime("2025-03-20T14:30:00Z", LocalDateTime.class));
-        System.out.println(parseDateTime("2025-03-20T14:30:00Z", LocalDateTime.class));
-        System.out.println(parseDateTime("2025-03-20T14:30:00Z", LocalDateTime.class));
-        System.out.println(parseDateTime("2025-03-20T14:30:00Z", LocalDateTime.class));
-        System.out.println(parseDateTime("2025-03-20T14:30", LocalDateTime.class));
-        System.out.println(parseDateTime("2025-03-20T14:30:01", LocalDateTime.class));
-        System.out.println(parseDateTime("2025-03-20T15:05:47.337067400", LocalDateTime.class));
-        System.out.println(parseDateTime(new Date().toString(), LocalDateTime.class));
-        System.out.println(parseDateTime(String.valueOf(new Date().getTime()), LocalDateTime.class));
-        System.out.println(parseDateTime("2024-03-15 14:30:00 +0700", LocalDateTime.class));
-        System.out.println(parseDateTime("15/Feb/2024 14:30:00 +0700", LocalDateTime.class));
-
-        System.out.println(parseDateTime(LocalDate.now().toString(), LocalDate.class));
-        System.out.println(parseDateTime("21/03/2025 14:30", LocalDate.class));
-        System.out.println(parseDateTime(LocalTime.now().toString(), LocalTime.class));
-
-        System.out.println(parseDateTime("2025-03-21 14:30", LocalDateTime.class));
-        System.out.println(parseDateTime("2025-03-21 14:30:45", LocalDateTime.class));
-        System.out.println(parseDateTime("2025/03/21 14:30", LocalDateTime.class));
-        System.out.println(parseDateTime("2025/03/21 14:30:45", Date.class));
-        System.out.println(parseDateTime("21-03-2025 14:30:45", LocalDateTime.class));
-        System.out.println(parseDateTime("21-03-2025 14:30", Date.class));
-        System.out.println(parseDateTime("21/03/2025 14:30:45", LocalDateTime.class));
-    }
-
     public static Object parseDateTime(String value, Class<?> fieldType) {
         if (value == null || value.trim().isEmpty()) {
             return null;
@@ -140,129 +124,63 @@ public class SqlTransferUtils {
                 return parseLegacyDateType(value, fieldType);
             }
         } catch (Exception e) {
-            log.error("Error parsing date value '{}' to ", fieldType.getName(), e);
+            log.debug("Cannot parse date value '{}' as {}", value, fieldType.getName());
         }
         return null;
     }
 
-    private static final String[] BASIC_DATE_TIME_PATTERNS = {
-            "yyyy-MM-dd HH:mm",
-            "yyyy-MM-dd HH:mm:ss",
-            "yyyy/MM/dd HH:mm",
-            "yyyy/MM/dd HH:mm:ss",
-            "dd-MM-yyyy HH:mm:ss",
-            "dd-MM-yyyy HH:mm",
-            "dd/MM/yyyy HH:mm:ss",
-            "dd/MM/yyyy HH:mm",
-    };
-
-    private static final String[] LEGACY_DATE_TIME_PATTERNS = {
-            "EEE MMM dd HH:mm:ss zzz yyyy", // Example: Wed Jul 04 15:45:23 ICT 2023
-            "yyyy-MM-dd HH:mm:ss Z", // Example: 2024-03-15 14:30:00 +0700
-            "dd/MMM/yyyy HH:mm:ss Z" // Example: 15/Feb/2024 14:30:00 +0700
-    };
-
-    private static final DateTimeFormatter[] DATE_FORMATTERS = {
-            DateTimeFormatter.ISO_LOCAL_DATE,
-            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
-            DateTimeFormatter.ofPattern("yyyy/MM/dd"),
-            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-            DateTimeFormatter.ofPattern("dd-MM-yyyy")
-    };
-
-    private static final DateTimeFormatter[] TIME_FORMATTERS = {
-            DateTimeFormatter.ISO_LOCAL_TIME,
-            DateTimeFormatter.ofPattern("HH:mm:ss.SSS"),
-            DateTimeFormatter.ofPattern("HH:mm:ss"),
-            DateTimeFormatter.ofPattern("HH:mm")
-    };
-
-    private static final DateTimeFormatter[] FLEXIBLE_FORMATTERS;
-
-
-    static {
-        DateTimeFormatter isoLocalFormatter = new DateTimeFormatterBuilder()
-                .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                .optionalStart().appendOffsetId().optionalEnd()
-                .toFormatter();
-        DateTimeFormatter[] basicDateTimeFormatters = Stream.of(BASIC_DATE_TIME_PATTERNS)
-                .map(DateTimeFormatter::ofPattern).toArray(DateTimeFormatter[]::new);
-
-        DateTimeFormatter[] combinedBasicFormatters = new DateTimeFormatter[basicDateTimeFormatters.length + 1];
-        combinedBasicFormatters[0] = isoLocalFormatter;
-        System.arraycopy(basicDateTimeFormatters, 0, combinedBasicFormatters, 1, basicDateTimeFormatters.length);
-
-        DateTimeFormatter[] legacyDateTimeFormatters = Stream.of(LEGACY_DATE_TIME_PATTERNS)
-                .map(DateTimeFormatter::ofPattern).toArray(DateTimeFormatter[]::new);
-        FLEXIBLE_FORMATTERS = ArrayUtils.addAll(combinedBasicFormatters, legacyDateTimeFormatters);
-    }
-
     private Object parseTemporalType(String value, Class<?> fieldType) {
-        try {
-            long epochMilli = Long.parseLong(value);
-            Instant instant = Instant.ofEpochMilli(epochMilli);
-            return convertInstantToTargetDateTime(instant, fieldType);
-        } catch (NumberFormatException e) {
-            return parseTemporalTypeSafe(value, fieldType);
+        if (Instant.class.equals(fieldType)) {
+            return parseInstant(value);
         }
+        return parseTemporalTypeSafe(value, fieldType);
     }
 
     private Object parseTemporalTypeSafe(String value, Class<?> fieldType) {
         if (LocalDateTime.class.equals(fieldType)) {
-            return parseDateTime(value, FLEXIBLE_FORMATTERS, LocalDateTime::from);
+            return LocalDateTime.parse(value, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         } else if (OffsetDateTime.class.equals(fieldType)) {
-            return parseDateTime(value, FLEXIBLE_FORMATTERS, OffsetDateTime::from);
+            return OffsetDateTime.parse(value, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         } else if (ZonedDateTime.class.equals(fieldType)) {
-            return parseDateTime(value, FLEXIBLE_FORMATTERS, ZonedDateTime::from);
+            return ZonedDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
         } else if (LocalDate.class.equals(fieldType)) {
-            return parseDateTime(value, DATE_FORMATTERS, LocalDate::from);
+            return LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE);
         } else if (LocalTime.class.equals(fieldType)) {
-            return parseDateTime(value, TIME_FORMATTERS, LocalTime::from);
-        } else if (Long.class.equals(fieldType)) {
-            LocalDateTime dateTime = parseDateTime(value, FLEXIBLE_FORMATTERS, LocalDateTime::from);
-            if (dateTime != null) {
-                return dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-            }
+            return LocalTime.parse(value, DateTimeFormatter.ISO_LOCAL_TIME);
         }
         return null;
     }
 
+    private Instant parseInstant(String value) {
+        try {
+            return Instant.parse(value);
+        } catch (DateTimeException ignored) {
+            return OffsetDateTime.parse(value, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toInstant();
+        }
+    }
+
     private Object parseLegacyDateType(String value, Class<?> fieldType) {
-        TemporalAccessor temporal = parseDateTime(value, FLEXIBLE_FORMATTERS, Function.identity());
-        if (temporal == null) return null;
+        if (java.sql.Date.class.equals(fieldType)) {
+            return java.sql.Date.valueOf(LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE));
+        }
+        if (Time.class.equals(fieldType)) {
+            return Time.valueOf(LocalTime.parse(value, DateTimeFormatter.ISO_LOCAL_TIME));
+        }
 
         Instant instant;
-        if (temporal.isSupported(ChronoField.YEAR) && temporal.isSupported(ChronoField.MONTH_OF_YEAR) && temporal.isSupported(ChronoField.DAY_OF_MONTH)) {
-            LocalDate localDate = LocalDate.from(temporal);
-            instant = localDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
-        } else {
-            instant = Instant.from(temporal);
+        try {
+            instant = Instant.ofEpochMilli(Long.parseLong(value));
+        } catch (NumberFormatException ignored) {
+            instant = parseInstant(value);
         }
         return convertInstantToTargetDateTime(instant, fieldType);
     }
 
-    private <T> T parseDateTime(String value, DateTimeFormatter[] formatters, Function<TemporalAccessor, T> converter) {
-        for (DateTimeFormatter formatter : formatters) {
-            try {
-                TemporalAccessor parsed = formatter.parse(value);
-                return converter.apply(parsed);
-            } catch (Exception e) {
-                // Skip
-            }
-        }
-        return null;
-    }
-
     private Object convertInstantToTargetDateTime(Instant instant, Class<?> fieldType) {
+        if (Instant.class.equals(fieldType)) return instant;
         if (Date.class.equals(fieldType)) return new Date(instant.toEpochMilli());
-        if (java.sql.Date.class.equals(fieldType)) return new java.sql.Date(instant.toEpochMilli());
-        if (Timestamp.class.equals(fieldType)) return new Timestamp(instant.toEpochMilli());
-        if (Time.class.equals(fieldType)) return new Time(instant.toEpochMilli());
+        if (Timestamp.class.equals(fieldType)) return Timestamp.from(instant);
         if (Long.class.equals(fieldType)) return instant.toEpochMilli();
-        if (LocalDateTime.class.equals(fieldType)) return LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-        if (LocalDate.class.equals(fieldType)) return LocalDate.ofInstant(instant, ZoneId.systemDefault());
-        if (ZonedDateTime.class.equals(fieldType)) return ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
-        if (OffsetDateTime.class.equals(fieldType)) return OffsetDateTime.ofInstant(instant, ZoneId.systemDefault());
         return null;
     }
 

@@ -20,6 +20,7 @@
         <java.version>21</java.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.proc>full</maven.compiler.proc>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!--    Core    -->
@@ -40,12 +41,13 @@
         <kafka-starter.version>1.0</kafka-starter.version>
         <jpa-starter.version>1.0</jpa-starter.version>
         <storage-starter.version>1.0</storage-starter.version>
-        <websocket-starter.version>1.0</websocket-starter.version>
+        <websocket-client-starter.version>1.0</websocket-client-starter.version>
 
         <!--    Logging    -->
         <log4j-json.version>2.24.3</log4j-json.version>
 
         <!--    Tools    -->
+        <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <jakarta-json.version>2.0.1</jakarta-json.version>
         <httpclient5.version>5.4.1</httpclient5.version>
@@ -61,7 +63,7 @@
         <module>storage-starter</module>
         <module>api-starter</module>
         <module>core-common-starter</module>
-        <module>websocket-starter</module>
+        <module>websocket-client-starter</module>
         <module>test-core-lib</module>
     </modules>
 
@@ -165,4 +167,30 @@
             <version>5.2.3</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-maven-version</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>[3.9.16]</version>
+                                    <message>Build requires Maven 3.9.16. Run it with the repository Maven Wrapper.</message>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

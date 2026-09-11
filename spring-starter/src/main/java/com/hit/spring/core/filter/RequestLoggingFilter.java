@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Slf4j
 @Order(2)
@@ -38,10 +38,10 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         void process(RequestLogData requestData, ResponseLogData responseData);
     }
 
-    public record RequestLogData(String ip, String url, String header, String body, LocalDateTime requestTime) {
+    public record RequestLogData(String ip, String url, String header, String body, Instant requestTime) {
     }
 
-    public record ResponseLogData(String url, String header, Integer status, String body, LocalDateTime responseTime) {
+    public record ResponseLogData(String url, String header, Integer status, String body, Instant responseTime) {
     }
 
     @Override
@@ -51,7 +51,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        LocalDateTime requestTime = LocalDateTime.now();
+        Instant requestTime = Instant.now();
         try {
             CachedBodyRequestWrapper requestWrapper = new CachedBodyRequestWrapper(request);
             ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
@@ -81,7 +81,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
                     LoggingUtils.getHeaders(responseWrapper),
                     responseWrapper.getStatus(),
                     LoggingUtils.getResponseBody(responseWrapper),
-                    LocalDateTime.now()
+                    Instant.now()
             );
             StringBuilder responseStr = new StringBuilder();
             responseStr.append("\n======> HTTP Response: ");

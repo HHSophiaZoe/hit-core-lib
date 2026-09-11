@@ -17,7 +17,6 @@ import com.hit.storage.data.FileEntryDTO;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -53,9 +52,7 @@ public class FtpStorageCommandImpl implements BaseStorageCommand {
                 .map(file -> FileEntryDTO.builder()
                         .fileName(file.getName())
                         .filePath(FileUtils.joinPaths(path, file.getName()))
-                        .lastModifiedDate(file.getTimestamp().toInstant()
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDateTime())
+                        .lastModifiedAt(file.getTimestamp().toInstant())
                         .build())
                 .toList();
     }
@@ -72,9 +69,7 @@ public class FtpStorageCommandImpl implements BaseStorageCommand {
                 .map(file -> FileEntryDTO.builder()
                         .fileName(file.getName())
                         .filePath(FileUtils.joinPaths(path, file.getName()))
-                        .lastModifiedDate(file.getTimestamp().toInstant()
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDateTime())
+                        .lastModifiedAt(file.getTimestamp().toInstant())
                         .build())
                 .toList();
     }

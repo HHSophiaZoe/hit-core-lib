@@ -47,11 +47,17 @@ public class SqlPredicateUtils {
             Field field = SqlTransferUtils.findField(entityClass, columnName);
             if (field == null) throw new QueryException("Invalid column: " + columnName);
 
-            Class<?> columnType = field.getType();
-            Object convertedValue = convertFilterValue(operator, value, columnType);
-            if (convertedValue == null) {
+            if (operator == Operator.NULL) {
                 return cb.isNull(root.get(columnName));
             }
+            if (operator == Operator.NOT_NULL) {
+                return cb.isNotNull(root.get(columnName));
+            }
+
+            Class<?> columnType = field.getType();
+            Object convertedValue = Objects.requireNonNull(
+                    convertFilterValue(operator, value, columnType),
+                    () -> "Converted filter value must not be null: " + columnName);
 
             return switch (operator) {
                 case EQUAL -> cb.equal(root.get(columnName), convertedValue);
@@ -60,12 +66,13 @@ public class SqlPredicateUtils {
                 case LIKE -> createPredicateLikeOperator(root, cb, columnName, convertedValue);
                 case GREATER_THAN, LESS_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL ->
                         createPredicateComparisonOperator(root, cb, columnName, convertedValue, operator);
-                case NULL -> cb.isNull(root.get(columnName));
-                case NOT_NULL -> cb.isNotNull(root.get(columnName));
+                case NULL, NOT_NULL -> throw new IllegalStateException("Null operator was not handled");
                 default -> null;
             };
+        } catch (QueryException e) {
+            throw e;
         } catch (Exception e) {
-            throw new QueryException("Error processing filter for column: " + columnName, e);
+            throw new QueryException("Invalid filter value '%s' for column '%s'".formatted(value, columnName), e);
         }
     }
 

@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Getter
 @Builder
@@ -17,6 +17,6 @@ public class FileEntryDTO {
 
     private String filePath;
 
-    private LocalDateTime lastModifiedDate;
+    private Instant lastModifiedAt;
 
 }

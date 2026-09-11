@@ -17,7 +17,8 @@ public class Filter {
     @Parameter(description = "The name of property want to filter.")
     private String name;
 
-    @Parameter(description = "Filter value")
+    @Parameter(description = "Filter value. Instant fields require ISO-8601 with Z or an explicit offset; " +
+            "local date/time fields require ISO local values without an offset.")
     private String value;
 
     public Filter(String operator, String name) {

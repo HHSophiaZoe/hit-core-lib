@@ -12,8 +12,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.*;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -54,7 +52,7 @@ public class LocalStorageCommandImpl implements BaseStorageCommand {
         return FileEntryDTO.builder()
                 .fileName(path.getFileName().toString())
                 .filePath(path.toAbsolutePath().toString())
-                .lastModifiedDate(LocalDateTime.ofInstant(Files.getLastModifiedTime(path).toInstant(), ZoneId.systemDefault()))
+                .lastModifiedAt(Files.getLastModifiedTime(path).toInstant())
                 .build();
     }
 
