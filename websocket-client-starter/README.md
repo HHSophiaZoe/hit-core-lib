@@ -331,6 +331,48 @@ Pool dùng first-fit và reference counting. Acquire trùng resource chỉ tăng
 khi reference cuối cùng được đóng. Adapter chịu trách nhiệm encode subscribe/unsubscribe, auth, resubscribe
 sau reconnect và gọi `maintainConnections()` theo policy ứng dụng.
 
+### Hợp đồng capacity và allocation
+
+`acquire(...)` là thao tác đồng bộ và được tuần tự hóa bởi coordinator của pool. Collection đầu vào không được
+`null`, rỗng hoặc chứa phần tử `null`; resource trùng trong cùng request được loại bỏ nhưng vẫn giữ thứ tự đầu
+tiên xuất hiện.
+
+Pool xử lý một request theo các quy tắc sau:
+
+1. Resource đã tồn tại không chiếm thêm capacity; pool chỉ tăng reference count và trả lại connection đang giữ
+   resource đó.
+2. Pool tính toàn bộ số resource mới trước khi thay đổi allocation. Nếu số mới vượt capacity còn lại của toàn
+   pool, toàn bộ request bị từ chối bằng `IllegalStateException`.
+3. Pool không cấp phát một phần, không chờ capacity, không xếp hàng và không tự loại resource cũ. Caller phải
+   giảm request hoặc `release(...)` registration không còn sử dụng rồi thử lại.
+4. Khi global capacity còn đủ, từng resource mới được đưa vào connection đầu tiên còn slot. Nếu connection đó
+   đầy giữa request, phần còn lại được đưa sang connection tiếp theo; nếu chưa có connection phù hợp, pool tạo
+   connection mới theo nhu cầu.
+5. Pool không có cấu hình `maxConnections` riêng. Số connection hữu dụng được giới hạn gián tiếp bởi
+   `maxTotalResources` và `maxResourcesPerConnection`.
+
+Ví dụ với `maxResourcesPerConnection = 200`, `maxTotalResources = 2_000`:
+
+| Trạng thái trước request | Request | Kết quả |
+|---|---:|---|
+| Connection hiện tại còn 100 slot, global capacity còn ít nhất 200 | 200 resource mới | Điền 100 resource vào connection hiện tại và tạo connection mới cho 100 resource còn lại |
+| Mọi connection hiện tại đều đầy, global capacity còn ít nhất 200 | 200 resource mới | Tạo connection mới chứa 200 resource |
+| Pool đang giữ 1.900 resource | 200 resource mới | Từ chối toàn bộ request; 100 slot còn lại không được cấp phát một phần |
+| Pool đang giữ đủ 2.000 resource | Resource đã tồn tại | Thành công và tăng reference count, vì không tiêu thụ capacity mới |
+| Pool đang giữ đủ 2.000 resource | Có ít nhất một resource mới | Từ chối toàn bộ request |
+
+Nếu connection factory hoặc một bước allocation nội bộ phát sinh runtime exception, pool hoàn tác reference
+count và resource vừa thêm trong request đó trước khi trả lỗi. Việc gửi protocol message và gọi `connect()` nằm
+ngoài transaction allocation; adapter phải release allocation nếu những bước này thất bại.
+
+`release(...)` giảm reference count. Chỉ lần release cuối cùng mới trả slot và xuất hiện trong
+`PoolRelease.removed()`. Connection hết resource xuất hiện trong `unusedConnections()` để adapter disconnect;
+object connection vẫn nằm trong pool và có thể được first-fit tái sử dụng cho request sau. Resource không tồn
+tại được bỏ qua.
+
+Pool không tự di chuyển resource giữa các connection khi connection mất kết nối. Resource vẫn gắn với cùng
+`ConnectionId`; adapter phải reconnect và resubscribe trên connection đó.
+
 Mỗi lần đăng ký nên trả về `WebSocketRegistration` để caller chủ động kết thúc đúng phần tài nguyên mình đã
 đăng ký. `DefaultWebSocketRegistration` nằm trong package `registration`, dùng được cho client không công khai
 connection, client có một connection và client sử dụng connection pool. Nó giữ immutable snapshot các
