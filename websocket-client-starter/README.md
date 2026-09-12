@@ -331,6 +331,30 @@ Pool dùng first-fit và reference counting. Acquire trùng resource chỉ tăng
 khi reference cuối cùng được đóng. Adapter chịu trách nhiệm encode subscribe/unsubscribe, auth, resubscribe
 sau reconnect và gọi `maintainConnections()` theo policy ứng dụng.
 
+Mỗi lần đăng ký nên trả về `WebSocketRegistration` để caller chủ động kết thúc đúng phần tài nguyên mình đã
+đăng ký. `DefaultWebSocketRegistration` nằm trong package `registration`, dùng được cho client không công khai
+connection, client có một connection và client sử dụng connection pool. Nó giữ immutable snapshot các
+`ConnectionId` nếu có và bảo đảm hành động đóng chỉ chạy một lần.
+
+```java
+// Client không cần công khai connection
+WebSocketRegistration hiddenConnection = new DefaultWebSocketRegistration(this::unsubscribe);
+
+// Client có một connection
+WebSocketRegistration singleConnection = new DefaultWebSocketRegistration(connectionId, this::unsubscribe);
+
+// Adapter sử dụng connection pool
+DefaultWebSocketRegistration pooledRegistration = new DefaultWebSocketRegistration(() -> release(resources));
+PoolAllocation<ChannelResource> allocation = pool.acquire(resources);
+pooledRegistration.assignConnections(allocation.connectionIds());
+
+// Khi caller không còn cần luồng dữ liệu này
+singleConnection.close();
+```
+
+`WebSocketRegistration` không kế thừa `AutoCloseable`, vì subscription thường sống lâu hơn scope của một
+method và được đóng theo lifecycle của component, không phải bằng `try-with-resources` ngay tại nơi đăng ký.
+
 Pool coordinator được starter chọn platform/virtual thread theo cấu hình Spring. Nó chỉ tuần tự hóa allocation;
 không chạy callback provider trong coordinator để tránh deadlock khi callback gọi ngược vào pool.
 
