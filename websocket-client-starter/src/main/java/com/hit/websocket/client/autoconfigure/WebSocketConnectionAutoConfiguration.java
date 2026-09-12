@@ -12,6 +12,7 @@ import java.util.List;
 
 @AutoConfiguration(after = {WebSocketTransportAutoConfiguration.class, WebSocketObservabilityAutoConfiguration.class})
 public class WebSocketConnectionAutoConfiguration {
+
     @Bean(destroyMethod = "close")
     @ConditionalOnMissingBean
     WebSocketClientFactory webSocketClientFactory(
