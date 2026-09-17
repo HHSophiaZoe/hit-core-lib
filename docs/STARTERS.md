@@ -263,5 +263,5 @@ Tất cả versions được quản lý trong parent POM:
 ./mvnw -f hit-core-lib/spring-starter/pom.xml clean install
 
 # Build service using starters
-./mvnw clean package -pl hit-trading-stock-service -am
+./mvnw clean package -pl hit-trading-securities-service -am
 ```
