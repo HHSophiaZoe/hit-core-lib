@@ -4,27 +4,29 @@ import com.hit.common.model.ResponseStatusCode;
 import org.springframework.http.HttpStatus;
 
 public interface ResponseStatusCodeEnum {
-    ResponseStatusCode SUCCESS = ResponseStatusCode.builder().code("00").httpStatus(HttpStatus.OK).build();
-    ResponseStatusCode INTERNAL_GENERAL_SERVER_ERROR = ResponseStatusCode.builder().code("GENERAL_SERVER_ERROR").httpStatus(HttpStatus.INTERNAL_SERVER_ERROR).build();
-    ResponseStatusCode BUSINESS_ERROR = ResponseStatusCode.builder().code("BUSINESS_ERROR").httpStatus(HttpStatus.BAD_REQUEST).build();
-    ResponseStatusCode VALIDATION_ERROR = ResponseStatusCode.builder().code("VALIDATION_ERROR").httpStatus(HttpStatus.BAD_REQUEST).build();
-    ResponseStatusCode RESOURCE_NOT_FOUND = ResponseStatusCode.builder().code("RESOURCE_NOT_FOUND").httpStatus(HttpStatus.BAD_REQUEST).build();
-    ResponseStatusCode SHOW_RESOURCES_NOT_FOUND = ResponseStatusCode.builder().code("SHOW_RESOURCES_NOT_FOUND").httpStatus(HttpStatus.BAD_REQUEST).build();
+    ResponseStatusCode SUCCESS = code("SUCCESS", HttpStatus.OK);
+    ResponseStatusCode INTERNAL_GENERAL_SERVER_ERROR = code("GENERAL_SERVER_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
+    ResponseStatusCode BUSINESS_ERROR = code("BUSINESS_ERROR", HttpStatus.BAD_REQUEST);
+    ResponseStatusCode VALIDATION_ERROR = code("VALIDATION_ERROR", HttpStatus.BAD_REQUEST);
+    ResponseStatusCode RESOURCE_NOT_FOUND = code("RESOURCE_NOT_FOUND", HttpStatus.BAD_REQUEST);
+    ResponseStatusCode SHOW_RESOURCES_NOT_FOUND = code("SHOW_RESOURCES_NOT_FOUND", HttpStatus.BAD_REQUEST);
 
     // Auth
-    ResponseStatusCode UNAUTHORIZED_ERROR = ResponseStatusCode.builder().code("AUTH001").httpStatus(HttpStatus.UNAUTHORIZED).build();
-    ResponseStatusCode FORBIDDEN_ERROR = ResponseStatusCode.builder().code("AUTH002").httpStatus(HttpStatus.FORBIDDEN).build();
-    ResponseStatusCode NOT_PERMISSION_DELETE_UPDATE = ResponseStatusCode.builder().code("AUTH003").httpStatus(HttpStatus.FORBIDDEN).build();
-    ResponseStatusCode INCORRECT_EMAIL = ResponseStatusCode.builder().code("AUTH004").httpStatus(HttpStatus.BAD_REQUEST).build();
-    ResponseStatusCode INCORRECT_EMAIL_OR_PHONE = ResponseStatusCode.builder().code("AUTH005").httpStatus(HttpStatus.BAD_REQUEST).build();
-    ResponseStatusCode PASSWORD_INCORRECT = ResponseStatusCode.builder().code("AUTH006").httpStatus(HttpStatus.BAD_REQUEST).build();
-    ResponseStatusCode ACCOUNT_LOCKED = ResponseStatusCode.builder().code("AUTH007").httpStatus(HttpStatus.LOCKED).build();
-    ResponseStatusCode ACCOUNT_NOT_ENABLED = ResponseStatusCode.builder().code("AUTH008").httpStatus(HttpStatus.LOCKED).build();
-    ResponseStatusCode INVALID_TOKEN = ResponseStatusCode.builder().code("AUTH009").httpStatus(HttpStatus.BAD_REQUEST).build();
-    ResponseStatusCode EXPIRED_TOKEN = ResponseStatusCode.builder().code("AUTH010").httpStatus(HttpStatus.BAD_REQUEST).build();
-    ResponseStatusCode INVALID_REFRESH_TOKEN = ResponseStatusCode.builder().code("AUTH011").httpStatus(HttpStatus.BAD_REQUEST).build();
-    ResponseStatusCode EMAIL_OR_PHONE_REGISTERED = ResponseStatusCode.builder().code("AUTH012").httpStatus(HttpStatus.BAD_REQUEST).build();
-    ResponseStatusCode NEW_PASSWORD_MATCHES_OLD_PASSWORD = ResponseStatusCode.builder().code("AUTH013").httpStatus(HttpStatus.BAD_REQUEST).build();
+    ResponseStatusCode UNAUTHORIZED_ERROR = code("AUTH001", HttpStatus.UNAUTHORIZED);
+    ResponseStatusCode FORBIDDEN_ERROR = code("AUTH002", HttpStatus.FORBIDDEN);
+    ResponseStatusCode NOT_PERMISSION_DELETE_UPDATE = code("AUTH003", HttpStatus.FORBIDDEN);
+    ResponseStatusCode INCORRECT_EMAIL = code("AUTH004", HttpStatus.BAD_REQUEST);
+    ResponseStatusCode INCORRECT_EMAIL_OR_PHONE = code("AUTH005", HttpStatus.BAD_REQUEST);
+    ResponseStatusCode PASSWORD_INCORRECT = code("AUTH006", HttpStatus.BAD_REQUEST);
+    ResponseStatusCode ACCOUNT_LOCKED = code("AUTH007", HttpStatus.LOCKED);
+    ResponseStatusCode ACCOUNT_NOT_ENABLED = code("AUTH008", HttpStatus.LOCKED);
+    ResponseStatusCode INVALID_TOKEN = code("AUTH009", HttpStatus.BAD_REQUEST);
+    ResponseStatusCode EXPIRED_TOKEN = code("AUTH010", HttpStatus.BAD_REQUEST);
+    ResponseStatusCode INVALID_REFRESH_TOKEN = code("AUTH011", HttpStatus.BAD_REQUEST);
+    ResponseStatusCode EMAIL_OR_PHONE_REGISTERED = code("AUTH012", HttpStatus.BAD_REQUEST);
+    ResponseStatusCode NEW_PASSWORD_MATCHES_OLD_PASSWORD = code("AUTH013", HttpStatus.BAD_REQUEST);
 
-
+    private static ResponseStatusCode code(String value, HttpStatus status) {
+        return ResponseStatusCode.builder().code(value).httpStatus(status).build();
+    }
 }
