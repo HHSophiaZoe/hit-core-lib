@@ -29,4 +29,4 @@ Từ repository gốc:
 
 ## Tài liệu
 
-- [Chi tiết các starter](docs/STARTERS.md)
+- [Chi tiết các starter](docs/starters.md)
