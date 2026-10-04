@@ -27,11 +27,9 @@ public class SqlUtils {
         }
         List<Sort.Order> orders = request.getSorts().stream()
                 .map(order -> {
-                    if (BooleanUtils.isTrue(order.isAscending())) {
-                        return Sort.Order.desc(order.getName());
-                    } else {
-                        return Sort.Order.asc(order.getName());
-                    }
+                    return BooleanUtils.isTrue(order.isAscending())
+                            ? Sort.Order.asc(order.getName())
+                            : Sort.Order.desc(order.getName());
                 })
                 .toList();
         return PageRequest.of(request.getPage(), request.getPageSize(), Sort.by(orders));
