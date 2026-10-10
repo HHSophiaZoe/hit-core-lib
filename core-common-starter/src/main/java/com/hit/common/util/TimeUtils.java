@@ -25,6 +25,7 @@ public class TimeUtils {
     public static final String ISO_OFFSET_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ssXXX";
     public static final String ISO_OFFSET_DATE_TIME_2_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
     public static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    public static final String DATE_TIME_MILLIS_PATTERN = "yyyy-MM-dd HH:mm:ss.SSS";
     public static final String DATE_TIME_PATTERN_VN = "dd/MM/yyyy HH:mm:ss";
     public static final String TIME_DATE_PATTERN = "HH:mm:ss yyyy-MM-dd";
     public static final String YEAR_MONTH_PATTERN = "yyyy-MM";
