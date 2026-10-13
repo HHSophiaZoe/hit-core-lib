@@ -136,6 +136,12 @@ public class TelegramChatBotServiceImpl extends DefaultLongPollingUpdateConsumer
 
         TitleStyle titleStyle = TitleStyle.BOLD_DIVIDER; // ⭐ default đẹp nhất
 
+        // HTML: title là text thuần nên escape hết; content do caller viết HTML nên chỉ làm sạch phần Telegram không hiểu.
+        if (telegramRequest.getParseMode() == TelegramMessageRequest.ParseMode.HTML) {
+            title = title != null ? TelegramHtmlUtils.escape(title) : null;
+            content = TelegramHtmlUtils.sanitize(content);
+        }
+
         String renderedTitle = title != null
                 ? this.renderTitle(title, titleStyle, telegramRequest.getParseMode())
                 : null;

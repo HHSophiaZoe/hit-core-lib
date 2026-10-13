@@ -2,6 +2,7 @@ package com.hit.chatbot;
 
 import com.hit.chatbot.annotation.ChatBotMessageListener;
 import com.hit.chatbot.annotation.ChatBotMessageListener.Platform;
+import com.hit.chatbot.data.response.CommandHelp;
 import com.hit.chatbot.data.response.MessageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,17 @@ public class ChatBotMessageDispatcher {
                         method.getName(), beanName, Arrays.toString(annotation.platforms()), annotation.commands());
             }
         }
+    }
+
+    /**
+     * Các command đang lắng nghe ở channel, dùng để dựng /help.
+     */
+    public List<CommandHelp> getCommandHelps(Platform platform, String chatId) {
+        return listeners.stream()
+                .filter(listener -> listener.isPlatformSupported(platform) && listener.isListeningChat(chatId))
+                .flatMap(listener -> Arrays.stream(listener.resolvedCommands)
+                        .map(command -> new CommandHelp(command, listener.annotation.description())))
+                .toList();
     }
 
     public void dispatchTelegramUpdate(Update update) {
@@ -131,13 +143,13 @@ public class ChatBotMessageDispatcher {
             return Arrays.asList(this.annotation.platforms()).contains(platform);
         }
 
+        private boolean isListeningChat(String id) {
+            return this.resolvedIds == null || this.resolvedIds.length == 0 || Arrays.asList(this.resolvedIds).contains(id);
+        }
+
         private boolean isMatchesMessage(String id, String command) {
-            // Check chatId
-            if (this.resolvedIds != null && this.resolvedIds.length > 0) {
-                boolean chatIdMatches = Arrays.asList(this.resolvedIds).contains(id);
-                if (!chatIdMatches) {
-                    return false;
-                }
+            if (!this.isListeningChat(id)) {
+                return false;
             }
 
             // Check command
