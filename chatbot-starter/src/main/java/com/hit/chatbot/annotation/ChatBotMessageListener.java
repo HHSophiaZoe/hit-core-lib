@@ -31,6 +31,11 @@ public @interface ChatBotMessageListener {
      * - SpEL: "#{@commandConfig.getStartCommand()}"
      */
     String[] commands() default {};
+
+    /**
+     * Mô tả command, hiển thị trong /help của channel.
+     */
+    String description() default "";
     
     enum Platform {
         TELEGRAM, DISCORD
