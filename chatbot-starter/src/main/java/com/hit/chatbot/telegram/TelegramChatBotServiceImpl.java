@@ -3,7 +3,6 @@ package com.hit.chatbot.telegram;
 import com.hit.chatbot.ChatBotService;
 import com.hit.chatbot.MessageSplitter;
 import com.hit.chatbot.data.request.MessageRequest;
-import com.hit.chatbot.data.request.TelegramMessageRequest;
 import com.hit.chatbot.telegram.api.TelegramApiClient;
 import com.hit.chatbot.telegram.api.TelegramSendMessage;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +39,7 @@ public class TelegramChatBotServiceImpl implements ChatBotService {
     public void sendMessage(String chatId, String content) {
         try {
             log.trace("Sending message to Telegram chatId: {}, message: {}", chatId, content);
-            this.send(chatId, MessageSplitter.splitText(content, MAX_MESSAGE_LENGTH), null, false, false);
+            this.send(chatId, MessageSplitter.splitText(content, MAX_MESSAGE_LENGTH), null);
         } catch (Exception e) {
             log.error("Failed to send message to Telegram chatId: {}", chatId, e);
         }
@@ -55,14 +54,7 @@ public class TelegramChatBotServiceImpl implements ChatBotService {
     public void sendMessage(MessageRequest request) {
         try {
             log.trace("Sending message to Telegram: {}", request);
-            boolean disableNotification = false;
-            boolean protectContent = false;
-            if (request instanceof TelegramMessageRequest telegramRequest) {
-                disableNotification = telegramRequest.isDisableNotification();
-                protectContent = telegramRequest.isProtectContent();
-            }
-            this.send(request.getChatId(), TelegramHtmlUtils.split(this.toHtml(request), MAX_MESSAGE_LENGTH),
-                    PARSE_MODE_HTML, disableNotification, protectContent);
+            this.send(request.getChatId(), TelegramHtmlUtils.split(this.toHtml(request), MAX_MESSAGE_LENGTH), PARSE_MODE_HTML);
         } catch (Exception e) {
             log.error("Failed to send message to Telegram chatId: {}", request.getChatId(), e);
         }
@@ -77,8 +69,7 @@ public class TelegramChatBotServiceImpl implements ChatBotService {
         this.sendMessage(userId, content);
     }
 
-    private void send(String chatId, List<String> parts, String parseMode,
-                      boolean disableNotification, boolean protectContent) {
+    private void send(String chatId, List<String> parts, String parseMode) {
         Pair<String, Integer> chatIdAndSubChatId = this.getChatIdAndSubChatId(chatId);
         for (String part : parts) {
             telegramClient.sendMessage(TelegramSendMessage.builder()
@@ -86,8 +77,6 @@ public class TelegramChatBotServiceImpl implements ChatBotService {
                     .messageThreadId(chatIdAndSubChatId.getRight())
                     .text(part)
                     .parseMode(parseMode)
-                    .disableNotification(disableNotification ? Boolean.TRUE : null)
-                    .protectContent(protectContent ? Boolean.TRUE : null)
                     .build());
         }
     }

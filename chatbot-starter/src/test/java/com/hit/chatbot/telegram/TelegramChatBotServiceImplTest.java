@@ -2,7 +2,6 @@ package com.hit.chatbot.telegram;
 
 import com.hit.chatbot.ChatBotService;
 import com.hit.chatbot.data.request.MessageRequest;
-import com.hit.chatbot.data.request.TelegramMessageRequest;
 import com.hit.chatbot.telegram.api.TelegramApiClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,21 +74,17 @@ class TelegramChatBotServiceImplTest {
     }
 
     @Test
-    void requestIsSentAsHtmlWithEscapedTitleAndFlags() {
+    void requestIsSentAsHtmlWithEscapedTitle() {
         server.enqueue("sendMessage", SENT);
 
-        service.sendMessage(TelegramMessageRequest.builder()
+        service.sendMessage(MessageRequest.builder()
                 .chatId("-100123")
                 .title("A<B")
                 .content("<b>x</b> 1 < 2")
-                .disableNotification(true)
-                .protectContent(true)
                 .build());
 
         JsonNode body = sent(0);
         assertThat(body.path("parse_mode").asString()).isEqualTo("HTML");
-        assertThat(body.path("disable_notification").asBoolean()).isTrue();
-        assertThat(body.path("protect_content").asBoolean()).isTrue();
         assertThat(body.path("text").asString()).isEqualTo("<b>A&lt;B</b>\n───────────────\n<b>x</b> 1 &lt; 2");
     }
 
@@ -101,7 +96,6 @@ class TelegramChatBotServiceImplTest {
 
         assertThat(sent(0).path("parse_mode").asString()).isEqualTo("HTML");
         assertThat(sent(0).path("text").asString()).isEqualTo("<b>Report</b>\n───────────────\ndone");
-        assertThat(sent(0).has("disable_notification")).isFalse();
     }
 
     @Test
@@ -127,7 +121,7 @@ class TelegramChatBotServiceImplTest {
         String content = "<b>" + "chữ đậm\n".repeat(1000) + "</b>";
         this.answerSent(5);
 
-        service.sendMessage(TelegramMessageRequest.builder().chatId("1").content(content).build());
+        service.sendMessage(MessageRequest.builder().chatId("1").content(content).build());
 
         assertThat(server.requests()).hasSizeGreaterThan(1);
         for (int i = 0; i < server.requests().size(); i++) {
@@ -186,7 +180,7 @@ class TelegramChatBotServiceImplTest {
                 {"ok":false,"error_code":400,"description":"Bad Request"}""");
 
         service.sendMessage("1", "x");
-        service.sendMessage(TelegramMessageRequest.builder().chatId("1").content("x").build());
+        service.sendMessage(MessageRequest.builder().chatId("1").content("x").build());
 
         assertThat(server.requests()).hasSize(2);
     }
