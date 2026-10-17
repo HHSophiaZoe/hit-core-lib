@@ -4,17 +4,15 @@ import com.zaxxer.hikari.HikariConfig;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy;
+import org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.hibernate.SpringImplicitNamingStrategy;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Setter
 @Getter
-@Configuration
 @ConfigurationProperties("datasource.default")
 public class DataSourceDefaultProperties extends HikariConfig {
 
@@ -30,7 +28,7 @@ public class DataSourceDefaultProperties extends HikariConfig {
         result.put(Hibernate.SHOW_SQL_CONFIG, hibernate.getShowSql());
         result.put(Hibernate.FORMAT_SQL_CONFIG, hibernate.getFormatSql());
         result.put(Hibernate.USE_SQL_COMMENTS_CONFIG, hibernate.getUseSqlComments());
-        result.put(Hibernate.ENBALE_LAZY_LOAD_NO_TRANS, hibernate.getEnableLazyLoadNoTrans());
+        result.put(Hibernate.ENABLE_LAZY_LOAD_NO_TRANS, hibernate.getEnableLazyLoadNoTrans());
         result.put(Hibernate.JDBC_TIME_ZONE_CONFIG, hibernate.getJdbcTimeZone());
         result.put(Hibernate.IMPLICIT_NAMING_STRATEGY_CONFIG, hibernate.getImplicitNamingStrategy());
         result.put(Hibernate.PHYSICAL_NAMING_STRATEGY_CONFIG, hibernate.getPhysicalNamingStrategy());
@@ -49,7 +47,7 @@ public class DataSourceDefaultProperties extends HikariConfig {
         public static final String SHOW_SQL_CONFIG = "hibernate.show_sql";
         public static final String FORMAT_SQL_CONFIG = "hibernate.format_sql";
         public static final String USE_SQL_COMMENTS_CONFIG = "hibernate.use_sql_comments";
-        public static final String ENBALE_LAZY_LOAD_NO_TRANS = "hibernate.enable_lazy_load_no_trans";
+        public static final String ENABLE_LAZY_LOAD_NO_TRANS = "hibernate.enable_lazy_load_no_trans";
         public static final String JDBC_TIME_ZONE_CONFIG = "hibernate.jdbc.time_zone";
         public static final String IMPLICIT_NAMING_STRATEGY_CONFIG = "hibernate.implicit_naming_strategy";
         public static final String PHYSICAL_NAMING_STRATEGY_CONFIG = "hibernate.physical_naming_strategy";
@@ -68,7 +66,7 @@ public class DataSourceDefaultProperties extends HikariConfig {
 
         private String implicitNamingStrategy = SpringImplicitNamingStrategy.class.getName();
 
-        private String physicalNamingStrategy = CamelCaseToUnderscoresNamingStrategy.class.getName();
+        private String physicalNamingStrategy = PhysicalNamingStrategySnakeCaseImpl.class.getName();
 
         @Getter
         @AllArgsConstructor

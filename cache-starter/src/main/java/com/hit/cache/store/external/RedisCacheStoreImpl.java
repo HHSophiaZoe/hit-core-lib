@@ -2,7 +2,8 @@ package com.hit.cache.store.external;
 
 import com.hit.cache.config.properties.CacheConfigProperties;
 import com.hit.cache.config.serializer.RedisSerializer;
-import com.hit.cache.helper.CacheContext;
+import com.hit.cache.helper.CacheKeyGenerator;
+import com.hit.cache.helper.RedisScripts;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +27,15 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
     protected CacheConfigProperties cacheConfigProp;
 
     @Setter(onMethod_ = {@Autowired})
+    protected CacheKeyGenerator cacheKeyGenerator;
+
+    @Setter(onMethod_ = {@Autowired})
     protected RedisSerializer redisSerializer;
 
     protected static final String OK = "OK";
 
     protected String keyGen(String key) {
-        return this.cacheConfigProp.getAppCache() + this.cacheConfigProp.getDelimiter() + key;
+        return this.cacheKeyGenerator.build(key);
     }
 
     @Override
@@ -52,7 +56,7 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
     public <T> boolean putIfAbsent(String key, T value, long expireSeconds) {
         try {
             return OK.equals(redisTemplate.execute(
-                    CacheContext.getSetIfAbsentScript(), Collections.singletonList(this.keyGen(key)),
+                    RedisScripts.SET_IF_ABSENT, Collections.singletonList(this.keyGen(key)),
                     redisSerializer.serializeToJson(value), String.valueOf(expireSeconds)
             ));
         } catch (Exception ex) {
@@ -86,8 +90,8 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
             entries.put(hashKeyRaw, hashValueRaw);
         }
         this.redisTemplate.execute((RedisCallback<Object>) connection -> {
-            connection.hMSet(rawKey, entries);
-            connection.expire(rawKey, expire);
+            connection.hashCommands().hMSet(rawKey, entries);
+            connection.keyCommands().expire(rawKey, expire);
             return null;
         });
     }
@@ -107,7 +111,7 @@ public abstract class RedisCacheStoreImpl implements BaseExternalCacheStore {
         log.debug("RedisCacheTemplate get: key = {}", keyGen);
         Map<byte[], byte[]> entries =
                 this.redisTemplate.execute((RedisCallback<Map<byte[], byte[]>>) connection -> {
-                    return connection.hGetAll(redisSerializer.serializeToRawJson(keyGen));
+                    return connection.hashCommands().hGetAll(redisSerializer.serializeToRawJson(keyGen));
                 });
         if (entries == null || entries.isEmpty()) {
             log.debug("Key {} does not exist", keyGen);

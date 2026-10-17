@@ -9,12 +9,14 @@ import java.util.regex.Pattern;
 @UtilityClass
 public class StringUtils {
 
+    private static final Pattern COMBINING_DIACRITICAL_MARKS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+
     public static boolean isEmptyOrBlank(CharSequence cs) {
         return isEmpty(cs) || isBlank(cs);
     }
 
     public static boolean isNotEmptyOrBlank(CharSequence cs) {
-        return !isEmpty(cs) || !isBlank(cs);
+        return !isBlank(cs);
     }
 
     public static boolean isEmpty(CharSequence cs) {
@@ -86,8 +88,7 @@ public class StringUtils {
             return input;
         }
         String temp = Normalizer.normalize(input, Normalizer.Form.NFD);
-        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-        return pattern.matcher(temp)
+        return COMBINING_DIACRITICAL_MARKS.matcher(temp)
                 .replaceAll("")
                 .replace('đ', 'd').replace('Đ', 'D')
                 .replaceAll("\\P{Print}", "");
@@ -102,12 +103,12 @@ public class StringUtils {
     }
 
     public static String buildLikeOperatorUpper(String value) {
-        if (isNotEmptyOrBlank(value)) return null;
+        if (isBlank(value)) return null;
         return "%".concat(value.trim().toUpperCase()).concat("%");
     }
 
     public static String buildLikeOperator(String value) {
-        if (isNotEmptyOrBlank(value)) return null;
+        if (isBlank(value)) return null;
         return "%".concat(value.trim()).concat("%");
     }
 }

@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.time.Clock;
 
-@AutoConfiguration(afterName = "org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration")
+@AutoConfiguration(afterName = "org.springframework.boot.micrometer.metrics.autoconfigure.CompositeMeterRegistryAutoConfiguration")
 @EnableConfigurationProperties(WebSocketClientDispatcherProperties.class)
 public class WebSocketDispatcherAutoConfiguration {
 

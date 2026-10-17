@@ -1,14 +1,13 @@
 package com.hit.jpa;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.function.Supplier;
 
-@Component
-@RequiredArgsConstructor
+/**
+ * Runs a block in a transaction ({@code execute}) or in a new one ({@code executeOut}); rolls back on any exception.
+ */
 public class TransactionSupport {
 
     @Transactional(rollbackFor = Exception.class)

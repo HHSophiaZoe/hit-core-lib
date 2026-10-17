@@ -2,7 +2,6 @@ package com.hit.common.util;
 
 import lombok.experimental.UtilityClass;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -21,7 +20,7 @@ public class CollectionUtils {
             V value = values.next();
             result.put(keyFunction.apply(value), value);
         }
-        return new HashMap<>(result);
+        return result;
     }
 
     public static <K, V> Map<K, V> toMap(V[] values, Function<? super V, K> keyFunction) {
@@ -29,7 +28,7 @@ public class CollectionUtils {
         for (V value : values) {
             result.put(keyFunction.apply(value), value);
         }
-        return new HashMap<>(result);
+        return result;
     }
 
 }

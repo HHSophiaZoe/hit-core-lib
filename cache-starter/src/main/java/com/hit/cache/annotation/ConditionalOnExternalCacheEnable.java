@@ -1,14 +1,17 @@
 package com.hit.cache.annotation;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.TYPE, ElementType.METHOD})
+/**
+ * Matches when {@code cache.external.enable=true} (Redis through Redisson).
+ */
 @Retention(RetentionPolicy.RUNTIME)
-@Conditional(ExternalCacheEnabledCondition.class)
+@Target({ElementType.TYPE, ElementType.METHOD})
+@ConditionalOnBooleanProperty("cache.external.enable")
 public @interface ConditionalOnExternalCacheEnable {
 }

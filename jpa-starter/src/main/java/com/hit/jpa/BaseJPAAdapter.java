@@ -199,9 +199,7 @@ public abstract class BaseJPAAdapter<M, E, ID, R extends BaseJPARepository<E, ID
     @Override
     @Transactional
     public void saveAll(Collection<M> models) {
-        for (M model : models) {
-            this.save(model);
-        }
+        this.jpaRepository.saveAll(this.mapper.toEntities(models));
     }
 
     @Override
@@ -217,10 +215,7 @@ public abstract class BaseJPAAdapter<M, E, ID, R extends BaseJPARepository<E, ID
     @Override
     @Transactional
     public void saveAllAndFlush(Collection<M> models) {
-        for (M model : models) {
-            this.save(model);
-        }
-        this.jpaRepository.flush();
+        this.jpaRepository.saveAllAndFlush(this.mapper.toEntities(models));
     }
 
     @Override

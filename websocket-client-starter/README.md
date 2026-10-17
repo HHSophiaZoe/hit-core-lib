@@ -1,6 +1,6 @@
 # WebSocket Client Starter
 
-Thư viện WebSocket client dùng chung cho Java 21 và Spring Boot. Starter cung cấp:
+Thư viện WebSocket client dùng chung cho Java 25 và Spring Boot. Starter cung cấp:
 
 - Kết nối và lifecycle thread-safe, không dùng lifecycle lock trong client.
 - Reconnect có exponential backoff, jitter và giới hạn số lần thử.

@@ -107,10 +107,13 @@ public class ReflectUtils {
 
     public static Object invokeMethodByName(Object obj, String methodName, Object... args) {
         try {
-            Method method = obj.getClass().getMethod(methodName);
-            if (args == null || args.length == 0)
-                return invokeMethod(method, method);
-            return invokeMethod(obj, method, args);
+            Object[] arguments = args == null ? new Object[0] : args;
+            Method method = Arrays.stream(obj.getClass().getMethods())
+                    .filter(candidate -> candidate.getName().equals(methodName)
+                            && candidate.getParameterCount() == arguments.length)
+                    .findFirst()
+                    .orElseThrow(() -> new NoSuchMethodException(obj.getClass().getName() + "." + methodName));
+            return invokeMethod(obj, method, arguments);
         } catch (Exception e) {
             log.error("[fail to invoke method] {} cause: {}", methodName, e.getMessage(), e);
             throw new ReflectException(e.getMessage(), e);

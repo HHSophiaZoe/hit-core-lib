@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.5</version>
+        <version>4.1.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -14,161 +14,265 @@
     <version>1.0</version>
     <packaging>pom</packaging>
     <name>core</name>
-    <description>Hit core lib</description>
+    <description>Hit core lib: parent and dependency management for the hit starters</description>
 
+    <!--
+        This pom is the parent of every starter and of the applications that use them.
+        It only manages versions and build plugins; each module declares the dependencies it uses.
+    -->
     <properties>
-        <java.version>21</java.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <java.version>25</java.version>
         <maven.compiler.proc>full</maven.compiler.proc>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Boot 4 no longer exposes this property; keep it equal to the parent version -->
+        <spring-boot.version>4.1.1</spring-boot.version>
 
-        <!--    Core    -->
-        <spring-boot.version>3.4.5</spring-boot.version>
-        <rxjava3.version>3.1.8</rxjava3.version>
-        <rxjava-stream.version>1.2.1</rxjava-stream.version>
-        <redisson.version>3.35.0</redisson.version>
-        <jsonwebtoken.version>0.13.0</jsonwebtoken.version>
-        <cloudinary-http44.version>1.32.2</cloudinary-http44.version>
-        <dependency.classifier>jakarta</dependency.classifier>
+        <!-- Overrides of versions managed by Spring Boot (newer patch releases) -->
+        <lombok.version>1.18.48</lombok.version>
+        <commons-lang3.version>3.21.0</commons-lang3.version>
+        <commons-codec.version>1.23.0</commons-codec.version>
 
-        <!--    Core Lib    -->
-        <spring-starter.version>1.0</spring-starter.version>
-        <core-common-starter.version>1.0</core-common-starter.version>
-        <api-starter.version>1.0</api-starter.version>
-        <cache-starter.version>1.0</cache-starter.version>
-        <chatbot-starter.version>1.0</chatbot-starter.version>
-        <kafka-starter.version>1.0</kafka-starter.version>
-        <jpa-starter.version>1.0</jpa-starter.version>
-        <storage-starter.version>1.0</storage-starter.version>
-        <websocket-client-starter.version>1.0</websocket-client-starter.version>
-
-        <!--    Logging    -->
-        <log4j-json.version>2.24.3</log4j-json.version>
-
-        <!--    Tools    -->
-        <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
+        <!-- Versions not managed by Spring Boot -->
+        <commons-collections4.version>4.6.0</commons-collections4.version>
+        <commons-io.version>2.22.0</commons-io.version>
         <mapstruct.version>1.6.3</mapstruct.version>
-        <jakarta-json.version>2.0.1</jakarta-json.version>
-        <httpclient5.version>5.4.1</httpclient5.version>
-        <okhttp.version>4.12.0</okhttp.version>
+        <openfeign-querydsl.version>7.7</openfeign-querydsl.version>
+        <springdoc.version>3.1.1</springdoc.version>
+        <!-- Same swagger version springdoc 3.1.1 is built with -->
+        <swagger-annotations.version>2.2.55</swagger-annotations.version>
+        <redisson.version>4.8.0</redisson.version>
+        <jjwt.version>0.13.0</jjwt.version>
+        <msgpack.version>0.9.12</msgpack.version>
+        <poi.version>5.5.1</poi.version>
+        <ipaddress.version>5.6.2</ipaddress.version>
+        <guava.version>33.7.2-jre</guava.version>
+        <jda.version>6.7.0</jda.version>
+        <minio.version>9.0.3</minio.version>
+        <!-- okhttp 5 publishes its jar as okhttp-jvm; the plain okhttp artifact is an empty Gradle redirect for Maven -->
+        <okhttp.version>5.5.0</okhttp.version>
+
+        <!-- Plugins -->
+        <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
     </properties>
 
     <modules>
+        <module>core-common-starter</module>
         <module>spring-starter</module>
         <module>jpa-starter</module>
+        <module>api-starter</module>
         <module>cache-starter</module>
         <module>chatbot-starter</module>
         <module>kafka-starter</module>
         <module>storage-starter</module>
-        <module>api-starter</module>
-        <module>core-common-starter</module>
         <module>websocket-client-starter</module>
-        <module>test-core-lib</module>
     </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- ===== Hit starters ===== -->
+            <dependency>
+                <groupId>com.hit</groupId>
+                <artifactId>core-common-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.hit</groupId>
+                <artifactId>spring-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.hit</groupId>
+                <artifactId>jpa-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.hit</groupId>
+                <artifactId>api-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.hit</groupId>
+                <artifactId>cache-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.hit</groupId>
+                <artifactId>chatbot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.hit</groupId>
+                <artifactId>kafka-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.hit</groupId>
+                <artifactId>storage-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.hit</groupId>
+                <artifactId>websocket-client-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- ===== Logging: spring-starter brings log4j2, so no Boot starter may pull logback in ===== -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter</artifactId>
+                <version>${spring-boot.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-starter-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- ===== Utilities ===== -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons-collections4.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+            <!-- Only comes in through MinIO; pinned to the latest release -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.seancfoley</groupId>
+                <artifactId>ipaddress</artifactId>
+                <version>${ipaddress.version}</version>
+            </dependency>
+
+            <!-- ===== Mapping and persistence ===== -->
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.openfeign.querydsl</groupId>
+                <artifactId>querydsl-jpa</artifactId>
+                <version>${openfeign-querydsl.version}</version>
+            </dependency>
+
+            <!-- ===== Web: OpenAPI and JWT ===== -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations-jakarta</artifactId>
+                <version>${swagger-annotations.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+
+            <!-- ===== Cache: Redis through Redisson ===== -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-data-41</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+
+            <!-- ===== Serialization ===== -->
+            <dependency>
+                <groupId>org.msgpack</groupId>
+                <artifactId>msgpack-core</artifactId>
+                <version>${msgpack.version}</version>
+            </dependency>
+
+            <!-- ===== Office ===== -->
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+
+            <!-- ===== Chatbot ===== -->
+            <dependency>
+                <groupId>net.dv8tion</groupId>
+                <artifactId>JDA</artifactId>
+                <version>${jda.version}</version>
+            </dependency>
+
+            <!-- ===== Storage: MinIO and its HTTP client ===== -->
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp-jvm</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-logging</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
-
-        <!--    test    -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit-jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!--    logging    -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-log4j2</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-layout-template-json</artifactId>
-            <version>${log4j-json.version}</version>
-        </dependency>
-
-        <!--    Swagger    -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.6.0</version>
-        </dependency>
-
-        <!--    Commons    -->
-        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.20.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-collections4 -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-collections4</artifactId>
-            <version>4.5.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>1.20.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.20.0</version>
-        </dependency>
-
-        <!--    Tools    -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct</artifactId>
-            <version>${mapstruct.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.f4b6a3</groupId>
-            <artifactId>ulid-creator</artifactId>
-            <version>5.2.3</version>
-        </dependency>
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>${mapstruct.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.springframework.boot</groupId>
+                                <artifactId>spring-boot-configuration-processor</artifactId>
+                                <version>${spring-boot.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -186,6 +290,41 @@
                                     <version>[3.9.16]</version>
                                     <message>Build requires Maven 3.9.16. Run it with the repository Maven Wrapper.</message>
                                 </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>ban-legacy-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <!-- Replaced in the Boot 4 upgrade; must not come back, even transitively -->
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>com.querydsl</exclude>
+                                        <exclude>org.springframework.retry:spring-retry</exclude>
+                                        <exclude>org.msgpack:jackson-dataformat-msgpack</exclude>
+                                        <exclude>org.telegram</exclude>
+                                        <exclude>io.jsonwebtoken:jjwt</exclude>
+                                        <exclude>io.jsonwebtoken:jjwt-jackson</exclude>
+                                        <exclude>javax.xml.bind</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-starter-logging</exclude>
+                                        <exclude>ch.qos.logback</exclude>
+                                    </excludes>
+                                    <message>Use OpenFeign QueryDSL, Spring Framework @Retryable, msgpack-core, the chatbot TelegramApiClient, jjwt-api/jjwt-impl with the Jackson 3 JSON adapter, jakarta.xml.bind and log4j2 instead.</message>
+                                </bannedDependencies>
+                                <!-- Our code uses Jackson 3; Jackson 2 may only arrive inside third-party libraries (JDA, MinIO, swagger) -->
+                                <bannedDependencies>
+                                    <searchTransitive>false</searchTransitive>
+                                    <excludes>
+                                        <exclude>com.fasterxml.jackson.core:jackson-databind</exclude>
+                                        <exclude>com.fasterxml.jackson.core:jackson-core</exclude>
+                                        <exclude>com.fasterxml.jackson.datatype</exclude>
+                                    </excludes>
+                                    <message>Declare tools.jackson (Jackson 3) dependencies instead of Jackson 2.</message>
+                                </bannedDependencies>
                             </rules>
                         </configuration>
                     </execution>

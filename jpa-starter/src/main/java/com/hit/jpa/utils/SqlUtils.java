@@ -81,7 +81,7 @@ public class SqlUtils {
         return new PageResModel.PagingMeta(
                 pages.getTotalElements(), pages.getTotalPages(),
                 request.getPage(), request.getPageSize(),
-                isLoadMoreAble(pages.getTotalElements(), request.getPageSize(), request.getPageSize())
+                isLoadMoreAble(pages.getTotalElements(), request.getPageSize(), request.getPage() * request.getPageSize())
         );
     }
 
@@ -90,8 +90,11 @@ public class SqlUtils {
         return (ID) entityManager.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
     }
 
-    private static boolean isLoadMoreAble(Long total, Integer pageSize, Integer offset) {
-        return total != null && (total > (pageSize + offset));
+    /**
+     * True when rows remain after the current page.
+     */
+    private static boolean isLoadMoreAble(Long total, int pageSize, int offset) {
+        return total != null && total > (long) offset + pageSize;
     }
 
 }

@@ -1,42 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>com.hit</groupId>
-		<artifactId>hit-core-lib</artifactId>
-		<version>1.0</version>
-	</parent>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<artifactId>api-starter</artifactId>
-	<version>1.0</version>
-	<name>api-starter</name>
-	<description>Api starter</description>
+    <parent>
+        <groupId>com.hit</groupId>
+        <artifactId>hit-core-lib</artifactId>
+        <version>1.0</version>
+    </parent>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.hit</groupId>
-			<artifactId>spring-starter</artifactId>
-			<version>${spring-starter.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.hit</groupId>
-			<artifactId>jpa-starter</artifactId>
-			<version>${jpa-starter.version}</version>
-		</dependency>
-	</dependencies>
+    <artifactId>api-starter</artifactId>
+    <name>api-starter</name>
+    <description>Base CRUD controller and service on top of spring-starter and jpa-starter</description>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>${maven-compiler-plugin.version}</version>
-				<configuration>
-					<source>${maven.compiler.source}</source>
-					<target>${maven.compiler.target}</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <dependencies>
+        <!-- ===== Hit starters ===== -->
+        <dependency>
+            <groupId>com.hit</groupId>
+            <artifactId>spring-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.hit</groupId>
+            <artifactId>jpa-starter</artifactId>
+        </dependency>
+    </dependencies>
 </project>

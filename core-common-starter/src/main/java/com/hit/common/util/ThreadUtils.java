@@ -7,11 +7,15 @@ import java.time.Duration;
 @UtilityClass
 public class ThreadUtils {
 
+    /**
+     * Sleeps; when interrupted, keeps the interrupt flag and throws {@link IllegalStateException}.
+     */
     public static void sleep(Duration duration) {
         try {
-            Thread.sleep(duration.toMillis());
+            Thread.sleep(duration);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while sleeping", e);
         }
     }
 

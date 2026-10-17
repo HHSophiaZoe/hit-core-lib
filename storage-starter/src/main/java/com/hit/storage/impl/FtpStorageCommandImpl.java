@@ -1,7 +1,7 @@
 package com.hit.storage.impl;
 
 import com.hit.common.util.FileUtils;
-import io.micrometer.common.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTPFile;

@@ -1,9 +1,8 @@
 package com.hit.storage.impl;
 
-import com.google.common.io.ByteStreams;
 import com.hit.common.util.FileUtils;
 import io.minio.*;
-import io.minio.http.Method;
+import io.minio.Http;
 import io.minio.messages.Item;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,9 @@ import java.util.stream.StreamSupport;
 @SuppressWarnings({"java:S112"})
 public class MinioStorageCommandImpl implements BaseStorageCommand {
 
-    private MinioClient minioClient;
+    private static final long UPLOAD_PART_SIZE = 10L * 1024 * 1024;
+
+    private final MinioClient minioClient;
 
     private final String bucketName;
 
@@ -101,7 +102,7 @@ public class MinioStorageCommandImpl implements BaseStorageCommand {
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(bucketName)
                     .object(dirPath)
-                    .stream(InputStream.nullInputStream(), 0, -1)
+                    .data(new byte[0], 0)
                     .build());
             log.debug("[MinIO] Directory {} create successfully.", dirPath);
         } catch (Exception e) {
@@ -115,12 +116,13 @@ public class MinioStorageCommandImpl implements BaseStorageCommand {
     public ByteArrayResource readFile(String filePath) {
         Objects.requireNonNull(filePath, "File path must not be null");
         try {
-            InputStream is = minioClient.getObject(GetObjectArgs.builder()
+            byte[] content;
+            try (InputStream is = minioClient.getObject(GetObjectArgs.builder()
                     .bucket(bucketName)
                     .object(filePath)
-                    .build());
-            byte[] content = ByteStreams.toByteArray(is);
-            is.close();
+                    .build())) {
+                content = is.readAllBytes();
+            }
             log.info("File {} read successfully.", filePath);
             return new ByteArrayResource(content) {
                 @Override
@@ -141,7 +143,7 @@ public class MinioStorageCommandImpl implements BaseStorageCommand {
         try {
             return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
-                            .method(Method.GET)
+                            .method(Http.Method.GET)
                             .bucket(bucketName)
                             .object(filePath)
                             .expiry(this.expireTime, TimeUnit.DAYS)
@@ -162,7 +164,8 @@ public class MinioStorageCommandImpl implements BaseStorageCommand {
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(bucketName)
                     .object(filePath)
-                    .stream(is, is.available(), 0L)
+                    // available() is not the stream length; unknown size uploads in 10 MiB parts
+                    .stream(is, null, UPLOAD_PART_SIZE)
                     .build());
             log.debug("[MinIO] File {} upload successfully.", filePath);
         } catch (Exception e) {
@@ -193,8 +196,8 @@ public class MinioStorageCommandImpl implements BaseStorageCommand {
         Objects.requireNonNull(outputFilePath, "Output file path must not be null");
         Objects.requireNonNull(filePaths, "File path must not be null");
         try {
-            List<ComposeSource> composeSources = new ArrayList<>();
-            filePaths.forEach(filePath -> composeSources.add(ComposeSource.builder()
+            List<SourceObject> composeSources = new ArrayList<>();
+            filePaths.forEach(filePath -> composeSources.add(SourceObject.builder()
                     .bucket(bucketName)
                     .object(filePath)
                     .build()));
@@ -218,7 +221,7 @@ public class MinioStorageCommandImpl implements BaseStorageCommand {
         minioClient.copyObject(CopyObjectArgs.builder()
                 .bucket(bucketName)
                 .object(destinationFilePath)
-                .source(CopySource.builder()
+                .source(SourceObject.builder()
                         .bucket(bucketName)
                         .object(sourceFilePath)
                         .build())
@@ -234,9 +237,7 @@ public class MinioStorageCommandImpl implements BaseStorageCommand {
     }
 
     @Override
-    public void close() {
-        if (this.minioClient != null) {
-            this.minioClient = null;
-        }
+    public void close() throws Exception {
+        minioClient.close();
     }
 }

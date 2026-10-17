@@ -1,50 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>com.hit</groupId>
-		<artifactId>hit-core-lib</artifactId>
-		<version>1.0</version>
-	</parent>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<artifactId>chatbot-starter</artifactId>
-	<version>1.0</version>
-	<name>chatbot-starter-library</name>
-	<description>Chatbot starter library</description>
+    <parent>
+        <groupId>com.hit</groupId>
+        <artifactId>hit-core-lib</artifactId>
+        <version>1.0</version>
+    </parent>
 
-	<dependencies>
-		<!-- Discord API -->
-		<dependency>
-			<groupId>net.dv8tion</groupId>
-			<artifactId>JDA</artifactId>
-			<version>5.6.1</version>
-		</dependency>
-		<!-- Telegram Bot API -->
-		<dependency>
-			<groupId>org.telegram</groupId>
-			<artifactId>telegrambots-springboot-longpolling-starter</artifactId>
-			<version>10.1.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.telegram</groupId>
-			<artifactId>telegrambots-client</artifactId>
-			<version>10.1.1</version>
-		</dependency>
-	</dependencies>
+    <artifactId>chatbot-starter</artifactId>
+    <name>chatbot-starter</name>
+    <description>Chatbot starter: Telegram Bot API client and Discord (JDA)</description>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>${maven-compiler-plugin.version}</version>
-				<configuration>
-					<source>${maven.compiler.source}</source>
-					<target>${maven.compiler.target}</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <dependencies>
+        <!-- ===== Spring Boot ===== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <!-- Jackson 3 for the Telegram API client -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-jackson</artifactId>
+        </dependency>
 
+        <!-- ===== Discord ===== -->
+        <dependency>
+            <groupId>net.dv8tion</groupId>
+            <artifactId>JDA</artifactId>
+        </dependency>
+
+        <!-- ===== Utilities ===== -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <!-- ===== Logging ===== -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+    </dependencies>
 </project>

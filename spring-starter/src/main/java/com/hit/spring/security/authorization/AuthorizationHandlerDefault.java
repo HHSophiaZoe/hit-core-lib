@@ -1,36 +1,31 @@
 package com.hit.spring.security.authorization;
 
-import com.hit.spring.config.properties.SecurityProperties;
-import com.hit.spring.context.SecurityContext;
+import com.hit.spring.security.SecurityProperties;
+import com.hit.spring.security.SecurityContext;
 import com.hit.common.model.UserPrincipal;
-import com.hit.spring.core.exception.ResponseStatusCodeEnum;
-import com.hit.spring.core.factory.GeneralResponse;
-import com.hit.spring.core.factory.InternalResponse;
-import com.hit.spring.service.http.HttpService;
-import com.hit.spring.util.ApiUtils;
+import com.hit.spring.exception.ResponseStatusCodeEnum;
+import com.hit.spring.web.response.GeneralResponse;
+import com.hit.spring.http.InternalResponse;
+import com.hit.spring.http.HttpService;
+import com.hit.spring.http.ApiUtils;
 import com.hit.spring.util.DataUtils;
-import com.hit.spring.util.IPAddressUtils;
+import com.hit.spring.web.IPAddressUtils;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Component;
 
+/**
+ * Asks {@code app.security.filter.api-check-permission-url} whether the current user may call the request.
+ */
 @Slf4j
-@Component
-@ConditionalOnMissingBean(AuthorizationHandler.class)
-@ConditionalOnProperty(value = {"app.security.filter.authorization"}, havingValue = "true")
+@RequiredArgsConstructor
 public class AuthorizationHandlerDefault implements AuthorizationHandler {
 
-    @Setter(onMethod_ = {@Autowired})
-    private HttpService httpService;
+    private final HttpService httpService;
 
-    @Setter(onMethod_ = {@Autowired})
-    private SecurityProperties securityProperties;
+    private final SecurityProperties securityProperties;
 
     @Override
     public boolean handle(HttpServletRequest request) {

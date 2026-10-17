@@ -1,0 +1,129 @@
+package com.hit.spring.json;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import com.hit.spring.exception.BusinessException;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Encode/decode helpers over the application {@link ObjectMapper}; {@link #getObjectMapper()} gives static access to it.
+ */
+@Slf4j
+public class JsonMapper {
+
+    private static ObjectMapper OBJECT_MAPPER;
+
+    public JsonMapper(ObjectMapper objectMapper) {
+        JsonMapper.OBJECT_MAPPER = objectMapper;
+    }
+
+    public static ObjectMapper getObjectMapper() {
+        return OBJECT_MAPPER;
+    }
+
+    /**
+     * Encode a Object to JSON using the underlying Jackson mapper.
+     *
+     * @param obj a Object
+     * @return a String containing the JSON representation of the given Object.
+     * @throws BusinessException if a property cannot be encoded.
+     */
+    public String encode(Object obj) throws BusinessException {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(obj);
+        } catch (Exception e) {
+            log.error("encode {} ERROR {}", obj, e.getMessage(), e);
+            throw new JsonSerializationException("Failed to encode as JSON: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Encode a Object to JSON using the underlying Jackson mapper.
+     *
+     * @param obj a Object
+     * @return a byte[] containing the JSON representation of the given Object.
+     * @throws BusinessException if a property cannot be encoded.
+     */
+    public byte[] encodeAsByte(Object obj) {
+        try {
+            return OBJECT_MAPPER.writeValueAsBytes(obj);
+        } catch (Exception e) {
+            log.error("encode {} ERROR {}", obj, e.getMessage(), e);
+            throw new JsonSerializationException("Failed to encode as byte: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Decode a given JSON string to a Object of the given class type.
+     *
+     * @param str   the JSON string.
+     * @param clazz the class to map to.
+     * @param <T>   the generic type.
+     * @return an instance of T
+     * @throws BusinessException when there is a parsing or invalid mapping.
+     */
+    public <T> T decodeValue(String str, Class<T> clazz) {
+        try {
+            return OBJECT_MAPPER.readValue(str, clazz);
+        } catch (JacksonException e) {
+            log.error("decodeValue {} ERROR {}", str, e.getMessage(), e);
+            throw new JsonDeserializeException("Failed to decode: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Decode a given JSON string to a Object of the given type.
+     *
+     * @param str  the JSON string.
+     * @param type the type to map to.
+     * @param <T>  the generic type.
+     * @return an instance of T
+     * @throws BusinessException when there is a parsing or invalid mapping.
+     */
+    public <T> T decodeValue(String str, TypeReference<T> type) {
+        try {
+            return OBJECT_MAPPER.readValue(str, type);
+        } catch (Exception e) {
+            log.error("decodeValue {} ERROR {}", str, e.getMessage(), e);
+            throw new JsonDeserializeException("Failed to decode: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Decode a given JSON byte to a Object of the given type.
+     *
+     * @param src  the JSON byte.
+     * @param type the type to map to.
+     * @param <T>  the generic type.
+     * @return an instance of T
+     * @throws BusinessException when there is a parsing or invalid mapping.
+     */
+    public <T> T decodeValue(byte[] src, Class<T> type) {
+        try {
+            return OBJECT_MAPPER.readValue(src, type);
+        } catch (Exception e) {
+            log.error("decodeValue ERROR {}", e.getMessage(), e);
+            throw new JsonDeserializeException("Failed to decode: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Decode a given JSON byte to a Object of the given type.
+     *
+     * @param src  the JSON byte.
+     * @param type the type to map to.
+     * @param <T>  the generic type.
+     * @return an instance of T
+     * @throws BusinessException when there is a parsing or invalid mapping.
+     */
+    public <T> T decodeValue(byte[] src, TypeReference<T> type) {
+        try {
+            return OBJECT_MAPPER.readValue(src, type);
+        } catch (Exception e) {
+            log.error("decodeValue ERROR {}", e.getMessage(), e);
+            throw new JsonDeserializeException("Failed to decode: " + e.getMessage(), e);
+        }
+    }
+
+}

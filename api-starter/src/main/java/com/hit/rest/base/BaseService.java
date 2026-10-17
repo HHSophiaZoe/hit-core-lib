@@ -4,8 +4,8 @@ import com.hit.common.model.pagination.PageResModel;
 import com.hit.common.model.pagination.PageableReqModel;
 import com.hit.common.model.pagination.PageableSearchReqModel;
 import com.hit.jpa.BaseRepository;
-import com.hit.spring.core.exception.BaseResponseException;
-import com.hit.spring.core.exception.ResponseStatusCodeEnum;
+import com.hit.spring.exception.BaseResponseException;
+import com.hit.spring.exception.ResponseStatusCodeEnum;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,8 +64,8 @@ public abstract class BaseService<M, ID, Repo extends BaseRepository<M, ID>> imp
         }
 
         List<ID> idNotExists = new ArrayList<>();
-        for (ID id : allId) {
-            if (!ids.contains(id)) {
+        for (ID id : ids) {
+            if (!allId.contains(id)) {
                 idNotExists.add(id);
             }
         }

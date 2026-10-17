@@ -1,12 +1,12 @@
 package com.hit.spring.security.annotation.resolver;
 
-import com.hit.spring.context.SecurityContext;
+import com.hit.spring.security.SecurityContext;
 import com.hit.common.model.SimpleSecurityUser;
 import com.hit.common.model.UserPrincipal;
-import com.hit.spring.core.exception.BaseResponseException;
-import com.hit.spring.core.exception.ResponseStatusCodeEnum;
+import com.hit.spring.exception.BaseResponseException;
+import com.hit.spring.exception.ResponseStatusCodeEnum;
 import com.hit.spring.security.annotation.UserPrincipalRequest;
-import com.hit.spring.util.IPAddressUtils;
+import com.hit.spring.web.IPAddressUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;

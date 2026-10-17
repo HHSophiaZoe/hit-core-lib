@@ -1,10 +1,17 @@
 package com.hit.chatbot.annotation;
 
-import org.springframework.context.annotation.Conditional;
-import java.lang.annotation.*;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 
-@Target({ElementType.TYPE, ElementType.METHOD})
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Matches when {@code chatbot.telegram.enable=true}.
+ */
 @Retention(RetentionPolicy.RUNTIME)
-@Conditional(TelegramEnabledCondition.class)
+@Target({ElementType.TYPE, ElementType.METHOD})
+@ConditionalOnBooleanProperty("chatbot.telegram.enable")
 public @interface ConditionalOnTelegramEnable {
 }

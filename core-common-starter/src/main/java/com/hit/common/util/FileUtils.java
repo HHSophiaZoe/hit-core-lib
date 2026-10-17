@@ -85,7 +85,7 @@ public class FileUtils {
         return Files.readAllBytes(path);
     }
 
-    public List<Path> createDirectories(String... paths) throws IOException {
+    public static List<Path> createDirectories(String... paths) throws IOException {
         List<Path> pathList = new ArrayList<>();
         for (String pathFolder : paths) {
             pathList.add(createDirectories(pathFolder));
@@ -93,7 +93,7 @@ public class FileUtils {
         return pathList;
     }
 
-    public Path createDirectories(String path) throws IOException {
+    public static Path createDirectories(String path) throws IOException {
         Path pathResult = Paths.get(validPath(path));
         if (!Files.exists(pathResult)) {
             Files.createDirectories(pathResult);
@@ -122,7 +122,7 @@ public class FileUtils {
             Files.copy(is, filePath, StandardCopyOption.REPLACE_EXISTING);
             return filePath;
         } catch (IOException ioe) {
-            throw new IOException("Could not save file: " + filename);
+            throw new IOException("Could not save file: " + filename, ioe);
         }
     }
 
@@ -137,20 +137,18 @@ public class FileUtils {
             fileList.add(sourceFolder);
         }
 
-        if (CollectionUtils.isNotEmpty(fileList)) {
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
-            try {
-                for (File fileFolder : fileList) {
-                    addToZip(fileFolder.getParentFile().getPath(), zipOutputStream, fileFolder);
-                }
-                zipOutputStream.close();
-                return byteArrayOutputStream.toByteArray();
-            } catch (IOException ioe) {
-                throw new IOException("Something went wrong, file cannot be compressed", ioe);
-            }
+        if (CollectionUtils.isEmpty(fileList)) {
+            return new byte[0];
         }
-        return new byte[0];
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+            for (File fileFolder : fileList) {
+                addToZip(fileFolder.getParentFile().getPath(), zipOutputStream, fileFolder);
+            }
+        } catch (IOException ioe) {
+            throw new IOException("Something went wrong, file cannot be compressed", ioe);
+        }
+        return byteArrayOutputStream.toByteArray();
     }
 
     /**
@@ -159,17 +157,15 @@ public class FileUtils {
      */
     public static byte[] zipFileByPath(String... filePaths) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
-        try {
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
             for (String pathFile : filePaths) {
                 File file = getFile(pathFile);
                 addToZip(file.getParentFile().getPath(), zipOutputStream, file);
             }
-            zipOutputStream.close();
-            return byteArrayOutputStream.toByteArray();
         } catch (IOException ioe) {
             throw new IOException("Something went wrong, file cannot be compressed", ioe);
         }
+        return byteArrayOutputStream.toByteArray();
     }
 
     /**

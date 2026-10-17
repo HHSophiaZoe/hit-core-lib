@@ -1,27 +1,26 @@
 package com.hit.cache.lock.processor;
 
-import com.github.f4b6a3.ulid.UlidCreator;
-import com.hit.cache.annotation.ConditionalOnExternalCacheEnable;
 import com.hit.cache.helper.DistributedAtomic;
 import com.hit.cache.lock.DistributedLock;
 import com.hit.cache.exception.DistributedLockException;
-import com.hit.cache.util.CacheUtils;
+import com.hit.cache.helper.CacheKeyGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.context.annotation.Configuration;
+
+import java.util.UUID;
 
 @Slf4j
 @Aspect
-@Configuration
 @RequiredArgsConstructor
-@ConditionalOnExternalCacheEnable
 public class DistributedLockSimpleLockProcessor extends DistributedLockAbstractProcessor {
 
     private final DistributedAtomic distributedAtomic;
+
+    private final CacheKeyGenerator cacheKeyGenerator;
 
     private static final String READ_LOCK_SUFFIX = "READ_LOCK";
 
@@ -39,10 +38,10 @@ public class DistributedLockSimpleLockProcessor extends DistributedLockAbstractP
 
         if (StringUtils.isEmpty(value)) return pjp.proceed();
 
-        String key = CacheUtils.buildCacheKey(name, value);
+        String key = cacheKeyGenerator.build(name, value);
         long startTime = System.currentTimeMillis();
         do {
-            String uniqueValue = UlidCreator.getMonotonicUlid().toString();
+            String uniqueValue = UUID.randomUUID().toString(); // lock owner: unlock only deletes its own value
             long startCallRedisTime = System.currentTimeMillis();
             if (this.acquireLock(key, uniqueValue, transactionTtlSec, readLock)) {
                 log.info("DistributedLock: got key '{}' after {} ms, read-lock {}", key, System.currentTimeMillis() - startTime, readLock);
