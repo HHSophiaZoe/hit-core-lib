@@ -10,8 +10,6 @@ public record TelegramSendMessage(
         String chatId,
         Integer messageThreadId,
         String text,
-        String parseMode,
-        Boolean disableNotification,
-        Boolean protectContent
+        String parseMode
 ) {
 }

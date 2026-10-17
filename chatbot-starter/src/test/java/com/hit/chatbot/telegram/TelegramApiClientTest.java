@@ -80,9 +80,7 @@ class TelegramApiClientTest {
                 .contains("\"chat_id\":\"-100123\"")
                 .contains("\"message_thread_id\":42")
                 .contains("\"text\":\"hi\"")
-                .contains("\"parse_mode\":\"HTML\"")
-                .doesNotContain("disable_notification")
-                .doesNotContain("protect_content");
+                .contains("\"parse_mode\":\"HTML\"");
     }
 
     @Test
