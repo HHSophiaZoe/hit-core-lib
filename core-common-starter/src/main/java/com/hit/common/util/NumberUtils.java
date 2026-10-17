@@ -150,7 +150,7 @@ public class NumberUtils {
     public static Double round(Double value, int scale) {
         if (value == null) return null;
 
-        return new BigDecimal(value)
+        return BigDecimal.valueOf(value)
                 .setScale(scale, RoundingMode.HALF_UP)
                 .doubleValue();
     }
@@ -175,7 +175,7 @@ public class NumberUtils {
     public static Double safeRound(Double value, int scale) {
         if (value == null) return 0.0;
 
-        return new BigDecimal(value)
+        return BigDecimal.valueOf(value)
                 .setScale(scale, RoundingMode.HALF_UP)
                 .doubleValue();
     }

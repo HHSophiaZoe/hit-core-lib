@@ -3,9 +3,7 @@ package com.hit.spring.util;
 import lombok.Setter;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
 
-@Component
 public class BeanUtils implements ApplicationContextAware {
 
     @Override

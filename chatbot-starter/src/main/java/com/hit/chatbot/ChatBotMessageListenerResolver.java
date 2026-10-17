@@ -4,21 +4,16 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.expression.BeanFactoryResolver;
-import org.springframework.core.env.Environment;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.Objects;
 
-@Component
 @RequiredArgsConstructor
 public class ChatBotMessageListenerResolver {
-
-    private final Environment environment;
 
     private final ConfigurableBeanFactory beanFactory;
 
@@ -107,20 +102,4 @@ public class ChatBotMessageListenerResolver {
 
         return result != null ? result.toString() : null;
     }
-
-    /**
-     * Resolve property placeholder
-     * Hỗ trợ:
-     * - Simple placeholder: ${property.name}
-     * - Default value: ${property.name:defaultValue}
-     * - Nested placeholders: ${prefix.${env}.suffix}
-     * - Multiple placeholders: ${prop1}-${prop2}
-     *
-     * @param value Giá trị chứa placeholder (ví dụ: "${telegram.chat.id}")
-     * @return Giá trị đã resolve
-     */
-    private String resolvePropertyPlaceholder(String value) {
-        return environment.resolvePlaceholders(value);
-    }
-
 }

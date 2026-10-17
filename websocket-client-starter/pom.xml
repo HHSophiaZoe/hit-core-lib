@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -11,47 +10,43 @@
     </parent>
 
     <artifactId>websocket-client-starter</artifactId>
-    <version>1.0</version>
     <name>websocket-client-starter</name>
     <description>Transport-agnostic WebSocket client starter with lifecycle and observability support</description>
 
-    <!-- Keep the published client starter isolated from unrelated dependencies declared by the monorepo parent. -->
-    <dependencies combine.self="override">
+    <dependencies>
+        <!-- ===== Spring Boot ===== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
 
+        <!-- ===== Transport: Reactor Netty WebSocket ===== -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webflux</artifactId>
         </dependency>
-
         <dependency>
             <groupId>io.projectreactor.netty</groupId>
             <artifactId>reactor-netty-http</artifactId>
         </dependency>
 
+        <!-- ===== Observability: Micrometer metrics when the application has a MeterRegistry ===== -->
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-core</artifactId>
             <optional>true</optional>
         </dependency>
 
+        <!-- ===== Logging ===== -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-
+        <!-- ===== Test ===== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <artifactId>spring-boot-micrometer-metrics</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

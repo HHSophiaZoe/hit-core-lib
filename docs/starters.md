@@ -1,267 +1,187 @@
-# Hit Core Lib - Chi Tiết Các Modules
+# Hit Core Lib - Các starter
 
-## 1. spring-starter
+Java 25, Spring Boot 4.1, Jackson 3.
 
-**Mục đích**: Core Spring Boot configurations
+## Cách dùng
 
-**Dependencies**:
-- spring-boot-starter-web
-- spring-boot-starter-aop
-- spring-boot-starter-actuator
-- spring-boot-starter-validation
-- spring-security-crypto
-- JWT (jsonwebtoken)
-- Apache HttpClient5, OkHttp
-- Apache POI (Excel)
-- Google Guava
+- Ứng dụng kế thừa `com.hit:hit-core-lib` làm parent (hoặc parent kế thừa nó) để dùng chung version và cấu hình build.
+  Parent chỉ quản lý version (`dependencyManagement`) và plugin; mỗi module tự khai báo dependency nó dùng.
+- Thêm starter cần dùng, không cần ghi version:
 
-**Cung cấp**:
-- Web configurations
-- Security utilities
-- REST client helpers
-- File processing utilities
-- Validation support
+  ```xml
+  <dependency>
+      <groupId>com.hit</groupId>
+      <artifactId>spring-starter</artifactId>
+  </dependency>
+  ```
 
----
-
-## 2. core-common-starter
-
-**Mục đích**: Common models và utilities
-
-**Cung cấp**:
-- `PageResModel<T>`: Pagination response
-- `PageableReqModel`: Pagination request
-- `PageableSearchReqModel`: Search with pagination
-- Common utilities
-- Shared constants
+- Các starter tự cấu hình qua `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
+  Ứng dụng dùng `@SpringBootApplication` bình thường, **không** scan package `com.hit`.
+- Mọi bean của starter có `@ConditionalOnMissingBean` (trừ hạ tầng như filter/aspect), nên ứng dụng khai báo bean
+  cùng kiểu để thay thế.
+- Logging là log4j2 (do `spring-starter` mang vào). Enforcer cấm logback, `spring-boot-starter-logging`, Jackson 2
+  khai báo trực tiếp và các thư viện cũ đã thay thế.
 
 ---
 
-## 3. api-starter
+## core-common-starter
 
-**Mục đích**: Base classes cho REST API
+Model và util dùng chung, không phụ thuộc Spring Boot runtime (chỉ `spring-web` cho `HttpStatus`).
 
-**Cung cấp**:
+- Model: `PageableReqModel`, `PageableSearchReqModel`, `PageResModel`, `Filter`, `Search`, `Order`, `ResponseStatus`,
+  `SimpleSecurityUser`...
+- Mapper: `DomainMapper`, `ResponseMapper` (MapStruct).
+- Util: `StringUtils`, `NumberUtils`, `TimeUtils`, `VndMoneyUtils`, `ThreadUtils`, `CollectionUtils`, `FileUtils`,
+  `ReflectUtils`, `TraceUtils`, `PageUtils`.
 
-### BaseService<M, E, ID, Repo, Map>
+## spring-starter
 
-Generic service với CRUD operations:
+Starter cho web application.
 
-```java
-// M: Model (DTO)
-// E: Entity
-// ID: ID type
-// Repo: Repository
-// Map: Mapper
+| Auto-configuration | Nội dung | Bật khi |
+|---|---|---|
+| `HitSpringAutoConfiguration` | `JsonMapper`, `EventPublisher`, `DataConverter`, `TokenService` (mặc định JWT), message bundle (`messages` của app trước, `hit-messages` của starter làm dự phòng), `Translator`, aspect `@LogTracking`/`@RolesAllowed` | luôn |
+| `HitWebMvcAutoConfiguration` | `GlobalExceptionHandler`, locale theo `Accept-Language` (mặc định `vi-VN`), resolver `@UserPrincipalRequest` / `@PaginationParameter`, CORS, filter trace id / log request / xác thực / phân quyền, OpenAPI, executor virtual thread cho Tomcat | servlet web app |
+| `HitTaskExecutionAutoConfiguration` | `appTaskExecutor` (virtual thread hoặc pool theo `spring.threads.virtual.enabled`), `@EnableAsync`, `ExecutorManager`, truyền trace id vào task định kỳ | `app.task.executor.enable=true` (executor) |
+| `HitHttpClientAutoConfiguration` | `defaultRestClient` (RestClient trên Apache HttpClient 5 có pool), `HttpService` | `http-client.default.enable=true` |
+| `HitExcelAutoConfiguration` | `IExcelService` (Apache POI) | có POI |
 
-// Methods:
-getById(ID id)                          // Get by ID
-getBasicById(ID id)                     // Get basic info
-getByIds(List<ID> ids)                  // Get multiple
-select(PageableReqModel request)        // Pagination
-search(PageableSearchReqModel request)  // Search with pagination
-deleteById(ID id)                       // Delete by ID
-deleteByIds(Set<ID> ids)                // Delete multiple
-```
+Filter (theo thứ tự): CORS (0) → trace id (1) → log request (2, `app.enable-log-request-http`) → xác thực
+(3, `app.security.filter.authentication`) → phân quyền (4, `app.security.filter.authorization`).
+Đường dẫn public = mặc định (`/swagger-ui`, `/springdoc`, `/v3/api-docs`, `/actuator/health`, `/auth/login`) cộng
+`app.security.api-whitelist`, so khớp theo **prefix**.
 
-### BaseController
+Lỗi trả về dạng `GeneralResponse`: validate body/param, UUID sai, JSON hỏng → 400 `VALIDATION_ERROR`;
+`BaseResponseException` → status theo mã; lỗi khác → 500 `GENERAL_SERVER_ERROR`. `@RestControllerAdvice` của app
+được ưu tiên hơn handler của starter.
 
-Base class cho REST controllers
+Filter xác thực chỉ phụ thuộc interface `TokenService` (`com.hit.spring.security.token`). Bản mặc định
+`JwtTokenService` ký HS256, khoá `app.security.jwt.secret-key` phải dài ít nhất 32 byte; chỉ tạo khi có jjwt. Muốn
+dùng loại token khác thì khai báo bean `TokenService` của ứng dụng.
 
-### IService
+`ExecutorManager`: `zipTasks` / `zipTasksReturn` chạy song song và chờ tối đa `app.task.executor.task-timeout-seconds`
+cho cả lời gọi. Khi ném lỗi (timeout, task lỗi, bị interrupt, executor từ chối) thì các task còn chạy bị interrupt.
+`zipTasksReturn` dừng ngay ở task lỗi đầu tiên. Lỗi của task là `cause` của `ExecutorException`.
 
-Service interface
+## jpa-starter
 
-### ItemPermission
+`HitJpaAutoConfiguration`: bind `datasource.default.*` (`DataSourceDefaultProperties`, kế thừa `HikariConfig`) cho
+DataSource/EntityManager do ứng dụng tự khai báo, và `TransactionSupport`.
 
-Permission model
+- `BaseJPARepository` = `JpaRepository` + `JpaSpecificationExecutor` + `QuerydslPredicateExecutor` (OpenFeign QueryDSL 7).
+- `BaseJPAAdapter` / `BaseRepository`: CRUD theo model, search phân trang với filter động.
+- `SqlUtils`, `SqlPredicateUtils`, `SqlDslPredicateUtils`, `ChunkUtils`, `PageableSearchFieldMapper`.
 
----
+## api-starter
 
-## 4. jpa-starter
+`BaseController`, `BaseService`, `IService` cho CRUD REST trên `jpa-starter`.
 
-**Mục đích**: JPA/Hibernate + QueryDSL
+## cache-starter
 
-**Dependencies**:
-- spring-boot-starter-data-jpa
-- QueryDSL JPA (Jakarta)
+`HitCacheAutoConfiguration` (chạy trước auto-configuration cache/Redis của Boot):
 
-**Cung cấp**:
+- Internal (`cache.internal.enable=true`): `internalCacheManager` Caffeine hoặc Ehcache 3 (JCache).
+- External (`cache.external.enable=true`): Redisson 4 (`cache.external.redisson.*`), `externalCacheManager`,
+  `StringRedisTemplate`, serializer Jackson 3, `RedisDistribution` và aspect `@DistributedLock`.
+- `RedisCacheStoreImpl` / `InternalCacheStoreImpl`: lớp cơ sở cho store của ứng dụng.
 
-### BaseRepository<E, ID>
+## kafka-starter
 
-```java
-// Extends: JpaRepository + QuerydslPredicateExecutor
-
-// Methods:
-E getOne(ID id)
-List<E> getAllByIdIn(List<ID> ids)
-List<ID> getAllId(Set<ID> ids)
-PageResModel<E> search(PageableReqModel request)
-PageResModel<E> search(PageableSearchReqModel request)
-void delete(ID id)
-void delete(Set<ID> ids)
-```
-
-**QueryDSL Support**:
-- Type-safe queries
-- Q-classes auto-generated
-- BooleanBuilder for dynamic queries
-
----
-
-## 5. cache-starter
-
-**Mục đích**: Multi-level caching (Redis + EhCache)
-
-**Dependencies**:
-- Redisson 3.35.0
-
-**Cung cấp**:
-
-### Configurations
-- `CacheStarterConfig`: Main config
-- `RedisCacheConfig`: Redis setup
-- `InternalCacheConfig`: EhCache setup
-- `CacheConfigProperties`: Properties binding
-
-### Conditional Annotations
-- `@ConditionalOnExternalCacheEnable`: Enable Redis
-- `@ConditionalOnInternalCacheEnable`: Enable EhCache
-
-### Cache Stores
-- `BaseExternalCacheStore`: Redis operations
-- `RedisCacheStoreImpl`: Redis implementation
-- `BaseInternalCacheStore`: Internal cache operations
-- `InternalCacheStoreImpl`: EhCache implementation
-
-### Distributed Locking
-- `@DistributedLock`: Annotation for distributed locks
-- `DistributedLockAbstractProcessor`: Lock processor
-- `DistributedLockSimpleLockProcessor`: Simple lock
-
-### Helpers
-- `CacheContext`: Cache context management
-- `DistributedAtomic`: Atomic operations
-- `RedisDistribution`: Distributed utilities
-- `ExpressionEvaluator`: SpEL evaluation
-
-### Lua Scripts
-- `deleteByKeyValue.lua`: Atomic delete
-- `setIfAbsent.lua`: Set if not exists
-- `setIfAbsentWithSuffix.lua`: Set with suffix
-
----
-
-## 6. storage-starter
-
-**Mục đích**: File storage integration
-
-**Dependencies**:
-- Cloudinary HTTP44
-
-**Cung cấp**:
-- Cloudinary integration
-- File upload/download utilities
-- Image processing
-
----
-
-## 7. chatbot-starter
-
-**Mục đích**: Chatbot integration
-
-**Cung cấp**:
-- `ChatBotAnnotationScanner`: Scan chatbot annotations
-- Chatbot utilities
-
----
-
-## 8. kafka-starter
-
-**Mục đích**: Kafka messaging
-
-**Cung cấp**:
-- Kafka producer/consumer configurations
-- Message serialization
-- Error handling
-
----
-
-## 9. test-core-lib
-
-**Mục đích**: Testing utilities
-
-**Cung cấp**:
-- Test base classes
-- Test utilities
-- Mock helpers
-
----
-
-## Cách Sử Dụng
-
-### 1. Thêm Dependency
-
-```xml
-<dependency>
-    <groupId>com.hit</groupId>
-    <artifactId>spring-starter</artifactId>
-    <version>${spring-starter.version}</version>
-</dependency>
-```
-
-### 2. Extend Base Classes
-
-```java
-@Service
-public class UserService extends BaseService<
-    UserModel, UserEntity, Long, UserRepository, UserMapper
-> {
-    // Custom business logic
-}
-```
-
-### 3. Configure Properties
+Mỗi cụm Kafka là một khối `messaging.kafka.clusters.<tên>.*`, với **các key của `spring.kafka.*`** mà starter xử lý
+(kết nối, `ssl`, `security`, `producer`, `consumer`, `listener`, `admin`, `template`) cộng các field riêng cho config
+dễ gây lỗi nếu không để ý (chỉ producer và SASL; consumer dùng nguyên key của Spring Boot, config khác viết qua
+`properties[...]`). Thêm cụm = thêm khối, không viết code.
 
 ```yaml
-cache:
-  external:
-    enabled: true
-  internal:
-    enabled: true
+messaging:
+  kafka:
+    clusters:
+      main:
+        bootstrap-servers: kafka-main:9092
+        producer:
+          delivery-timeout: 20s
+          request-timeout: 10s
+        consumer:
+          group-id: trading
+          max-poll-interval: 40s
+      market:
+        bootstrap-servers: kafka-market:9092
+        listener:
+          ack-mode: batch
 ```
 
----
+| Phần | Field riêng (ngoài key của Spring Boot) | Key Kafka |
+|---|---|---|
+| Cụm | `sasl.mechanism`, `sasl.jaas-config` | `sasl.mechanism`, `sasl.jaas.config` |
+| Producer | `delivery-timeout`, `request-timeout`, `linger`, `max-block` | `*.ms` tương ứng |
+| | `enable-idempotence`, `max-in-flight-requests`, `max-request-size` | `enable.idempotence`, `max.in.flight.requests.per.connection`, `max.request.size` |
 
-## Version Management
+- Mặc định giống Spring Boot: field để trống thì không gửi, Kafka dùng mặc định của nó (ghi trong Javadoc từng field
+  của `KafkaClusterProperties`). Thời gian viết `20s` hoặc số trần là mili-giây.
+- Ưu tiên từ thấp đến cao: `properties[...]` của cụm, field có kiểu, `producer/consumer.properties[...]`.
+- Mỗi cụm độc lập, không thừa hưởng cấu hình của cụm khác.
 
-Tất cả versions được quản lý trong parent POM:
+### Bean và cách dùng
 
-```xml
-<properties>
-    <spring-starter.version>1.0</spring-starter.version>
-    <core-common-starter.version>1.0</core-common-starter.version>
-    <api-starter.version>1.0</api-starter.version>
-    <jpa-starter.version>1.0</jpa-starter.version>
-    <cache-starter.version>1.0</cache-starter.version>
-    <storage-starter.version>1.0</storage-starter.version>
-    <chatbot-starter.version>1.0</chatbot-starter.version>
-    <kafka-starter.version>1.0</kafka-starter.version>
-</properties>
-```
+Mỗi cụm `<tên>` có `<tên>KafkaTemplate`, `<tên>KafkaListenerContainerFactory`, `<tên>KafkaAdmin`,
+`<tên>KafkaProducerFactory`, `<tên>KafkaConsumerFactory`.
 
----
+- **Một cụm**: các bean này cũng mang tên mặc định (`kafkaTemplate`, `kafkaListenerContainerFactory`...), dùng như
+  Spring Boot bình thường, bean `NewTopic` được tạo trên cụm đó.
+- **Từ hai cụm**: không có cụm mặc định, phải chỉ rõ cụm, thiếu thì app báo lỗi lúc khởi động:
 
-## Build Commands
+  ```java
+  @Qualifier("marketKafkaTemplate") KafkaTemplate<String, String> marketTemplate;
+  @KafkaListener(topics = "ticks", containerFactory = "marketKafkaListenerContainerFactory")
+  @KafkaListener(topics = "ticks", batch = "true", containerFactory = "marketKafkaListenerContainerFactory")
+  marketKafkaAdmin.createOrModifyTopics(new NewTopic("ticks", 6, (short) 3));   // không dùng bean NewTopic
+  ```
 
-```bash
-# Build all starters from repository root
-./mvnw -f hit-core-lib/pom.xml clean install
+- Có `clusters` thì auto-configuration Kafka của Spring Boot bị bỏ (`KafkaClustersImportFilter`), để Boot không tạo
+  bean trên `spring.kafka.*` (`localhost:9092`). Không có `clusters` thì Spring Boot cấu hình Kafka từ
+  `spring.kafka.*` như bình thường.
+- Bean của ứng dụng áp dụng cho mọi cụm, như Spring Boot làm cho `spring.kafka`:
+  `DefaultKafkaProducerFactoryCustomizer` / `DefaultKafkaConsumerFactoryCustomizer` (metrics Micrometer đi qua đây),
+  `CommonErrorHandler`, `RecordInterceptor`, `BatchInterceptor`, `RecordMessageConverter`, `BatchMessageConverter`,
+  `RecordFilterStrategy`, `AfterRollbackProcessor`, `ConsumerAwareRebalanceListener`, `ContainerCustomizer`,
+  `ProducerListener`. Listener chạy virtual thread khi `spring.threads.virtual.enabled=true`.
+- `producer.transaction-id-prefix` bật transaction cho producer và listener container của cụm đó; không tạo bean
+  transaction manager để không đè `transactionManager` của JPA.
+- `KafkaPublisher` là lớp để kế thừa, gửi JSON qua `KafkaTemplate<String, String>` truyền vào constructor.
 
-# Build specific starter
-./mvnw -f hit-core-lib/spring-starter/pom.xml clean install
+## storage-starter
 
-# Build service using starters
-./mvnw clean package -pl hit-trading-securities-service -am
-```
+`BaseStorageCommand` với các bản Local, FTP (Spring Integration) và MinIO (MinIO client 9). Tạo trực tiếp từ
+`StorageFileConfig`, không phải bean.
+
+## chatbot-starter
+
+`HitChatBotAutoConfiguration`:
+
+- Telegram (`chatbot.telegram.enable=true`): `TelegramApiClient` (JDK HttpClient + Jackson 3), long polling
+  `TelegramUpdatePoller`, `TelegramChatBotServiceImpl` (mặc định khi bật cả hai bot).
+- Discord (`chatbot.discord.enable=true`): JDA 6 kết nối nền (app không chờ Discord khi khởi động; lần gửi đầu chờ tối
+  đa `chatbot.discord.ready-timeout`, mặc định 30s), `DiscordChatBotServiceImpl`.
+- Method có `@ChatBotMessageListener` trên bất kỳ bean nào (kể cả khai báo ở class cha / interface, bean có proxy)
+  được đăng ký vào `ChatBotMessageDispatcher`.
+
+Gửi tin (`ChatBotService`):
+
+| | Telegram | Discord |
+|---|---|---|
+| `sendMessage(chatId, content)` | text thường | markdown của Discord |
+| `sendMessage(MessageRequest)` | **HTML**: title in đậm + gạch, content là HTML (tag Telegram hỗ trợ), text động không cần escape (`TelegramHtmlUtils.sanitize`) | embed: title, màu theo type, description markdown, field/file của `DiscordMessageRequest` |
+| Tin dài | tách thành nhiều tin ≤ 4096 ký tự, cắt ở xuống dòng, tag HTML đang mở được đóng/mở lại | tách ≤ 2000 ký tự (embed ≤ 4096), khối code ``` được giữ |
+| Giới hạn tốc độ | 429: chờ `retry_after` (tối đa `chatbot.telegram.max-retry-wait`, mặc định 30s) rồi gửi lại một lần | JDA tự xếp hàng |
+| `sendMessageAsync` | chạy trên `TaskExecutor` | chạy trên `TaskExecutor` |
+| `sendPrivateMessage(userId, …)` | gửi tới chat của user (user phải từng nhắn bot) | mở kênh riêng qua API |
+| Lỗi | ghi log, không ném exception | ghi log, không ném exception |
+
+Telegram chỉ dùng HTML (không có Markdown: bản cũ Telegram đã ngừng phát triển, MarkdownV2 phải escape 18 ký tự).
+Discord không hỗ trợ HTML.
+
+## websocket-client-starter
+
+Client WebSocket trên Reactor Netty: connection có reconnect, pool, dispatcher theo key, observability (in-memory và
+Micrometer khi có `MeterRegistry`). Cấu hình `websocket-client.*`.
+

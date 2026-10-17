@@ -3,10 +3,11 @@ package com.hit.common.util;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
-import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -96,10 +97,18 @@ public class TimeUtils {
         }
     }
 
+    /**
+     * Parses in the system time zone; a pattern without time gives the start of the day.
+     */
     public static Date parseToDate(String dateStr, String pattern) {
+        if (StringUtils.isEmptyOrBlank(dateStr)) {
+            return null;
+        }
         try {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-            return simpleDateFormat.parse(dateStr);
+            TemporalAccessor parsed = DateTimeFormatter.ofPattern(pattern).parse(dateStr);
+            LocalDate date = LocalDate.from(parsed);
+            LocalTime time = parsed.isSupported(ChronoField.HOUR_OF_DAY) ? LocalTime.from(parsed) : LocalTime.MIDNIGHT;
+            return Date.from(date.atTime(time).atZone(ZoneId.systemDefault()).toInstant());
         } catch (Exception e) {
             log.warn("parseToDate ERROR", e);
             return null;
@@ -188,10 +197,12 @@ public class TimeUtils {
         }
     }
 
+    /**
+     * Formats in the system time zone.
+     */
     public static String formatDate(Date date, String pattern) {
         try {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-            return simpleDateFormat.format(date);
+            return DateTimeFormatter.ofPattern(pattern).withZone(ZoneId.systemDefault()).format(date.toInstant());
         } catch (Exception e) {
             log.warn("formatDate ERROR", e);
             return null;

@@ -1,60 +1,32 @@
 package com.hit.chatbot;
 
 import com.hit.chatbot.annotation.ChatBotMessageListener;
-import org.springframework.beans.BeansException;
+import org.springframework.aop.framework.AopProxyUtils;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
-import org.springframework.util.ReflectionUtils;
+import org.springframework.core.annotation.AnnotationUtils;
 
-import java.lang.annotation.Annotation;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-@Component
+/**
+ * Registers every bean that has a {@link ChatBotMessageListener} method with the {@link ChatBotMessageDispatcher}
+ * once the bean is fully initialized (proxy included). Methods are found the same way as the dispatcher registers
+ * them.
+ */
 public class ChatBotAnnotationScanner implements BeanPostProcessor {
 
-    private final ChatBotMessageDispatcher dispatcher;
+    private final ObjectProvider<ChatBotMessageDispatcher> dispatcher;
 
-    private final List<Class<? extends Annotation>> annotations = List.of(ChatBotMessageListener.class);
-
-    private String originalBeanName;
-
-    public ChatBotAnnotationScanner(@Lazy ChatBotMessageDispatcher dispatcher) {
+    public ChatBotAnnotationScanner(ObjectProvider<ChatBotMessageDispatcher> dispatcher) {
         this.dispatcher = dispatcher;
     }
 
     @Override
-    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-        final AtomicBoolean add = new AtomicBoolean();
-        ReflectionUtils.doWithMethods(bean.getClass(), methodCallback -> add.set(true), methodFilter -> {
-            Iterator<Class<? extends Annotation>> annotations = this.annotations.iterator();
-
-            Class<? extends Annotation> annotationClass;
-            do {
-                if (!annotations.hasNext()) {
-                    return false;
-                }
-
-                annotationClass = annotations.next();
-            } while (!methodFilter.isAnnotationPresent(annotationClass));
-
-            return true;
-        });
-        if (add.get()) {
-            this.originalBeanName = beanName;
+    public Object postProcessAfterInitialization(Object bean, String beanName) {
+        Class<?> targetClass = AopProxyUtils.ultimateTargetClass(bean);
+        // Cheap check first, as Spring does for @EventListener: skips JDK and framework classes
+        if (AnnotationUtils.isCandidateClass(targetClass, ChatBotMessageListener.class)
+                && !ChatBotMessageDispatcher.findListenerMethods(targetClass).isEmpty()) {
+            dispatcher.getObject().addListener(beanName, bean);
         }
         return bean;
     }
-
-    @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        if (this.originalBeanName != null && originalBeanName.equals(beanName)) {
-            this.dispatcher.addListener(beanName, bean);
-            this.originalBeanName = null;
-        }
-        return bean;
-    }
-
 }

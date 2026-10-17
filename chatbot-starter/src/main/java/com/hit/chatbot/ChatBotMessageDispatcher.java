@@ -4,24 +4,27 @@ import com.hit.chatbot.annotation.ChatBotMessageListener;
 import com.hit.chatbot.annotation.ChatBotMessageListener.Platform;
 import com.hit.chatbot.data.response.CommandHelp;
 import com.hit.chatbot.data.response.MessageResponse;
+import com.hit.chatbot.telegram.api.TelegramMessage;
+import com.hit.chatbot.telegram.api.TelegramUpdate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.aop.framework.AopProxyUtils;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.core.MethodIntrospector;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.message.Message;
+import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
 public class ChatBotMessageDispatcher {
 
@@ -29,22 +32,35 @@ public class ChatBotMessageDispatcher {
 
     private final TaskExecutor taskExecutor;
 
-    private final List<ListenerMethod> listeners = new ArrayList<>();
+    /**
+     * Listeners are added while beans are created and read by the bot threads, which may already receive messages
+     * (Discord connects as soon as its bean exists).
+     */
+    private final List<ListenerMethod> listeners = new CopyOnWriteArrayList<>();
 
+    /**
+     * The {@link ChatBotMessageListener} methods of a class, its superclasses and interfaces included.
+     */
+    static Map<Method, ChatBotMessageListener> findListenerMethods(Class<?> targetClass) {
+        return MethodIntrospector.selectMethods(targetClass, (MethodIntrospector.MetadataLookup<ChatBotMessageListener>)
+                method -> AnnotatedElementUtils.findMergedAnnotation(method, ChatBotMessageListener.class));
+    }
+
+    /**
+     * Registers the listener methods of a bean. The bean may be an AOP proxy: its methods are called through the
+     * proxy, so the advice ({@code @Transactional}...) applies.
+     *
+     * @throws IllegalStateException when the bean is an interface-based proxy and a listener method is not on the
+     *                               interface
+     */
     public void addListener(String beanName, Object bean) {
-        Class<?> targetClass = AopProxyUtils.ultimateTargetClass(bean);
-        Method[] methods = targetClass.getDeclaredMethods();
-        for (Method method : methods) {
-            ChatBotMessageListener annotation = method.getAnnotation(ChatBotMessageListener.class);
-            if (annotation != null) {
-                method.setAccessible(true);
-                ListenerMethod listenerMethod =
-                        new ListenerMethod(bean, method, annotation, resolver);
-                listeners.add(listenerMethod);
-                log.debug("Registered listener: {} from bean {} for platforms: {} with command: {}",
-                        method.getName(), beanName, Arrays.toString(annotation.platforms()), annotation.commands());
-            }
-        }
+        findListenerMethods(AopProxyUtils.ultimateTargetClass(bean)).forEach((method, annotation) -> {
+            Method invocable = AopUtils.selectInvocableMethod(method, bean.getClass());
+            ReflectionUtils.makeAccessible(invocable);
+            listeners.add(new ListenerMethod(bean, invocable, annotation, resolver));
+            log.debug("Registered listener: {} from bean {} for platforms: {} with command: {}",
+                    method.getName(), beanName, Arrays.toString(annotation.platforms()), annotation.commands());
+        });
     }
 
     /**
@@ -58,10 +74,9 @@ public class ChatBotMessageDispatcher {
                 .toList();
     }
 
-    public void dispatchTelegramUpdate(Update update) {
+    public void dispatchTelegramUpdate(TelegramUpdate update) {
         if (update.hasMessage()) {
-            Message message = update.getMessage();
-            this.handleTelegramMessage(message);
+            this.handleTelegramMessage(update.message());
         }
     }
 
@@ -69,14 +84,14 @@ public class ChatBotMessageDispatcher {
         this.handleDiscordMessage(event);
     }
 
-    private void handleTelegramMessage(Message message) {
+    private void handleTelegramMessage(TelegramMessage message) {
         String chatId;
-        if (Boolean.TRUE.equals(message.getIsTopicMessage())) {
-            chatId = message.getChatId() + "_" + message.getMessageThreadId();
+        if (Boolean.TRUE.equals(message.isTopicMessage())) {
+            chatId = message.chat().id() + "_" + message.messageThreadId();
         } else {
-            chatId = String.valueOf(message.getChatId());
+            chatId = String.valueOf(message.chat().id());
         }
-        String text = message.getText() != null ? message.getText() : StringUtils.EMPTY;
+        String text = message.text() != null ? message.text() : StringUtils.EMPTY;
         Pair<String, String> commandContent = ChatBotCommandParser.parse(text);
 
         log.trace("Handling Telegram message from message: {}", message);

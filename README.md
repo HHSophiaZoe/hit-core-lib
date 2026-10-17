@@ -1,7 +1,10 @@
 # HIT Core Lib
 
 Maven library tập hợp các Spring Boot starter dùng chung cho các service HIT: web/security,
-REST API, JPA, cache, Kafka, storage, chatbot, websocket và test utilities.
+REST API, JPA, cache, Kafka, storage, chatbot và websocket.
+
+Java 25, Spring Boot 4.1, Jackson 3. Các starter tự cấu hình bằng Spring Boot auto-configuration; ứng dụng chỉ cần
+`@SpringBootApplication`, không scan package `com.hit`.
 
 Đây là Git submodule độc lập. Thay đổi trong module phải được commit tại repository
 `hit-core-lib`, sau đó cập nhật submodule pointer ở repository cha.
@@ -17,7 +20,6 @@ REST API, JPA, cache, Kafka, storage, chatbot, websocket và test utilities.
 - `storage-starter`
 - `chatbot-starter`
 - `websocket-client-starter`
-- `test-core-lib`
 
 ## Build
 

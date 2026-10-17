@@ -1,0 +1,5 @@
+com.hit.spring.autoconfigure.HitSpringAutoConfiguration
+com.hit.spring.autoconfigure.HitWebMvcAutoConfiguration
+com.hit.spring.autoconfigure.HitTaskExecutionAutoConfiguration
+com.hit.spring.autoconfigure.HitHttpClientAutoConfiguration
+com.hit.spring.autoconfigure.HitExcelAutoConfiguration

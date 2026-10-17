@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.time.Clock;
 
-@AutoConfiguration(afterName = "org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration")
+@AutoConfiguration(afterName = "org.springframework.boot.micrometer.metrics.autoconfigure.CompositeMeterRegistryAutoConfiguration")
 @EnableConfigurationProperties(WebSocketClientObservabilityProperties.class)
 public class WebSocketObservabilityAutoConfiguration {
 

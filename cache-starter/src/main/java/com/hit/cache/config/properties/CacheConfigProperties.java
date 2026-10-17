@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.redisson.config.*;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 
 import java.util.HashMap;
@@ -12,7 +11,6 @@ import java.util.Map;
 
 @Setter
 @Getter
-@Configuration
 @ConfigurationProperties("cache")
 public class CacheConfigProperties {
 

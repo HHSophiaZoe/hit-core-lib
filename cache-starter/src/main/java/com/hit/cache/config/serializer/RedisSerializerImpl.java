@@ -1,6 +1,6 @@
 package com.hit.cache.config.serializer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.serializer.SerializationException;
 

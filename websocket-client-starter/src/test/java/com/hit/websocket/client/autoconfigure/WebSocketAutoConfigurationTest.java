@@ -9,7 +9,13 @@ import com.hit.websocket.client.pool.PooledWebSocketConnection;
 import com.hit.websocket.client.pool.WebSocketConnectionPool;
 import com.hit.websocket.client.pool.WebSocketConnectionPoolFactory;
 import com.hit.websocket.client.pool.WebSocketConnectionPoolOptions;
+import com.hit.websocket.client.dispatch.micrometer.MicrometerMessageDispatcherObserver;
+import com.hit.websocket.client.observability.micrometer.MicrometerWebSocketObserver;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.micrometer.metrics.autoconfigure.CompositeMeterRegistryAutoConfiguration;
+import org.springframework.boot.micrometer.metrics.autoconfigure.MetricsAutoConfiguration;
+import org.springframework.boot.micrometer.metrics.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import java.util.concurrent.CompletableFuture;
@@ -38,6 +44,19 @@ class WebSocketAutoConfigurationTest {
                     assertThat(application).hasSingleBean(WebSocketClientFactory.class);
                     assertThat(application).hasSingleBean(MessageDispatcherRegistry.class);
                     assertThat(application).hasSingleBean(WebSocketConnectionPoolFactory.class);
+                });
+    }
+
+    @Test
+    void micrometerObserversAreCreatedWhenBootProvidesTheMeterRegistry() {
+        context.withConfiguration(AutoConfigurations.of(MetricsAutoConfiguration.class,
+                        CompositeMeterRegistryAutoConfiguration.class, SimpleMetricsExportAutoConfiguration.class))
+                .withPropertyValues("websocket-client.observability.enabled=true")
+                .run(application -> {
+                    assertThat(application).hasNotFailed();
+                    assertThat(application).hasSingleBean(MeterRegistry.class);
+                    assertThat(application).hasSingleBean(MicrometerWebSocketObserver.class);
+                    assertThat(application).hasSingleBean(MicrometerMessageDispatcherObserver.class);
                 });
     }
 

@@ -1,7 +1,7 @@
 package com.hit.spring.util;
 
-import com.hit.spring.core.constant.CommonConstant;
-import com.hit.spring.core.json.JsonMapper;
+import com.hit.spring.constant.CommonConstant;
+import com.hit.spring.json.JsonMapper;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
