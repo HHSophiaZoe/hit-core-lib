@@ -3,6 +3,12 @@ package com.hit.spring.http;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsServer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +25,7 @@ import javax.net.ssl.SSLContext;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.security.KeyStore;
 import java.time.Duration;
 import java.util.List;
@@ -68,9 +75,10 @@ class RestClientHttpServiceTest {
             if (path.equals("/slow")) {
                 sleep(Duration.ofSeconds(3));
             }
-            String response = path.equals("/invalid") ? "{not json" : "{\"code\":\"" + path + "\",\"name\":\"Việt\"}";
+            String response = path.equals("/large") ? "z".repeat(5000) : path.equals("/invalid") ? "{not json" : "{\"code\":\"" + path + "\",\"name\":\"Việt\"}";
             byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.getResponseHeaders().add("X-Request-Id", "request-123");
             exchange.sendResponseHeaders(status, bytes.length);
             exchange.getResponseBody().write(bytes);
             exchange.close();
@@ -116,6 +124,7 @@ class RestClientHttpServiceTest {
                 .postEntity(baseUrl + "/orders", new OrderBody("VN30F1M", 2), headers(), MAP_TYPE);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("request-123", response.getHeaders().getFirst("X-Request-Id"));
         assertEquals("/orders", response.getBody().get("code"));
         Request request = requests.getFirst();
         assertEquals("POST", request.method());
@@ -206,7 +215,7 @@ class RestClientHttpServiceTest {
     }
 
     @Test
-    void httpsTrustsSelfSignedCertificateWithOtherHostname() throws Exception {
+    void httpsRejectsSelfSignedCertificateWithOtherHostname() throws Exception {
         HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         httpsServer.setHttpsConfigurator(new HttpsConfigurator(selfSignedContext()));
         httpsServer.createContext("/", exchange -> {
@@ -217,12 +226,80 @@ class RestClientHttpServiceTest {
         });
         httpsServer.start();
         try {
-            Map<String, Object> response = service(new DefaultHttpClientProperties())
-                    .get("https://127.0.0.1:" + httpsServer.getAddress().getPort() + "/tls", headers(), MAP_TYPE);
-
-            assertEquals(Map.of("secure", true), response);
+            assertThrows(HttpClientTimeoutException.class, () -> service(new DefaultHttpClientProperties())
+                    .get("https://127.0.0.1:" + httpsServer.getAddress().getPort() + "/tls", headers(), MAP_TYPE));
         } finally {
             httpsServer.stop(0);
+        }
+    }
+
+    @Test
+    void httpsRejectsWrongHostnameEvenWhenCertificateIsTrusted() throws Exception {
+        String previousStore = System.getProperty("javax.net.ssl.trustStore");
+        String previousPassword = System.getProperty("javax.net.ssl.trustStorePassword");
+        HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        httpsServer.setHttpsConfigurator(new HttpsConfigurator(selfSignedContext()));
+        httpsServer.start();
+        try {
+            System.setProperty("javax.net.ssl.trustStore", Path.of(getClass().getResource("/http/self-signed.p12").toURI()).toString());
+            System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+            HttpClientTimeoutException error = assertThrows(HttpClientTimeoutException.class,
+                    () -> service(new DefaultHttpClientProperties()).get(
+                            "https://127.0.0.1:" + httpsServer.getAddress().getPort() + "/tls", headers()));
+            assertTrue(error.getCause().getMessage().contains("subject alternative")
+                    || error.getCause().getMessage().contains("doesn't match"), error.getMessage());
+        } finally {
+            if (previousStore == null) System.clearProperty("javax.net.ssl.trustStore");
+            else System.setProperty("javax.net.ssl.trustStore", previousStore);
+            if (previousPassword == null) System.clearProperty("javax.net.ssl.trustStorePassword");
+            else System.setProperty("javax.net.ssl.trustStorePassword", previousPassword);
+            httpsServer.stop(0);
+        }
+    }
+
+    @Test
+    void omitsHeadersAndOnlyLogsTruncatedResponseAtDebug() {
+        Logger logger = (Logger) LogManager.getLogger(RestClientHttpService.class);
+        Level previous = logger.getLevel();
+        List<LogEvent> events = new CopyOnWriteArrayList<>();
+        AbstractAppender appender = new AbstractAppender("http-test", null, null, true, Property.EMPTY_ARRAY) {
+            @Override
+            public void append(LogEvent event) {
+                events.add(event.toImmutable());
+            }
+        };
+        appender.start();
+        logger.addAppender(appender);
+        logger.setLevel(Level.DEBUG);
+        try {
+            HttpHeaders headers = headers();
+            for (String name : List.of("X-MBX-APIKEY", "x-token", "X-Secret", "X-Signature")) {
+                headers.add(name, "private-value");
+            }
+            headers.add("X-Trace", "visible-value");
+            String response = service(new DefaultHttpClientProperties()).get(baseUrl + "/large", headers);
+            assertEquals(5000, response.length());
+            String logs = events.stream().map(event -> event.getMessage().getFormattedMessage())
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            assertFalse(logs.contains("Bearer token"));
+            assertFalse(logs.contains("private-value"));
+            assertFalse(logs.contains("visible-value"));
+            assertFalse(logs.contains("Headers:"));
+            assertTrue(logs.contains("z".repeat(2048) + "...[truncated]"));
+            assertFalse(logs.contains("z".repeat(2049)));
+            assertTrue(events.stream().filter(event -> event.getMessage().getFormattedMessage().contains("Response:"))
+                    .allMatch(event -> event.getLevel() == Level.DEBUG));
+            events.clear();
+            assertThrows(HttpClientErrorException.class,
+                    () -> service(new DefaultHttpClientProperties()).get(baseUrl + "/not-found", headers));
+            assertTrue(events.stream().filter(event -> event.getLevel() != Level.DEBUG)
+                    .noneMatch(event -> event.getMessage().getFormattedMessage().contains("\"name\":\"Việt\"")));
+            assertTrue(events.stream().anyMatch(event -> event.getLevel() == Level.DEBUG
+                    && event.getMessage().getFormattedMessage().contains("\"name\":\"Việt\"")));
+        } finally {
+            logger.removeAppender(appender);
+            logger.setLevel(previous);
+            appender.stop();
         }
     }
 

@@ -1,7 +1,6 @@
 package com.hit.spring.http;
 
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.cookie.StandardCookieSpec;
@@ -10,14 +9,12 @@ import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
-import org.apache.hc.client5.http.ssl.HostnameVerificationPolicy;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
-import javax.net.ssl.SSLContext;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -59,22 +56,13 @@ public class DefaultHttpClientFactory {
 
     private PoolingHttpClientConnectionManager defaultHttpPoolingConnectionManager() {
         return PoolingHttpClientConnectionManagerBuilder.create()
-                .setTlsSocketStrategy(this.trustAllTlsStrategy())
+                .setTlsSocketStrategy(new DefaultClientTlsStrategy(SSLContexts.createDefault()))
                 .setDefaultConnectionConfig(ConnectionConfig.custom()
                         .setConnectTimeout(properties.getConnection().getConnectTimeout(), TimeUnit.SECONDS)
                         .build())
                 .setMaxConnTotal(properties.getConnectionPool().getMaxTotal())
                 .setMaxConnPerRoute(properties.getConnectionPool().getDefaultMaxPerRoute())
                 .build();
-    }
-
-    @SneakyThrows
-    private DefaultClientTlsStrategy trustAllTlsStrategy() {
-        SSLContext sslContext = SSLContexts.custom()
-                .loadTrustMaterial(null, (chain, authType) -> true)
-                .build();
-        return new DefaultClientTlsStrategy(sslContext, HostnameVerificationPolicy.CLIENT,
-                (s, sslSession) -> s.equalsIgnoreCase(sslSession.getPeerHost()));
     }
 
 }
