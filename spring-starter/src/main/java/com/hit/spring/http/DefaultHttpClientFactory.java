@@ -43,6 +43,8 @@ public class DefaultHttpClientFactory {
         DefaultHttpClientProperties.Connection connection = properties.getConnection();
 
         CloseableHttpClient closeableHttpClient = HttpClients.custom()
+                // Callers own retry policy; retrying a trading POST after 503 can submit a second order.
+                .disableAutomaticRetries()
                 .setConnectionManager(this.defaultHttpPoolingConnectionManager())
                 .setDefaultRequestConfig(RequestConfig.custom()
                         .setConnectionRequestTimeout(connection.getConnectRequestTimeout(), TimeUnit.SECONDS)
