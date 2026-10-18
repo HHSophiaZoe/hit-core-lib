@@ -15,6 +15,7 @@ public class WebSocketTransportAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(WebSocketTransportFactory.class)
     WebSocketTransportFactory reactorNettyWebSocketTransportFactory() {
-        return new ReactorNettyWebSocketTransportFactory(HttpClient.create());
+        // Theo proxy JVM (https.proxyHost, http.nonProxyHosts...) như HTTP client của JDK; không cấu hình thì kết nối thẳng.
+        return new ReactorNettyWebSocketTransportFactory(HttpClient.create().proxyWithSystemProperties());
     }
 }

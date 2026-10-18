@@ -168,6 +168,7 @@ public final class RotatingWebSocketClient implements AutoCloseable {
         Session old = active;
         active = standby;
         standby = null;
+        log.info("Rotated {} to a new session", options.connectionId().value());
         if (old != null) {
             retire(old);
         }
