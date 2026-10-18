@@ -201,6 +201,40 @@ không retry mặc định; 408/429/5xx có thể retry.
 Backoff chỉ reset sau khi connection sống ổn định ít nhất 30 giây, tránh vòng lặp handshake thành công rồi
 ngắt ngay làm mất retry budget.
 
+### Xoay kết nối không mất dữ liệu
+
+Reconnect giữ kết nối sống nhưng không lấy lại được message provider gửi trong lúc ngắt. Với provider chủ động
+ngắt kết nối sau một thời gian (ví dụ Binance sau 24h), dùng `RotatingWebSocketClient`: định kỳ mở session mới,
+chờ adapter báo sẵn sàng rồi mới cho session cũ nghỉ; message nhận trùng từ hai session chỉ giao một lần.
+
+```java
+RotatingWebSocketClient client = clientFactory.createRotating(options, RotationOptions.every(Duration.ofHours(23)),
+        new RotatingWebSocketListener() {
+            @Override
+            public void onSessionOpened(RotatingSession session) {
+                session.send(subscribeAll()); // Đăng ký theo protocol của provider.
+            }
+
+            @Override
+            public void onMessage(RotatingSession session, WebSocketFrame frame) {
+                if (isSubscribeAck(frame)) session.markReady(); // Session mới chỉ thay session cũ sau khi sẵn sàng.
+                else dispatcher.dispatch(orderingKey(frame), () -> handle(frame));
+            }
+
+            @Override
+            public void onDisconnected() { /* Rớt mạng ngoài kế hoạch: dữ liệu có thể thiếu. */ }
+
+            @Override
+            public void onConnected() { /* Sẵn sàng lần đầu hoặc sau khi rớt mạng: bù dữ liệu nếu cần. */ }
+        });
+client.connect();
+```
+
+Xoay theo kế hoạch không gọi `onDisconnected`/`onConnected`. Mỗi session là một `WebSocketClient` (connection id
+thêm hậu tố `#a`/`#b`) nên vẫn tự reconnect theo `reconnectPolicy`. Session mới không sẵn sàng trong
+`readyTimeout` thì bị bỏ, session cũ tiếp tục chạy và thử xoay lại sau `retryDelay`. Lệnh đổi đăng ký trong lúc
+xoay nên gửi tới mọi session trong `client.sessions()`.
+
 ## 6. Native WebSocket Ping/Pong
 
 ```java

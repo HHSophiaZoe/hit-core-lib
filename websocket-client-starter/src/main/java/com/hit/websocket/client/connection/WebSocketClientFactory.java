@@ -4,9 +4,11 @@ import com.hit.websocket.client.transport.WebSocketTransportFactory;
 import com.hit.websocket.client.observability.WebSocketObserver;
 import java.time.Clock;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Owns created clients and closes their control threads when the application stops. */
@@ -15,6 +17,7 @@ public final class WebSocketClientFactory {
     private final List<WebSocketObserver> observers;
     private final Clock clock;
     private final Map<ConnectionId, WebSocketClient> clients = new HashMap<>();
+    private final Set<RotatingWebSocketClient> rotatingClients = new HashSet<>();
     private final AtomicLong generations = new AtomicLong();
     private boolean closed;
 
@@ -34,8 +37,19 @@ public final class WebSocketClientFactory {
         return client;
     }
 
+    /** Kết nối logic tự xoay session định kỳ không mất dữ liệu; xem RotatingWebSocketClient. */
+    public synchronized RotatingWebSocketClient createRotating(WebSocketClientOptions options, RotationOptions rotation,
+                                                               RotatingWebSocketListener listener) {
+        if (closed) throw new IllegalStateException("WebSocket client factory is closed");
+        RotatingWebSocketClient client = new RotatingWebSocketClient(options, rotation, listener, this);
+        rotatingClients.add(client);
+        return client;
+    }
+
     public synchronized void close() {
         closed = true;
+        rotatingClients.forEach(RotatingWebSocketClient::close);
+        rotatingClients.clear();
         clients.values().forEach(WebSocketClient::close);
         clients.clear();
     }
@@ -47,5 +61,9 @@ public final class WebSocketClientFactory {
 
     synchronized void release(ConnectionId id, WebSocketClient client) {
         clients.remove(id, client);
+    }
+
+    synchronized void release(RotatingWebSocketClient client) {
+        rotatingClients.remove(client);
     }
 }
