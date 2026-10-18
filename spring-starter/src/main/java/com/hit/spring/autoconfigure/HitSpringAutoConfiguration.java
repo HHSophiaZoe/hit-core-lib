@@ -17,6 +17,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -24,6 +25,7 @@ import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.convert.ConversionService;
@@ -44,6 +46,7 @@ public class HitSpringAutoConfiguration {
      */
     public static final String HIT_MESSAGES_BASENAME = "hit-messages";
 
+    // Static callers do not trigger lazy bean creation; initialize the context holder at startup.
     @Bean
     public static BeanUtils hitBeanUtils() {
         return new BeanUtils();
@@ -60,12 +63,14 @@ public class HitSpringAutoConfiguration {
         return new JsonMapper(objectMapper);
     }
 
+    @Lazy
     @Bean
     @ConditionalOnMissingBean(EventPublisher.class)
     public EventPublisher eventPublisher(ApplicationEventPublisher applicationEventPublisher) {
         return new EventPublisherImpl(applicationEventPublisher);
     }
 
+    @Lazy
     @Bean
     @ConditionalOnMissingBean
     public DataConverter dataConverter(@Qualifier("mvcConversionService") ObjectProvider<ConversionService> mvcConversionService) {
@@ -98,13 +103,15 @@ public class HitSpringAutoConfiguration {
     }
 
     /**
-     * JWT tokens while jjwt is on the classpath; an application {@link TokenService} bean replaces them.
+     * JWT tokens when a secret is configured and jjwt is on the classpath; an application {@link TokenService} bean replaces them.
      */
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass(name = "io.jsonwebtoken.Jwts")
+    @ConditionalOnProperty("app.security.jwt.secret-key")
     static class JwtTokenConfiguration {
 
         @Bean
+        @Lazy
         @ConditionalOnMissingBean(TokenService.class)
         public TokenService tokenService(ObjectMapper objectMapper, SecurityProperties securityProperties) {
             return new JwtTokenService(objectMapper, securityProperties);

@@ -46,6 +46,15 @@ class HitKafkaAutoConfigurationTest {
             "messaging.kafka.clusters.market.consumer.group-id=market-group");
 
     @Test
+    void noClustersDoNotEnableListenerInfrastructure() {
+        runner.run(context -> {
+            assertThat(context).hasNotFailed();
+            assertThat(context).doesNotHaveBean("org.springframework.kafka.config.internalKafkaListenerAnnotationProcessor");
+            assertThat(context).doesNotHaveBean(KafkaTemplate.class);
+        });
+    }
+
+    @Test
     void withoutClustersSpringBootConfiguresKafka() {
         runner.withConfiguration(AutoConfigurations.of(KafkaAutoConfiguration.class))
                 .run(context -> {

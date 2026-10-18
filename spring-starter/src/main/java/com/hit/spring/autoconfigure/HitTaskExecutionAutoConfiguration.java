@@ -10,6 +10,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnThreading;
 import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration;
@@ -19,12 +20,14 @@ import org.springframework.boot.task.SimpleAsyncTaskSchedulerCustomizer;
 import org.springframework.boot.task.ThreadPoolTaskSchedulerCustomizer;
 import org.springframework.boot.thread.Threading;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.config.TaskManagementConfigUtils;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.time.Duration;
@@ -45,12 +48,14 @@ public class HitTaskExecutionAutoConfiguration {
     public static final String APP_TASK_EXECUTOR = "appTaskExecutor";
 
     @Bean
+    @ConditionalOnBean(name = TaskManagementConfigUtils.SCHEDULED_ANNOTATION_PROCESSOR_BEAN_NAME)
     @ConditionalOnThreading(Threading.PLATFORM)
     public ThreadPoolTaskSchedulerCustomizer traceIdThreadPoolTaskSchedulerCustomizer() {
         return scheduler -> scheduler.setTaskDecorator(RunnableWrapper::new);
     }
 
     @Bean
+    @ConditionalOnBean(name = TaskManagementConfigUtils.SCHEDULED_ANNOTATION_PROCESSOR_BEAN_NAME)
     @ConditionalOnThreading(Threading.VIRTUAL)
     public SimpleAsyncTaskSchedulerCustomizer traceIdSimpleAsyncTaskSchedulerCustomizer() {
         return scheduler -> scheduler.setTaskDecorator(RunnableWrapper::new);
@@ -62,6 +67,7 @@ public class HitTaskExecutionAutoConfiguration {
 
         @Primary
         @Bean(name = APP_TASK_EXECUTOR)
+        @ConditionalOnMissingBean(name = APP_TASK_EXECUTOR)
         @ConditionalOnThreading(Threading.PLATFORM)
         public ThreadPoolTaskExecutor threadPoolTaskExecutor(TaskExecutorProperties properties) {
             TaskExecutorProperties.Pool pool = properties.getPool();
@@ -80,6 +86,7 @@ public class HitTaskExecutionAutoConfiguration {
 
         @Primary
         @Bean(name = APP_TASK_EXECUTOR)
+        @ConditionalOnMissingBean(name = APP_TASK_EXECUTOR)
         @ConditionalOnThreading(Threading.VIRTUAL)
         public SimpleAsyncTaskExecutor simpleAsyncTaskExecutor(TaskExecutorProperties properties) {
             SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor(properties.getSimple().getThreadNamePrefix());
@@ -89,10 +96,11 @@ public class HitTaskExecutionAutoConfiguration {
             return executor;
         }
 
+        @Lazy
         @Bean
         @ConditionalOnMissingBean(ExecutorManager.class)
         public DefaultExecutorManager executorManager(@Qualifier(APP_TASK_EXECUTOR) AsyncTaskExecutor executor,
-                                               TaskExecutorProperties properties) {
+                                                      TaskExecutorProperties properties) {
             return new DefaultExecutorManager(executor, Duration.ofSeconds(properties.getTaskTimeoutSeconds()));
         }
     }

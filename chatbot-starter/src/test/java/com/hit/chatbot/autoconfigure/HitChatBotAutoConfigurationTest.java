@@ -30,8 +30,18 @@ class HitChatBotAutoConfigurationTest {
         context.run(application -> {
             assertThat(application).hasNotFailed();
             assertThat(application).doesNotHaveBean(ChatBotService.class);
-            assertThat(application).hasSingleBean(ChatBotMessageDispatcher.class);
+            assertThat(application).doesNotHaveBean(ChatBotMessageDispatcher.class);
+            assertThat(application).doesNotHaveBean("chatBotAnnotationScanner");
+            assertThat(application).doesNotHaveBean("chatBotMessageListenerResolver");
         });
+    }
+
+    @Test
+    void disabledBotsNeedNoExecutor() {
+        new ApplicationContextRunner().withConfiguration(AutoConfigurations.of(HitChatBotAutoConfiguration.class))
+                .withPropertyValues("chatbot.telegram.enable=false", "chatbot.discord.enable=false")
+                .run(application -> assertThat(application).hasNotFailed()
+                        .doesNotHaveBean(ChatBotMessageDispatcher.class));
     }
 
     @Test
@@ -57,7 +67,9 @@ class HitChatBotAutoConfigurationTest {
     void listenerCreatedWhileAnotherInitializesIsRegisteredToo() {
         // OuterListener gets the lazy InnerListener in its init callback, so Spring creates InnerListener between the
         // before- and after-initialization of OuterListener
-        context.withUserConfiguration(NestedListeners.class).run(application -> {
+        context.withPropertyValues("chatbot.telegram.enable=true", "chatbot.telegram.token=test-token",
+                "chatbot.telegram.base-url=http://127.0.0.1:9", "chatbot.telegram.error-backoff=1h")
+                .withUserConfiguration(NestedListeners.class).run(application -> {
             assertThat(application).hasNotFailed();
             assertThat(application.getBean(ChatBotMessageDispatcher.class)
                     .getCommandHelps(ChatBotMessageListener.Platform.TELEGRAM, "-100"))

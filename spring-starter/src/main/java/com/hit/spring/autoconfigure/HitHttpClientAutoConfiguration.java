@@ -11,6 +11,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.ObjectMapper;
@@ -25,20 +27,28 @@ public class HitHttpClientAutoConfiguration {
 
     public static final String DEFAULT_REST_CLIENT = "defaultRestClient";
 
-    @Bean
-    @ConditionalOnMissingBean(name = "defaultClientHttpRequestFactory")
-    public HttpComponentsClientHttpRequestFactory defaultClientHttpRequestFactory(DefaultHttpClientProperties properties) {
-        return new DefaultHttpClientFactory(properties).createRequestFactory();
-    }
-
-    @Bean(name = DEFAULT_REST_CLIENT)
+    @Configuration(proxyBeanMethods = false)
     @ConditionalOnMissingBean(name = DEFAULT_REST_CLIENT)
-    public RestClient defaultRestClient(DefaultHttpClientProperties properties,
-                                        @Qualifier("defaultClientHttpRequestFactory")
-                                        HttpComponentsClientHttpRequestFactory requestFactory) {
-        return new DefaultHttpClientFactory(properties).createRestClient(requestFactory);
+    static class DefaultRestClientConfiguration {
+
+        @Lazy
+        @Bean
+        @ConditionalOnMissingBean(name = "defaultClientHttpRequestFactory")
+        public HttpComponentsClientHttpRequestFactory defaultClientHttpRequestFactory(DefaultHttpClientProperties properties) {
+            return new DefaultHttpClientFactory(properties).createRequestFactory();
+        }
+
+        @Lazy
+        @Bean(name = DEFAULT_REST_CLIENT)
+        @ConditionalOnMissingBean(name = DEFAULT_REST_CLIENT)
+        public RestClient defaultRestClient(DefaultHttpClientProperties properties,
+                                            @Qualifier("defaultClientHttpRequestFactory")
+                                            HttpComponentsClientHttpRequestFactory requestFactory) {
+            return new DefaultHttpClientFactory(properties).createRestClient(requestFactory);
+        }
     }
 
+    @Lazy
     @Bean
     @ConditionalOnMissingBean(HttpService.class)
     public HttpService httpService(@Qualifier(DEFAULT_REST_CLIENT) RestClient restClient, ObjectMapper objectMapper) {

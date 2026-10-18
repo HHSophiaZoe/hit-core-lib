@@ -23,6 +23,9 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.AnyNestedCondition;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +37,7 @@ import org.springframework.core.task.TaskExecutor;
  * incoming messages to {@code @ChatBotMessageListener} methods.
  */
 @AutoConfiguration
+@Conditional(HitChatBotAutoConfiguration.EnabledCondition.class)
 @EnableConfigurationProperties({TelegramProperties.class, DiscordProperties.class})
 public class HitChatBotAutoConfiguration {
 
@@ -81,10 +85,10 @@ public class HitChatBotAutoConfiguration {
     @Configuration(proxyBeanMethods = false)
     static class DiscordConfiguration {
 
-        @Bean(destroyMethod = "shutdown")
         /**
          * Connects in the background: the application does not wait for Discord, sends wait up to ready-timeout.
          */
+        @Bean(destroyMethod = "shutdown")
         public JDA discord(DiscordProperties properties, ChatBotMessageDispatcher dispatcher) {
             return JDABuilder.createDefault(properties.getToken())
                     .setActivity(Activity.playing("Discord Chatbot"))
@@ -110,5 +114,17 @@ public class HitChatBotAutoConfiguration {
             }
             dispatcher.dispatchDiscordMessage(event);
         }
+    }
+
+    static class EnabledCondition extends AnyNestedCondition {
+        EnabledCondition() {
+            super(ConfigurationPhase.PARSE_CONFIGURATION);
+        }
+
+        @ConditionalOnBooleanProperty("chatbot.telegram.enable")
+        static class TelegramEnabled { }
+
+        @ConditionalOnBooleanProperty("chatbot.discord.enable")
+        static class DiscordEnabled { }
     }
 }

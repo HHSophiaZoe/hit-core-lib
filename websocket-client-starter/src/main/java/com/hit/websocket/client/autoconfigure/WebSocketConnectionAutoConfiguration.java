@@ -13,8 +13,8 @@ import java.util.List;
 @AutoConfiguration(after = {WebSocketTransportAutoConfiguration.class, WebSocketObservabilityAutoConfiguration.class})
 public class WebSocketConnectionAutoConfiguration {
 
-    @Bean(destroyMethod = "close")
     @ConditionalOnMissingBean
+    @Bean(destroyMethod = "close")
     WebSocketClientFactory webSocketClientFactory(
             WebSocketTransportFactory transportFactory, List<WebSocketObserver> observers,
             @Qualifier("webSocketObservabilityClock") Clock clock) {

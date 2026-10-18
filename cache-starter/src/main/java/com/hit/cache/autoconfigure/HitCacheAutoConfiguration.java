@@ -3,6 +3,9 @@ package com.hit.cache.autoconfigure;
 import com.hit.cache.config.properties.CacheConfigProperties;
 import com.hit.cache.helper.CacheKeyGenerator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.AnyNestedCondition;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Bean;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.cache.autoconfigure.CacheAutoConfiguration;
@@ -17,6 +20,7 @@ import org.springframework.context.annotation.Import;
  */
 @AutoConfiguration(after = JacksonAutoConfiguration.class, before = CacheAutoConfiguration.class,
         beforeName = "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration")
+@Conditional(HitCacheAutoConfiguration.EnabledCondition.class)
 @EnableConfigurationProperties(CacheConfigProperties.class)
 @Import({InternalCacheConfiguration.class, ExternalCacheConfiguration.class})
 public class HitCacheAutoConfiguration {
@@ -25,5 +29,17 @@ public class HitCacheAutoConfiguration {
     @ConditionalOnMissingBean
     public CacheKeyGenerator cacheKeyGenerator(CacheConfigProperties properties) {
         return new CacheKeyGenerator(properties);
+    }
+
+    static class EnabledCondition extends AnyNestedCondition {
+        EnabledCondition() {
+            super(ConfigurationPhase.PARSE_CONFIGURATION);
+        }
+
+        @ConditionalOnBooleanProperty("cache.internal.enable")
+        static class InternalEnabled { }
+
+        @ConditionalOnBooleanProperty("cache.external.enable")
+        static class ExternalEnabled { }
     }
 }
