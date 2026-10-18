@@ -68,6 +68,7 @@ public final class RotatingWebSocketClient implements AutoCloseable {
         execute(() -> {
             if (!closed && active == null) {
                 active = open();
+                updateViews();
             }
         });
     }
