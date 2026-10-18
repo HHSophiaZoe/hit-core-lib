@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Builds the shared {@link RestClient} on a pooled Apache HttpClient 5 from {@code http-client.default.*}.
+ * Automatic retries are disabled; callers own retry and reconciliation policy.
  */
 @RequiredArgsConstructor
 public class DefaultHttpClientFactory {
@@ -43,7 +44,6 @@ public class DefaultHttpClientFactory {
         DefaultHttpClientProperties.Connection connection = properties.getConnection();
 
         CloseableHttpClient closeableHttpClient = HttpClients.custom()
-                // Callers own retry policy; retrying a trading POST after 503 can submit a second order.
                 .disableAutomaticRetries()
                 // Theo proxy JVM (https.proxyHost, http.nonProxyHosts...); không cấu hình thì kết nối thẳng.
                 .useSystemProperties()
