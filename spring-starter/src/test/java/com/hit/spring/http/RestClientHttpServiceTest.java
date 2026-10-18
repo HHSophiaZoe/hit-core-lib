@@ -258,7 +258,7 @@ class RestClientHttpServiceTest {
     }
 
     @Test
-    void omitsHeadersAndOnlyLogsTruncatedResponseAtDebug() {
+    void omitsHeadersAndLogsTruncatedResponseAtInfo() {
         Logger logger = (Logger) LogManager.getLogger(RestClientHttpService.class);
         Level previous = logger.getLevel();
         List<LogEvent> events = new CopyOnWriteArrayList<>();
@@ -288,14 +288,14 @@ class RestClientHttpServiceTest {
             assertTrue(logs.contains("z".repeat(2048) + "...[truncated]"));
             assertFalse(logs.contains("z".repeat(2049)));
             assertTrue(events.stream().filter(event -> event.getMessage().getFormattedMessage().contains("Response:"))
-                    .allMatch(event -> event.getLevel() == Level.DEBUG));
+                    .allMatch(event -> event.getLevel() == Level.INFO));
             events.clear();
             assertThrows(HttpClientErrorException.class,
                     () -> service(new DefaultHttpClientProperties()).get(baseUrl + "/not-found", headers));
-            assertTrue(events.stream().filter(event -> event.getLevel() != Level.DEBUG)
-                    .noneMatch(event -> event.getMessage().getFormattedMessage().contains("\"name\":\"Việt\"")));
-            assertTrue(events.stream().anyMatch(event -> event.getLevel() == Level.DEBUG
+            assertTrue(events.stream().anyMatch(event -> event.getLevel() == Level.ERROR
                     && event.getMessage().getFormattedMessage().contains("\"name\":\"Việt\"")));
+            assertFalse(events.stream().map(event -> event.getMessage().getFormattedMessage())
+                    .anyMatch(message -> message.contains("private-value")));
         } finally {
             logger.removeAppender(appender);
             logger.setLevel(previous);
