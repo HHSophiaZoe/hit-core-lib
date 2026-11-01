@@ -12,6 +12,7 @@ import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
@@ -32,8 +33,13 @@ public class DefaultHttpClientFactory {
     }
 
     public RestClient createRestClient(ClientHttpRequestFactory requestFactory) {
+        return this.createRestClient(requestFactory, List.of());
+    }
+
+    public RestClient createRestClient(ClientHttpRequestFactory requestFactory, List<ClientHttpRequestInterceptor> interceptors) {
         return RestClient.builder()
                 .requestFactory(requestFactory)
+                .requestInterceptors(list -> list.addAll(interceptors))
                 // Accept mặc định khi đọc body dạng String (như RestTemplate cũ); header Accept của caller vẫn ghi đè
                 .defaultHeaders(headers -> headers.setAccept(List.of(MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON,
                         MediaType.APPLICATION_YAML, new MediaType("application", "*+json"), MediaType.ALL)))

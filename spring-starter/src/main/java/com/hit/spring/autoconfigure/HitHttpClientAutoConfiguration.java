@@ -4,6 +4,7 @@ import com.hit.spring.http.DefaultHttpClientFactory;
 import com.hit.spring.http.DefaultHttpClientProperties;
 import com.hit.spring.http.HttpService;
 import com.hit.spring.http.RestClientHttpService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
@@ -13,12 +14,14 @@ import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.ObjectMapper;
 
 /**
  * Shared {@code defaultRestClient} on pooled Apache HttpClient 5 and the {@link HttpService} over it.
+ * Every {@link ClientHttpRequestInterceptor} bean of the application is added to {@code defaultRestClient} in order.
  */
 @AutoConfiguration(after = JacksonAutoConfiguration.class)
 @ConditionalOnBooleanProperty("http-client.default.enable")
@@ -43,8 +46,9 @@ public class HitHttpClientAutoConfiguration {
         @ConditionalOnMissingBean(name = DEFAULT_REST_CLIENT)
         public RestClient defaultRestClient(DefaultHttpClientProperties properties,
                                             @Qualifier("defaultClientHttpRequestFactory")
-                                            HttpComponentsClientHttpRequestFactory requestFactory) {
-            return new DefaultHttpClientFactory(properties).createRestClient(requestFactory);
+                                            HttpComponentsClientHttpRequestFactory requestFactory,
+                                            ObjectProvider<ClientHttpRequestInterceptor> interceptors) {
+            return new DefaultHttpClientFactory(properties).createRestClient(requestFactory, interceptors.orderedStream().toList());
         }
     }
 

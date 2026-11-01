@@ -43,7 +43,7 @@ Starter cho web application.
 | `HitSpringAutoConfiguration` | `JsonMapper`, `EventPublisher`, `DataConverter`, `TokenService` (mặc định JWT), message bundle (`messages` của app trước, `hit-messages` của starter làm dự phòng), `Translator`, aspect `@LogTracking`/`@RolesAllowed` | luôn |
 | `HitWebMvcAutoConfiguration` | `GlobalExceptionHandler`, locale theo `Accept-Language` (mặc định `vi-VN`), resolver `@UserPrincipalRequest` / `@PaginationParameter`, CORS, filter trace id / log request / xác thực / phân quyền, OpenAPI, executor virtual thread cho Tomcat | servlet web app |
 | `HitTaskExecutionAutoConfiguration` | `appTaskExecutor` (virtual thread hoặc pool theo `spring.threads.virtual.enabled`), `@EnableAsync`, `ExecutorManager`, truyền trace id vào task định kỳ | `app.task.executor.enable=true` (executor) |
-| `HitHttpClientAutoConfiguration` | `defaultRestClient` (RestClient trên Apache HttpClient 5 có pool), `HttpService` | `http-client.default.enable=true` |
+| `HitHttpClientAutoConfiguration` | `defaultRestClient` (RestClient trên Apache HttpClient 5 có pool, gắn mọi bean `ClientHttpRequestInterceptor` của app), `HttpService` | `http-client.default.enable=true` |
 | `HitExcelAutoConfiguration` | `IExcelService` (Apache POI) | có POI |
 
 Filter (theo thứ tự): CORS (0) → trace id (1) → log request (2, `app.enable-log-request-http`) → xác thực
