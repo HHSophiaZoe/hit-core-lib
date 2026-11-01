@@ -1,6 +1,7 @@
 package com.hit.spring.autoconfigure;
 
 import com.hit.spring.task.TaskExecutorProperties;
+import com.hit.spring.task.ExecutorServiceFactory;
 import com.hit.spring.task.DefaultExecutorManager;
 import com.hit.spring.task.ExecutorManager;
 import com.hit.spring.task.RunnableWrapper;
@@ -46,6 +47,20 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class HitTaskExecutionAutoConfiguration {
 
     public static final String APP_TASK_EXECUTOR = "appTaskExecutor";
+
+    @Bean
+    @ConditionalOnMissingBean(ExecutorServiceFactory.class)
+    @ConditionalOnThreading(Threading.VIRTUAL)
+    public ExecutorServiceFactory virtualExecutorServiceFactory() {
+        return new ExecutorServiceFactory(true);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(ExecutorServiceFactory.class)
+    @ConditionalOnThreading(Threading.PLATFORM)
+    public ExecutorServiceFactory platformExecutorServiceFactory() {
+        return new ExecutorServiceFactory(false);
+    }
 
     @Bean
     @ConditionalOnBean(name = TaskManagementConfigUtils.SCHEDULED_ANNOTATION_PROCESSOR_BEAN_NAME)
