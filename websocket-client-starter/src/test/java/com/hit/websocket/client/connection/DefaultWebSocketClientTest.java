@@ -75,8 +75,7 @@ class DefaultWebSocketClientTest {
         connected(client);
         ConnectionSnapshot snapshot = snapshots.find(id).orElseThrow();
         assertThat(snapshot.connectedAt()).isEqualTo(clock.instant());
-        assertThat(snapshot.today().date().toString()).isEqualTo("2026-09-08");
-        assertThat(snapshot.today().transportConnections()).isOne();
+        assertThat(snapshot.counters().transportConnections()).isOne();
         assertThat(client.isHealthy()).isTrue();
     }
 

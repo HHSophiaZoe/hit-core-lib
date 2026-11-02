@@ -440,12 +440,12 @@ không chạy callback provider trong coordinator để tránh deadlock khi call
 websocket-client:
   observability:
     enabled: true
-    statistics-zone: Asia/Ho_Chi_Minh
     recent-event-capacity: 100
 ```
 
-`statistics-zone` chỉ xác định ranh giới ngày cho counter process-local; event lưu `Instant`. Mặc định dùng
-timezone hệ thống, không hard-code UTC. Có thể override bean `webSocketObservabilityClock` trong test/app.
+`ConnectionSnapshot.counters()` là counter process-local chỉ tăng từ lúc registry khởi tạo, không reset theo ngày:
+muốn số của một khoảng thời gian thì lấy hiệu hai snapshot, còn lưu lịch sử là việc của ứng dụng. Event lưu
+`Instant`. Có thể override bean `webSocketObservabilityClock` trong test/app.
 
 ```java
 List<ConnectionSnapshot> connections = connectionSnapshotQuery.findBySource("dnse");

@@ -33,8 +33,8 @@ public class WebSocketObservabilityAutoConfiguration {
 
     @Bean("webSocketObservabilityClock")
     @ConditionalOnMissingBean(name = "webSocketObservabilityClock")
-    Clock webSocketObservabilityClock(WebSocketClientObservabilityProperties properties) {
-        return Clock.system(properties.getStatisticsZone());
+    Clock webSocketObservabilityClock() {
+        return Clock.systemUTC();
     }
 
     @Configuration(proxyBeanMethods = false)

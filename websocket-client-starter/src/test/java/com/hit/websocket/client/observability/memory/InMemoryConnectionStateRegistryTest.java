@@ -2,7 +2,7 @@ package com.hit.websocket.client.observability.memory;
 
 import com.hit.websocket.client.connection.ConnectionId;
 import com.hit.websocket.client.connection.ConnectionState;
-import com.hit.websocket.client.observability.model.ConnectionDailySnapshot;
+import com.hit.websocket.client.observability.model.ConnectionCounters;
 import com.hit.websocket.client.observability.model.ConnectionEvent;
 import com.hit.websocket.client.observability.model.ConnectionEventDetails;
 import com.hit.websocket.client.observability.model.ConnectionEventType;
@@ -34,8 +34,8 @@ class InMemoryConnectionStateRegistryTest {
         ConnectionSnapshot snapshot = registry.find(connectionId).orElseThrow();
         assertThat(snapshot.generation()).isEqualTo(2);
         assertThat(snapshot.state()).isEqualTo(ConnectionState.CONNECTING);
-        assertThat(snapshot.receivedMessages()).isEqualTo(1);
-        assertThat(snapshot.receivedBytes()).isEqualTo(50);
+        assertThat(snapshot.counters().receivedMessages()).isEqualTo(1);
+        assertThat(snapshot.counters().receivedBytes()).isEqualTo(50);
     }
 
     @Test
@@ -53,7 +53,7 @@ class InMemoryConnectionStateRegistryTest {
     }
 
     @Test
-    void countsDailyConnectionLossRetryAndTraffic() {
+    void countsConnectionLossRetryAndTraffic() {
         registry.onEvent(new ConnectionEvent(connectionId, 1, 1,
                 ConnectionEventType.CONNECT_REQUESTED, ConnectionState.CONNECTING,
                 Instant.now(), new ConnectionEventDetails.ConnectAttempt(0)));
@@ -67,12 +67,12 @@ class InMemoryConnectionStateRegistryTest {
                         1, 3, java.time.Duration.ofSeconds(1))));
         registry.onMessageReceived(connectionId, 1, 42);
 
-        ConnectionDailySnapshot today = registry.find(connectionId).orElseThrow().today();
-        assertThat(today.connectAttempts()).isEqualTo(1);
-        assertThat(today.connectionLosses()).isEqualTo(1);
-        assertThat(today.retries()).isEqualTo(1);
-        assertThat(today.receivedMessages()).isEqualTo(1);
-        assertThat(today.receivedBytes()).isEqualTo(42);
+        ConnectionCounters counters = registry.find(connectionId).orElseThrow().counters();
+        assertThat(counters.connectAttempts()).isEqualTo(1);
+        assertThat(counters.connectionLosses()).isEqualTo(1);
+        assertThat(counters.retries()).isEqualTo(1);
+        assertThat(counters.receivedMessages()).isEqualTo(1);
+        assertThat(counters.receivedBytes()).isEqualTo(42);
     }
 
     private ConnectionEvent event(

@@ -2,7 +2,7 @@ package com.hit.websocket.client.observability.memory;
 
 import com.hit.websocket.client.connection.ConnectionId;
 import com.hit.websocket.client.connection.ConnectionState;
-import com.hit.websocket.client.observability.model.ConnectionDailySnapshot;
+import com.hit.websocket.client.observability.model.ConnectionCounters;
 import com.hit.websocket.client.observability.model.ConnectionEvent;
 import com.hit.websocket.client.observability.model.ConnectionEventDetails;
 import com.hit.websocket.client.observability.model.ConnectionEventType;
@@ -15,8 +15,6 @@ import com.hit.websocket.client.transport.CloseReason;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -38,11 +36,7 @@ public final class InMemoryConnectionStateRegistry
     private final int recentEventCapacity;
 
     public InMemoryConnectionStateRegistry() {
-        this(Clock.systemDefaultZone(), DEFAULT_RECENT_EVENT_CAPACITY);
-    }
-
-    public InMemoryConnectionStateRegistry(ZoneId statisticsZone) {
-        this(Clock.system(statisticsZone), DEFAULT_RECENT_EVENT_CAPACITY);
+        this(Clock.systemUTC(), DEFAULT_RECENT_EVENT_CAPACITY);
     }
 
     public InMemoryConnectionStateRegistry(Clock clock, int recentEventCapacity) {
@@ -129,7 +123,6 @@ public final class InMemoryConnectionStateRegistry
     private static final class MutableConnectionState {
         private final ConnectionId connectionId;
         private final Clock clock;
-        private final ZoneId statisticsZone;
         private long generation;
         private long lastSequence;
         private ConnectionState state = ConnectionState.STOPPED;
@@ -141,18 +134,12 @@ public final class InMemoryConnectionStateRegistry
         private String lastErrorCode;
         private String lastErrorMessage;
         private long reconnectAttempts;
-        private long receivedMessages;
-        private long receivedBytes;
-        private long sentMessages;
-        private long sentBytes;
-        private final DailyConnectionCounters dailyCounters;
+        private final MutableCounters counters = new MutableCounters();
 
         private MutableConnectionState(ConnectionId connectionId, Clock clock) {
             this.connectionId = connectionId;
             this.clock = clock;
-            this.statisticsZone = clock.getZone();
             this.stateChangedAt = clock.instant();
-            this.dailyCounters = new DailyConnectionCounters(LocalDate.now(clock));
         }
 
         private synchronized boolean apply(ConnectionEvent event) {
@@ -170,20 +157,19 @@ public final class InMemoryConnectionStateRegistry
                 state = event.state();
                 stateChangedAt = event.occurredAt();
             }
-            dailyCounters.resetIfNeeded(dateOf(event.occurredAt()));
 
             if (event.type() == ConnectionEventType.CONNECT_REQUESTED) {
-                dailyCounters.connectAttempted();
+                counters.connectAttempts++;
             } else if (event.type() == ConnectionEventType.TRANSPORT_CONNECTED) {
                 connectedAt = event.occurredAt();
-                dailyCounters.transportConnected();
+                counters.transportConnections++;
             } else if (event.type() == ConnectionEventType.RETRY_SCHEDULED) {
                 if (event.details() instanceof ConnectionEventDetails.RetryScheduled retry) {
                     reconnectAttempts = retry.attempt();
                 } else {
                     reconnectAttempts++;
                 }
-                dailyCounters.retryScheduled();
+                counters.retries++;
             } else if (event.type() == ConnectionEventType.ERROR
                     || event.type() == ConnectionEventType.HEARTBEAT_TIMEOUT) {
                 lastErrorAt = event.occurredAt();
@@ -193,19 +179,19 @@ public final class InMemoryConnectionStateRegistry
                 lastErrorCode = failure == null ? null : failure.code();
                 lastErrorMessage = failure == null ? null : failure.message();
                 if (event.type() == ConnectionEventType.ERROR) {
-                    dailyCounters.errorOccurred();
+                    counters.errors++;
                     if (failure != null && failure.terminal() && state != ConnectionState.CONNECTING) {
-                        dailyCounters.connectionLost();
+                        counters.connectionLosses++;
                     }
                 } else {
-                    dailyCounters.heartbeatTimedOut();
+                    counters.heartbeatTimeouts++;
                 }
             } else if (event.type() == ConnectionEventType.DISCONNECT_REQUESTED) {
-                dailyCounters.disconnectRequested();
+                counters.disconnects++;
             } else if (event.type() == ConnectionEventType.TRANSPORT_CLOSED) {
                 if (event.details() instanceof ConnectionEventDetails.TransportClosed(CloseReason reason)
                         && !reason.initiatedByClient()) {
-                    dailyCounters.connectionLost();
+                    counters.connectionLosses++;
                 }
             }
             return true;
@@ -215,10 +201,8 @@ public final class InMemoryConnectionStateRegistry
             if (eventGeneration != generation) {
                 return;
             }
-            dailyCounters.resetIfNeeded(LocalDate.now(clock));
-            receivedMessages++;
-            receivedBytes += Math.max(payloadBytes, 0);
-            dailyCounters.messageReceived(payloadBytes);
+            counters.receivedMessages++;
+            counters.receivedBytes += Math.max(payloadBytes, 0);
             lastMessageAt = clock.instant();
         }
 
@@ -226,14 +210,11 @@ public final class InMemoryConnectionStateRegistry
             if (eventGeneration != generation) {
                 return;
             }
-            dailyCounters.resetIfNeeded(LocalDate.now(clock));
-            sentMessages++;
-            sentBytes += Math.max(payloadBytes, 0);
-            dailyCounters.messageSent(payloadBytes);
+            counters.sentMessages++;
+            counters.sentBytes += Math.max(payloadBytes, 0);
         }
 
         private synchronized ConnectionSnapshot snapshot() {
-            dailyCounters.resetIfNeeded(LocalDate.now(clock));
             return ConnectionSnapshot.builder()
                     .connectionId(connectionId)
                     .generation(generation)
@@ -247,21 +228,13 @@ public final class InMemoryConnectionStateRegistry
                     .lastErrorCode(lastErrorCode)
                     .lastErrorMessage(lastErrorMessage)
                     .reconnectAttempts(reconnectAttempts)
-                    .receivedMessages(receivedMessages)
-                    .receivedBytes(receivedBytes)
-                    .sentMessages(sentMessages)
-                    .sentBytes(sentBytes)
-                    .today(dailyCounters.snapshot())
+                    .counters(counters.snapshot())
                     .build();
-        }
-
-        private LocalDate dateOf(Instant instant) {
-            return instant.atZone(statisticsZone).toLocalDate();
         }
     }
 
-    private static final class DailyConnectionCounters {
-        private LocalDate date;
+    /** Only grows; guarded by the owning {@link MutableConnectionState}. */
+    private static final class MutableCounters {
         private long connectAttempts;
         private long transportConnections;
         private long disconnects;
@@ -274,47 +247,8 @@ public final class InMemoryConnectionStateRegistry
         private long sentMessages;
         private long sentBytes;
 
-        private DailyConnectionCounters(LocalDate date) {
-            this.date = date;
-        }
-
-        private void connectAttempted() { connectAttempts++; }
-        private void transportConnected() { transportConnections++; }
-        private void disconnectRequested() { disconnects++; }
-        private void connectionLost() { connectionLosses++; }
-        private void retryScheduled() { retries++; }
-        private void errorOccurred() { errors++; }
-        private void heartbeatTimedOut() { heartbeatTimeouts++; }
-
-        private void messageReceived(int payloadBytes) {
-            receivedMessages++;
-            receivedBytes += Math.max(payloadBytes, 0);
-        }
-
-        private void messageSent(int payloadBytes) {
-            sentMessages++;
-            sentBytes += Math.max(payloadBytes, 0);
-        }
-
-        private void resetIfNeeded(LocalDate currentDate) {
-            if (currentDate.equals(date)) return;
-            date = currentDate;
-            connectAttempts = 0;
-            transportConnections = 0;
-            disconnects = 0;
-            connectionLosses = 0;
-            retries = 0;
-            errors = 0;
-            heartbeatTimeouts = 0;
-            receivedMessages = 0;
-            receivedBytes = 0;
-            sentMessages = 0;
-            sentBytes = 0;
-        }
-
-        private ConnectionDailySnapshot snapshot() {
-            return ConnectionDailySnapshot.builder()
-                    .date(date)
+        private ConnectionCounters snapshot() {
+            return ConnectionCounters.builder()
                     .connectAttempts(connectAttempts)
                     .transportConnections(transportConnections)
                     .disconnects(disconnects)

@@ -20,10 +20,6 @@ public record ConnectionSnapshot(
         String lastErrorCode,
         String lastErrorMessage,
         long reconnectAttempts,
-        long receivedMessages,
-        long receivedBytes,
-        long sentMessages,
-        long sentBytes,
-        ConnectionDailySnapshot today
+        ConnectionCounters counters
 ) {
 }
