@@ -8,6 +8,7 @@ public interface ResponseStatusCodeEnum {
     ResponseStatusCode INTERNAL_GENERAL_SERVER_ERROR = code("GENERAL_SERVER_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
     ResponseStatusCode BUSINESS_ERROR = code("BUSINESS_ERROR", HttpStatus.BAD_REQUEST);
     ResponseStatusCode VALIDATION_ERROR = code("VALIDATION_ERROR", HttpStatus.BAD_REQUEST);
+    ResponseStatusCode RESOURCE_ERROR = code("RESOURCE_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
     ResponseStatusCode RESOURCE_NOT_FOUND = code("RESOURCE_NOT_FOUND", HttpStatus.BAD_REQUEST);
     ResponseStatusCode SHOW_RESOURCES_NOT_FOUND = code("SHOW_RESOURCES_NOT_FOUND", HttpStatus.BAD_REQUEST);
 
