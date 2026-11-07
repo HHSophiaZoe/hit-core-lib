@@ -6,9 +6,6 @@ REST API, JPA, cache, Kafka, storage, chatbot và websocket.
 Java 25, Spring Boot 4.1, Jackson 3. Các starter tự cấu hình bằng Spring Boot auto-configuration; ứng dụng chỉ cần
 `@SpringBootApplication`, không scan package `com.hit`.
 
-Đây là Git submodule độc lập. Thay đổi trong module phải được commit tại repository
-`hit-core-lib`, sau đó cập nhật submodule pointer ở repository cha.
-
 ## Các starter
 
 - `spring-starter`
@@ -23,16 +20,17 @@ Java 25, Spring Boot 4.1, Jackson 3. Các starter tự cấu hình bằng Spring
 
 ## Build và kiểm tra
 
-Cần JDK 25. Từ root workspace `hit-trading-system` (nơi có Maven Wrapper):
+Cần JDK 25 và Maven 3.9.16 theo yêu cầu trong `pom.xml`. Chạy từ thư mục gốc của thư viện:
 
 ```bash
-./mvnw -f hit-core-lib/pom.xml clean install
+mvn clean install
 ```
 
-Build một starter cùng các dependency bằng
-`./mvnw -f hit-core-lib/pom.xml -pl <starter> -am test`.
-Checkout riêng của lib không có Maven Wrapper; cần Maven tương thích với cấu hình POM.
-Thư viện không chạy độc lập và không dùng env chung; ứng dụng sử dụng starter cung cấp cấu hình.
+Kiểm tra một starter cùng các dependency:
+
+```bash
+mvn -pl <starter> -am test
+```
 
 ## Tài liệu
 
